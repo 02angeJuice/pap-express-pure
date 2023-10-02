@@ -1,0 +1,211 @@
+import React, { useEffect } from 'react'
+import {
+  StyleSheet,
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Platform
+} from 'react-native'
+
+import { useTranslation } from 'react-i18next'
+import { useAuthToken, useSettings } from '../../hooks'
+import {
+  LOAD_PRODUCT,
+  UNLOAD_PRODUCT,
+  PAY_OUT_PRODUCT,
+  SCAN
+} from '../../constants/images'
+
+import { screenMap } from '../../constants/screenMap'
+import {
+  resetToken,
+  setAccessToken,
+  setRefreshToken
+} from '../../store/slices/tokenSlice'
+import { sendRefreshToken } from '../../apis/loginApi'
+import moment from 'moment'
+import { useDispatch } from 'react-redux'
+import CustomHeader from '../header/CustomHeader'
+import LanguageFlags from '../header/LanguageFlags'
+
+const Home = ({ navigation }) => {
+  const { t, i18n } = useTranslation()
+  const { language } = useSettings()
+
+  const { refresh } = useAuthToken()
+
+  const dispatch = useDispatch()
+
+  // == API
+  // =================================================================
+  const checkRefreshToken = async () => {
+    const res = await sendRefreshToken(refresh)
+
+    if (res?.status === 200) {
+      dispatch(setAccessToken(res.data?.access_token))
+      dispatch(setRefreshToken(res.data?.refresh_token))
+      console.log(
+        `${moment().format(
+          'MMMM Do YYYY, h:mm:ss a'
+        )} | REFRESH TOKEN CHANGED!.`
+      )
+
+      return true
+    } else {
+      dispatch(resetToken())
+
+      Platform.OS === 'android'
+        ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+        : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+
+      return false
+    }
+  }
+
+  // == EFFECT
+  // =================================================================
+  useEffect(() => {
+    language !== i18n.language && i18n.changeLanguage(language)
+  }, [])
+
+  const navigate = async route => {
+    if (await checkRefreshToken()) {
+      navigation.navigate(route)
+    }
+  }
+
+  return (
+    // <SafeAreaView style={{ flex: 1 }}>
+    //     <View
+    //         style={[
+    //             styles.row,
+    //             {
+    //                 justifyContent: 'space-around',
+    //                 backgroundColor: '#AE100F',
+    //                 zIndex: 2,
+    //             },
+    //         ]}
+    //     >
+    //         <View></View>
+    //         <CustomHeader />
+    //         <LanguageFlags />
+    //     </View>
+
+    // </SafeAreaView>
+
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={[styles.menu, styles.shadow]}
+        onPress={() => navigate(screenMap.LoadToTruck)}>
+        <DisplayMenu
+          text={t('load_to_truck')}
+          fileIcon={LOAD_PRODUCT}
+          x={125}
+          y={125}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.menu, styles.shadow]}
+        onPress={() => navigate(screenMap.UnloadFromTruck)}>
+        <DisplayMenu
+          text={t('unload_from_truck')}
+          fileIcon={UNLOAD_PRODUCT}
+          x={125}
+          y={125}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.menu, styles.shadow]}
+        onPress={() => navigate(screenMap.Distribution)}>
+        <DisplayMenu
+          text={t('distribution')}
+          fileIcon={PAY_OUT_PRODUCT}
+          x={125}
+          y={125}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.menu, styles.shadow]}
+        onPress={() => navigate(screenMap.ScanReceive)}>
+        <DisplayMenu text={t('scan_receive')} fileIcon={SCAN} x={125} y={125} />
+      </TouchableOpacity>
+
+      <View style={{ width: '44%', height: 150, margin: '2%' }}></View>
+    </View>
+  )
+}
+
+const DisplayMenu = ({ text, fileIcon, x = 100, y = 100 }) => {
+  return (
+    <View style={styles.menuItem}>
+      <Image
+        style={{
+          width: x,
+          height: y,
+          resizeMode: 'contain'
+        }}
+        source={fileIcon}
+      />
+      <Text style={styles.menuText}>{text}</Text>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-evenly',
+    gap: 2,
+    marginTop: 10,
+    backgroundColor: '#F2F2F2'
+  },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  menu: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    width: '44%',
+    height: 150,
+    margin: '2%'
+  },
+  menuItem: {
+    display: 'flex',
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: -20
+  },
+  menuText: {
+    fontSize: 18,
+    textAlign: 'center',
+    color: '#000'
+  },
+  shadow: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5
+  },
+  hidden: {
+    display: 'none'
+  }
+})
+
+export default Home
