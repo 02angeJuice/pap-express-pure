@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import {StyleSheet, View, Text, TouchableOpacity, Platform} from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import Modal from 'react-native-modal'
@@ -7,9 +7,10 @@ import {useTranslation} from 'react-i18next'
 import RNFS from 'react-native-fs'
 
 const ModalSignature = ({set, visible, setVisible}) => {
+  const [signature, setSignature] = useState(null)
   const {t} = useTranslation()
 
-  const handleOK = (sign) => {
+  const handleOK = async (sign) => {
     const dataType = sign.split(';')[0]
     const fileType = sign.split(';')[0].split('/')[1]
 
@@ -18,32 +19,21 @@ const ModalSignature = ({set, visible, setVisible}) => {
 
     const base64Content = sign.replace(`${dataType};base64,`, '')
 
-    RNFS.writeFile(path, base64Content, 'base64')
-      .then(() => {
-        return RNFS.stat(path)
-      })
-      .then(async (statResult) => {
-        console.log('File info:', statResult)
+    await RNFS.writeFile(path, base64Content, 'base64')
+      .then(() => RNFS.stat(path))
+      .then((statResult) => {
+        console.log(`file://${statResult?.path}`)
 
-        set(`file://${statResult.path}`)
-
-        // set(statResult?.path) // Assuming you want to store the file path in state
+        setSignature(`file://${statResult?.path}`)
       })
       .catch((error) => {
         console.error('Error saving or retrieving the image:', error)
       })
+  }
 
-    // const path = FileSystem.cacheDirectory + `${sign.slice(-10)}-SIGN.${fileType}`;
-    // FileSystem.writeAsStringAsync(
-    //   path,
-    //   sign.replace(`${dataType};base64,`, ''),
-    //   {encoding: FileSystem.EncodingType.Base64},
-    // )
-    //   .then(() => FileSystem.getInfoAsync(path))
-    //   .then(data => {
-    //     set(data.uri);
-    //   })
-    //   .catch(console.error);
+  const handleConfirm = () => {
+    set(signature)
+    setVisible(!visible)
   }
 
   return (
@@ -74,9 +64,6 @@ const ModalSignature = ({set, visible, setVisible}) => {
           ) : (
             <View style={[styles.row, {gap: 5}]}>
               <Text>{t('signature_support')}</Text>
-              {/* <TouchableOpacity>
-                                <Text>Skip</Text>
-                            </TouchableOpacity> */}
             </View>
           )}
         </View>
@@ -84,7 +71,7 @@ const ModalSignature = ({set, visible, setVisible}) => {
         <View>
           <TouchableOpacity
             style={[styles.button, {backgroundColor: '#ABFC74'}]}
-            onPress={() => setVisible(!visible)}>
+            onPress={handleConfirm}>
             <Text
               style={[
                 {

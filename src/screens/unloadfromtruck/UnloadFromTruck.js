@@ -8,7 +8,8 @@ import {
   TextInput,
   Image,
   Alert,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native'
 
 import debounce from 'lodash.debounce'
@@ -51,6 +52,8 @@ const ToggleState = {
 }
 
 const UnloadFromTruck = ({navigation}) => {
+  const [loading, setLoading] = useState(false)
+
   const [toggleState, setToggleState] = useState(null)
   const [toggleButton, setToggleButton] = useState(false)
 
@@ -223,6 +226,8 @@ const UnloadFromTruck = ({navigation}) => {
   }
 
   const onPressConfirm = async (status) => {
+    setLoading(!loading)
+
     const imgName = currentImage?.split('/').pop()
     const imgType = imgName?.split('.').pop()
     const signName = currentSign?.split('/').pop()
@@ -236,10 +241,7 @@ const UnloadFromTruck = ({navigation}) => {
         // CHECK Signature required !
 
         if (currentSign === null) {
-          Alert.alert(
-            'Signature must be required...!',
-            `Please fill your signature.`
-          )
+          alertReUse('signature_required', 'signature_required_detail')
         } else {
           // SENT ITEM PICKED --> ONSHIP
           // ==============================
@@ -298,6 +300,8 @@ const UnloadFromTruck = ({navigation}) => {
             })
 
           setToggleButton(false)
+
+          setLoading(false)
         }
       }
     }
@@ -305,7 +309,7 @@ const UnloadFromTruck = ({navigation}) => {
 
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail))
+      ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
       : alert(t(msg), t(detail))
   }
 
@@ -347,14 +351,7 @@ const UnloadFromTruck = ({navigation}) => {
             // focusable={true}
             blurOnSubmit={false}
           />
-          {/* 
-                    <ButtonComponent
-                        text="#RECEIPT"
-                        color="#fff"
-                        backgroundColor="#2a52be"
-                        flex={0.3}
-                        onPress={() => toggleSetState(ToggleState.HEADER)}
-                    /> */}
+
           <TouchableOpacity
             style={[
               styles.clearButton,
@@ -400,13 +397,6 @@ const UnloadFromTruck = ({navigation}) => {
             defaultValue={detailSelected?.item_no}
             editable={false}
           />
-          {/* <ButtonComponent
-                        text="CLEAR"
-                        color="#fff"
-                        backgroundColor="#AE100F"
-                        flex={0.3}
-                        onPress={() => onPressClear()}
-                    /> */}
 
           <TouchableOpacity
             style={[
@@ -421,7 +411,6 @@ const UnloadFromTruck = ({navigation}) => {
             <View style={[styles.row, {justifyContent: 'center'}]}>
               <Ionicons
                 style={{alignSelf: 'center'}}
-                // name={'document-text-outline'}
                 name={'document-outline'}
                 size={20}
                 color="#fff"
@@ -564,36 +553,46 @@ const UnloadFromTruck = ({navigation}) => {
         </TouchableOpacity>
       )}
 
-      {/* {headerSelected && (
-                <View style={styles.buttonGroup}>
-                    {toggleButton ? (
-                        <ButtonConfirmComponent
-                            text="CONFIRM ARRIVED"
-                            color="#183B00"
-                            backgroundColor="#ABFC74"
-                            onPress={() => onPressConfirm(true)}
-                        />
-                    ) : (
-                        <ButtonConfirmComponent
-                            text="ARRIVED SUCCESSFULLY"
-                            color="#000"
-                            backgroundColor="#fff"
-                        />
-                    )}
-                </View>
-            )} */}
-
       {headerSelected && (
         <View style={styles.buttonGroup}>
           {headerSelected?.status !== 'PICKED' &&
           detail?.every((el) => el.status !== 'PICKED') ? (
             toggleButton ? (
-              <ButtonConfirmComponent
-                text={`${t('confirm')}`}
-                color="#183B00"
-                backgroundColor="#ABFC74"
-                onPress={() => onPressConfirm(true)}
-              />
+              <TouchableOpacity
+                disabled={loading}
+                style={[
+                  styles.button,
+                  styles.shadow,
+                  styles.row,
+                  {justifyContent: 'center', gap: 10},
+                  loading
+                    ? {backgroundColor: '#000'}
+                    : {backgroundColor: '#ABFC74'}
+                ]}
+                onPress={() => onPressConfirm(true)}>
+                {loading ? (
+                  <ActivityIndicator size={25} color="#FFF" />
+                ) : (
+                  <Ionicons
+                    name={'checkmark-outline'}
+                    size={25}
+                    color={'#000'}
+                  />
+                )}
+
+                <Text
+                  style={[
+                    {
+                      color: '#183B00',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      fontSize: 18
+                    },
+                    loading && {color: '#fff'}
+                  ]}>
+                  {t('confirm')}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <ButtonConfirmComponent
                 text={`${t('success')}`}
@@ -628,32 +627,11 @@ const InputComponent = ({title, children}) => {
   )
 }
 
-const ButtonComponent = ({text, color, backgroundColor, flex, onPress}) => {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.clearButton,
-        styles.shadow,
-        {
-          backgroundColor: backgroundColor,
-          flex: flex
-        }
-      ]}
-      onPress={onPress}>
-      <Text style={[{color: color, fontSize: 14, textAlign: 'center'}]}>
-        {text}
-      </Text>
-    </TouchableOpacity>
-  )
-}
-
 const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   return (
     <TouchableOpacity
       style={[styles.button, styles.shadow, {backgroundColor: backgroundColor}]}
       onPress={onPress}>
-      {/* <ActivityIndicator size="large" color="#00ff00" /> */}
-
       <Text
         style={{
           color: color,

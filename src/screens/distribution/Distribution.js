@@ -6,11 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  Keyboard
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native'
 
 import debounce from 'lodash.debounce'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+
 import {Empty} from '../../components/SpinnerEmpty'
 
 import {screenMap} from '../../constants/screenMap'
@@ -26,6 +28,9 @@ const Distribution = ({navigation}) => {
   const [order, setOrder] = useState(null)
   const [orderSelected, setOrderSelected] = useState(null)
   const [input, setInput] = useState('')
+
+  const [toggleType, setToggleType] = useState(false)
+  const [type, setType] = useState('all')
 
   const inputRef = useRef(null)
 
@@ -65,11 +70,11 @@ const Distribution = ({navigation}) => {
 
   // == HANDLE
   // =================================================================
-  const debouncedSearch = useCallback(debounce(search, 1000), [input])
-
-  function search() {
+  const search = () => {
     input?.length !== 0 ? fetcOrderSelect_API(input) : fetchOrder_API(filter_di)
   }
+
+  const debouncedSearch = useCallback(debounce(search, 1000), [input])
 
   const handleChangeTextInput = (text) => {
     const upper = text.toUpperCase()
@@ -87,6 +92,22 @@ const Distribution = ({navigation}) => {
     [navigation]
   )
 
+  const handlePressOutside = () => {
+    setToggleType(false)
+  }
+
+  const handleChangeType = (change) => {
+    dispatch(setFilterDi(change))
+    setType(change)
+    setToggleType(false)
+  }
+
+  const handleChangeStatus = (change) => {
+    dispatch(setFilterDi(change))
+    setToggleType(false)
+    setType('all')
+  }
+
   const _renderitem = ({item}) => {
     return (
       <ItemOrder
@@ -100,82 +121,175 @@ const Distribution = ({navigation}) => {
   // == COMPONENT Distribution
   // =================================================================
   return (
-    <View style={styles.container}>
-      <View
-        style={[
-          styles.row,
-          {
-            marginTop: 10,
-            justifyContent: 'flex-start',
-            gap: 7
-          }
-        ]}>
-        <StatusButtonComponent
-          color="#FF2E6E"
-          text="ENTRY"
-          status={filter_di}
-          onPress={() => dispatch(setFilterDi('DATA ENTRY'))}
-        />
-        <StatusButtonComponent
-          color="#539ffc"
-          text="ONSHIP"
-          status={filter_di}
-          onPress={() => dispatch(setFilterDi('ONSHIP'))}
-        />
-        <StatusButtonComponent
-          color="#95ed66"
-          text="CLOSED"
-          status={filter_di}
-          onPress={() => dispatch(setFilterDi('CLOSED'))}
-        />
-      </View>
-
-      <View style={[styles.header, {marginVertical: 5}]}>
-        {/* <Text>
-                    {isFocused ? 'Screen is focused' : 'Screen is not focused'}
-                </Text> */}
-
-        <Text style={{color: '#000'}}>{t('receipt_no')}</Text>
-        <TextInput
-          ref={inputRef}
+    <TouchableWithoutFeedback onPress={handlePressOutside}>
+      <View style={styles.container}>
+        <View
           style={[
-            // styles.shadow,
-            styles.groupInput,
-            {
-              backgroundColor: '#D2D2D2',
-              fontWeight: 'normal',
-              // padding: 8,
-              paddingHorizontal: 10,
-              paddingVertical: 6
-            }
-          ]}
-          onChangeText={handleChangeTextInput}
-          placeholder={t('enter_barcode')}
-          placeholderTextColor="#000"
-          value={input}
-          maxLength={12}
-          editable={true}
-          // showSoftInputOnFocus={false}
-          autoFocus={true}
-          // focusable={true}
-          blurOnSubmit={false}
-        />
-        {input.length > 0 && <ClearButton onPress={() => setInput('')} />}
-      </View>
+            styles.row,
+            {marginTop: 10, justifyContent: 'space-between'}
+          ]}>
+          <View style={[styles.row, {justifyContent: 'flex-start', gap: 7}]}>
+            <StatusButtonComponent
+              color="#FF2E6E"
+              text="ENTRY"
+              status={filter_di}
+              onPress={() => handleChangeStatus('DATA ENTRY')}
+            />
+            <StatusButtonComponent
+              color="#539ffc"
+              text="ONSHIP"
+              status={filter_di}
+              onPress={() => handleChangeStatus('ONSHIP')}
+            />
+            <StatusButtonComponent
+              color="#95ed66"
+              text="CLOSED"
+              status={filter_di}
+              onPress={() => handleChangeStatus('CLOSED')}
+            />
+          </View>
 
-      <FlatList
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        style={styles.list}
-        keyExtractor={(el) => el.distribution_id.toString()}
-        data={order}
-        initialNumToRender={6}
-        windowSize={5}
-        renderItem={_renderitem}
-        ListEmptyComponent={<Empty text={t('empty')} />}
-        // ListEmptyComponent={<Empty visible={order?.length > 0} />}
-      />
-    </View>
+          <TouchableOpacity
+            style={[
+              styles.shadow,
+              styles.filter,
+              {justifyContent: 'center', alignItems: 'center'},
+              type === 'PDT001' && {backgroundColor: '#CFFFAE'},
+              type === 'PDT002' && {backgroundColor: '#B5E3FF'},
+              type === 'PDT003' && {backgroundColor: '#FFC4D2'}
+            ]}
+            onPress={() => setToggleType(!toggleType)}>
+            <Text style={{padding: 3, color: '#000'}}>
+              {type === 'all' ? (
+                <Ionicons color={'#000'} name={'funnel-outline'} size={25} />
+              ) : type === 'PDT001' ? (
+                <Ionicons color={'#000'} name={'home-outline'} size={25} />
+              ) : type === 'PDT002' ? (
+                <Ionicons
+                  color={'#000'}
+                  name={'bag-handle-outline'}
+                  size={25}
+                />
+              ) : (
+                <Ionicons color={'#000'} name={'business-outline'} size={25} />
+              )}
+            </Text>
+          </TouchableOpacity>
+
+          {toggleType && (
+            <View
+              style={[
+                {
+                  position: 'absolute',
+                  top: 40,
+                  right: 0,
+                  backgroundColor: '#fff',
+                  padding: 5,
+                  borderRadius: 5,
+                  zIndex: 2
+                },
+                styles.shadow
+              ]}>
+              <TouchableOpacity
+                style={[
+                  styles.row,
+                  {gap: 8, borderRadius: 3, padding: 12},
+                  type === 'PDT001' && {
+                    backgroundColor: '#CFFFAE'
+                  }
+                ]}
+                onPress={() => handleChangeType('PDT001')}>
+                <View style={[styles.row, {gap: 5}]}>
+                  <Ionicons color={'#000'} name={'home-outline'} size={15} />
+                  <Text style={{color: '#000'}}>{t('od_type_warehouse')}</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.row,
+                  {gap: 8, borderRadius: 3, padding: 12},
+                  type === 'PDT002' && {
+                    backgroundColor: '#B5E3FF'
+                  }
+                ]}
+                onPress={() => handleChangeType('PDT002')}>
+                <View style={[styles.row, {gap: 5}]}>
+                  <Ionicons
+                    color={'#000'}
+                    name={'bag-handle-outline'}
+                    size={15}
+                  />
+                  <Text style={{color: '#000'}}>{t('od_type_express')}</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.row,
+                  {gap: 8, borderRadius: 3, padding: 12},
+                  type === 'PDT003' && {
+                    backgroundColor: '#FFC4D2'
+                  }
+                ]}
+                onPress={() => handleChangeType('PDT003')}>
+                <View style={[styles.row, {gap: 5}]}>
+                  <Ionicons
+                    color={'#000'}
+                    name={'business-outline'}
+                    size={15}
+                  />
+                  <Text style={{color: '#000'}}>{t('od_type_self')}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        <View style={[styles.header, {marginVertical: 5}]}>
+          <Text style={{color: '#000'}}>{t('receipt_no')}</Text>
+          <TextInput
+            ref={inputRef}
+            style={[
+              // styles.shadow,
+              styles.groupInput,
+              {
+                color: '#000',
+                backgroundColor: '#D2D2D2',
+                fontWeight: 'normal',
+                // padding: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 6
+              }
+            ]}
+            onChangeText={handleChangeTextInput}
+            placeholder={t('enter_barcode')}
+            placeholderTextColor="#000"
+            value={input}
+            maxLength={12}
+            editable={true}
+            // showSoftInputOnFocus={false}
+            autoFocus={true}
+            // focusable={true}
+            blurOnSubmit={false}
+          />
+          {input.length > 0 && <ClearButton onPress={() => setInput('')} />}
+        </View>
+
+        <FlatList
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          style={styles.list}
+          keyExtractor={(el) => el.distribution_id.toString()}
+          data={order}
+          initialNumToRender={6}
+          windowSize={5}
+          renderItem={_renderitem}
+          ListEmptyComponent={<Empty text={t('empty')} />}
+          // ListEmptyComponent={<Empty visible={order?.length > 0} />}
+        />
+      </View>
+    </TouchableWithoutFeedback>
   )
 }
 
@@ -251,7 +365,7 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
               marginVertical: 4
             }
           ]}>
-          <Ionicons name={'home'} size={15} />
+          <Ionicons color={'#FF0000'} name={'location-outline'} size={15} />
           <Text style={{flex: 1, flexWrap: 'wrap', color: '#000'}}>
             {item.address} - {item.subdistrict} {item.district} {item.province}{' '}
             {item.zip_code}
@@ -263,6 +377,7 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
           <View
             style={[
               styles.status,
+              styles.row,
               item.distributeType === 'PDT001'
                 ? styles.PICKED
                 : item.distributeType === 'PDT002'
@@ -270,10 +385,24 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
                 : styles.ARRIVED,
               {
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: 5,
+                borderColor: '#000',
+                borderWidth: 0.5
               }
             ]}>
-            <Text style={{padding: 2}}>
+            <Ionicons
+              color={'#000'}
+              name={
+                item?.distributeType === 'PDT001'
+                  ? 'home'
+                  : item?.distributeType === 'PDT002'
+                  ? 'bag-handle'
+                  : 'business'
+              }
+              size={15}
+            />
+            <Text style={{padding: 2, color: '#000'}}>
               {item?.distributeType === 'PDT001'
                 ? `${t('od_type_warehouse')}`
                 : item?.distributeType === 'PDT002'
@@ -385,15 +514,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   PICKED: {
-    backgroundColor: '#4AB800',
+    backgroundColor: '#CFFFAE',
     color: '#183B00'
   },
   ONSHIP: {
-    backgroundColor: '#009DFF',
+    backgroundColor: '#B5E3FF',
     color: '#003F67'
   },
   ARRIVED: {
-    backgroundColor: '#FF003C',
+    backgroundColor: '#FFC4D2',
     color: '#4A0011'
   },
   shadow: {

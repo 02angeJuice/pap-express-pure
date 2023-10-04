@@ -54,6 +54,8 @@ const ToggleState = {
 }
 
 const LoadToTruck = ({navigation}) => {
+  const [loading, setLoading] = useState(false)
+
   const [toggleState, setToggleState] = useState(null)
   const [toggleButton, setToggleButton] = useState(false)
 
@@ -227,6 +229,8 @@ const LoadToTruck = ({navigation}) => {
   }
 
   const onPressConfirm = async (status) => {
+    setLoading(!loading)
+
     const imgName = currentImage?.split('/').pop()
     const imgType = imgName?.split('.').pop()
     const signName = currentSign?.split('/').pop()
@@ -241,10 +245,7 @@ const LoadToTruck = ({navigation}) => {
       } else {
         // CHECK Signature required !
         if (currentSign === null) {
-          Alert.alert(
-            'Signature must be required...!',
-            `Please fill your signature.`
-          )
+          alertReUse('signature_required', 'signature_required_detail')
         } else {
           // SENT ITEM PICKED --> ONSHIP
           // ==============================
@@ -321,9 +322,12 @@ const LoadToTruck = ({navigation}) => {
           setCurrentImage(null)
           setCurrentSign(null)
           setToggleButton(false)
+
+          setLoading(false)
         }
       }
     }
+
     // else {
     //     // CANCEL ITEM ONSHIP --> PICKED
     //     // ==============================
@@ -361,7 +365,7 @@ const LoadToTruck = ({navigation}) => {
 
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail))
+      ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
       : alert(t(msg), t(detail))
   }
 
@@ -667,19 +671,41 @@ const LoadToTruck = ({navigation}) => {
           {headerSelected?.status !== 'ARRIVED' &&
           detail?.every((el) => el.status !== 'UNLOADED') ? (
             toggleButton ? (
-              <ButtonConfirmComponent
-                text={`${t('confirm')}`}
-                color="#183B00"
-                backgroundColor="#ABFC74"
-                onPress={() => onPressConfirm(true)}
-              />
+              <TouchableOpacity
+                disabled={loading}
+                style={[
+                  styles.button,
+                  styles.shadow,
+                  styles.row,
+                  {justifyContent: 'center', gap: 10},
+                  loading
+                    ? {backgroundColor: '#000'}
+                    : {backgroundColor: '#ABFC74'}
+                ]}
+                onPress={() => onPressConfirm(true)}>
+                {loading ? (
+                  <ActivityIndicator size={25} color="#FFF" />
+                ) : (
+                  <Ionicons
+                    name={'checkmark-outline'}
+                    size={25}
+                    color={'#000'}
+                  />
+                )}
+
+                <Text
+                  style={[
+                    {
+                      color: '#183B00',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    },
+                    loading && {color: '#fff'}
+                  ]}>
+                  {t('confirm')}
+                </Text>
+              </TouchableOpacity>
             ) : (
-              // <ButtonConfirmComponent
-              //     text="REVERSE ONSHIP"
-              //     color="#723400"
-              //     backgroundColor="#FFA256"
-              //     onPress={() => onPressConfirm(false)}
-              // />
               <ButtonConfirmComponent
                 text={`${t('success')}`}
                 color="#000"
@@ -712,32 +738,11 @@ const InputComponent = ({title, children}) => {
   )
 }
 
-const ButtonComponent = ({text, color, backgroundColor, flex, onPress}) => {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.clearButton,
-        styles.shadow,
-        {
-          backgroundColor: backgroundColor,
-          flex: flex
-        }
-      ]}
-      onPress={onPress}>
-      <Text style={[{color: color, fontSize: 14, textAlign: 'center'}]}>
-        {text}
-      </Text>
-    </TouchableOpacity>
-  )
-}
-
 const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   return (
     <TouchableOpacity
       style={[styles.button, styles.shadow, {backgroundColor: backgroundColor}]}
       onPress={onPress}>
-      {/* <ActivityIndicator size="large" color="#00ff00" /> */}
-
       <Text
         style={{
           color: color,

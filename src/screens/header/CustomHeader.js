@@ -1,22 +1,23 @@
 import React from 'react'
-import {LOGO} from '../../constants/images'
-import {Image, StyleSheet, View, Text} from 'react-native'
+import {StyleSheet, View, Text} from 'react-native'
 import {path} from '../../constants/url'
-import LanguageFlags from './LanguageFlags'
-import {SafeAreaView} from 'react-native'
+
+import FastImage from 'react-native-fast-image'
 
 const CustomHeader = () => {
   return (
     <View style={[styles.row, {justifyContent: 'center', gap: 0}]}>
-      <Image
+      <FastImage
+        resizeMode={FastImage.resizeMode.contain}
+        source={{
+          uri: `${path.IMG_LOGO}`,
+          priority: FastImage.priority.normal
+        }}
         style={{
           height: 48,
           width: 48,
           borderRadius: 10,
           resizeMode: 'contain'
-        }}
-        source={{
-          uri: `${path.IMG_LOGO}`
         }}
       />
 
@@ -51,7 +52,6 @@ const styles = StyleSheet.create({
   super: {
     fontSize: 20,
     fontWeight: 'bold'
-    // letterSpacing: 0,
   },
   sunway: {
     fontSize: 16,

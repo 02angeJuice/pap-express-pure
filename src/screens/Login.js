@@ -7,11 +7,12 @@ import {
   ImageBackground,
   TouchableOpacity,
   Alert,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native'
+import Ionicons from 'react-native-vector-icons/Ionicons'
 
 import {LOGIN} from '../constants/images'
-import {ActivityIndicator} from '@react-native-material/core'
 
 import {useController, useForm} from 'react-hook-form'
 import {useTranslation} from 'react-i18next'
@@ -62,7 +63,7 @@ const Login = ({navigation}) => {
                 [
                   {
                     text: t('cancel'),
-                    onPress: () => console.log('Cancel Pressed'),
+                    onPress: () => setLoading(false),
                     style: 'cancel'
                   },
                   {
@@ -97,8 +98,6 @@ const Login = ({navigation}) => {
     } catch (error) {
       console.log('sendCheckLoginHH_API: ', error)
     }
-
-    setLoading(false)
   }
 
   const sendLoginHH_API = async ({user_id, password}) => {
@@ -116,6 +115,8 @@ const Login = ({navigation}) => {
 
         alertReUse('auth_login_success', 'auth_login_success_detail')
         // navigation.navigate(screenMap.HomePage)
+
+        setLoading(false)
 
         navigation.reset({index: 0, routes: [{name: screenMap.HomePage}]})
       } else {
@@ -136,13 +137,14 @@ const Login = ({navigation}) => {
 
     await sendCheckLoginHH_API({
       user_id: data.username,
-      password: data.password ? data.username : 'Warehousedbo!1'
+      // password: data.password ? data.password : 'Warehousedbo!1'
+      password: data.password
     })
   }
 
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail))
+      ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
       : alert(t(msg), t(detail))
   }
 
@@ -169,12 +171,20 @@ const Login = ({navigation}) => {
               styles.shadow,
               styles.row,
               {justifyContent: 'center', gap: 10},
-              loading && {backgroundColor: '#d3d3d3'}
+              loading && {backgroundColor: '#000'}
             ]}
             onPress={handleSubmit(onSubmit)}>
-            {loading && <ActivityIndicator color="#FFF" />}
+            {loading ? (
+              <ActivityIndicator size={25} color="#FFF" />
+            ) : (
+              <Ionicons name={'log-in-outline'} size={25} color={'#000'} />
+            )}
 
-            <Text style={{color: '#183B00', fontSize: 16, fontWeight: 'bold'}}>
+            <Text
+              style={[
+                {color: '#183B00', fontSize: 18, fontWeight: 'bold'},
+                loading && {color: '#fff'}
+              ]}>
               {t('login')}
             </Text>
           </TouchableOpacity>
@@ -253,7 +263,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 30,
     backgroundColor: '#ABFC74',
-    paddingVertical: 15,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center'
   },

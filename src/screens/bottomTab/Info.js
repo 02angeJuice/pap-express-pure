@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   Image,
   Platform,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
@@ -31,6 +32,8 @@ import moment from 'moment'
 import {screenMap} from '../../constants/screenMap'
 
 const Info = ({navigation}) => {
+  const [loading, setLoading] = useState(false)
+
   const [profile, setProfile] = useState(null)
   const {t, i18n} = useTranslation()
   const {userName, refresh} = useAuthToken()
@@ -74,8 +77,12 @@ const Info = ({navigation}) => {
   // == HANDLE
   // =================================================================
   const handleLogout = async () => {
+    setLoading(!loading)
+
     if (await checkRefreshToken()) {
-      await sendLogout(refresh)
+      await sendLogout(refresh).then(() => {
+        setLoading(false)
+      })
       dispatch(resetToken())
     }
 
@@ -86,8 +93,6 @@ const Info = ({navigation}) => {
   // =================================================================
   return (
     <View style={styles.container}>
-      {/* <Image style={styles.logo} source={LOGO} /> */}
-
       <View style={[styles.infoMenu, styles.shadow]}>
         <View style={[styles.infoMenuItem, {backgroundColor: '#AE100F'}]}>
           <View style={styles.groupStart}>
@@ -95,21 +100,9 @@ const Info = ({navigation}) => {
               <Image
                 resizeMode={'contain'}
                 style={styles.avatar}
-                // source={
-                //     profile
-                //         ? require(`${profile?.img_profile}`)
-                //         : AVATAR
-                // }
-
                 source={{
                   uri: `${path.IMG}/${profile?.img_idcard}`
                 }}
-
-                // source={{
-                //     uri: profile?.img_idcard
-                //         ? `${path.IMG}/${profile?.img_idcard}`
-                //         : AVATAR,
-                // }}
               />
             )}
 
@@ -123,27 +116,29 @@ const Info = ({navigation}) => {
           </View>
         </View>
 
-        <InfoItem
-          icon="person"
-          text={t('personal_info')}
-          // nav={() =>
-          //     navigation.navigate(screenMap.UserProfile, {
-          //         profile: profile,
-          //     })
-          // }
-        />
-        {/* <InfoItem icon="qr-code" text="คิวอาร์โค้ด" /> */}
+        <InfoItem icon="person" text={t('personal_info')} />
         <InfoItem icon="help-circle" text={t('help')} />
         <InfoItem icon="settings" text={t('setting')} />
       </View>
 
       <TouchableOpacity
-        style={[styles.signout, styles.shadow]}
+        disabled={loading}
+        style={[
+          styles.signout,
+          styles.shadow,
+          styles.row,
+
+          {justifyContent: 'center', gap: 10},
+          loading && {backgroundColor: '#000'}
+        ]}
         onPress={handleLogout}>
-        <View style={styles.rightIcon}>
+        {loading ? (
+          <ActivityIndicator size={25} color="#FFF" />
+        ) : (
           <Ionicons name={'log-out-outline'} size={25} color={'#fff'} />
-          <Text style={styles.signoutText}>{t('logout')}</Text>
-        </View>
+        )}
+
+        <Text style={styles.signoutText}>{t('logout')}</Text>
       </TouchableOpacity>
     </View>
   )
@@ -233,7 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#AE100F',
     width: '100%',
     paddingVertical: 10,
-    borderRadius: 15
+    borderRadius: 30
   },
 
   signoutText: {

@@ -1,5 +1,5 @@
-import {createInstance} from 'i18next';
-import {initReactI18next} from 'react-i18next';
+import {createInstance} from 'i18next'
+import {initReactI18next} from 'react-i18next'
 
 const i18n = createInstance({
   compatibilityJSON: 'v3',
@@ -7,7 +7,7 @@ const i18n = createInstance({
   debug: false,
 
   interpolation: {
-    escapeValue: false, // not needed for react as it escapes by default
+    escapeValue: false // not needed for react as it escapes by default
   },
 
   resources: {
@@ -33,6 +33,9 @@ const i18n = createInstance({
         load_shipment_detail: 'กรุณาเลือกประเภทการขนส่ง',
         load_alert: 'แจ้งเตือนการขนส่ง...!',
         load_alert_detail: 'การขนส่งได้รับการเปลี่ยนแปลง',
+
+        signature_required: 'ลายเซ็นต์จำเป็นต้องมี...!',
+        signature_required_detail: 'กรุณากรอกลายเซ็นต์ของคุณ',
 
         home: 'หน้าแรก',
         info: 'ข้อมูลทั่วไป',
@@ -112,8 +115,8 @@ const i18n = createInstance({
         od_item_confirmed: 'รายการสินค้าทำการยืนยันครบหมดแล้ว',
         od_type_warehouse: 'รับสินค้าที่คลัง',
         od_type_express: 'บริการขนส่งเอกชน',
-        od_type_self: 'บริษัทจัดส่งเอง',
-      },
+        od_type_self: 'บริษัทจัดส่งเอง'
+      }
     },
     gb: {
       translation: {
@@ -138,6 +141,9 @@ const i18n = createInstance({
         load_shipment_detail: 'Please select the shipment type.',
         load_alert: 'Shipment Alert...!',
         load_alert_detail: 'Transportation has been changed.',
+
+        signature_required: 'Signature must be required...!',
+        signature_required_detail: 'Please fill your signature.',
 
         home: 'Home',
         info: 'Information',
@@ -217,8 +223,8 @@ const i18n = createInstance({
         od_item_confirmed: 'The product list has been completely verified.',
         od_type_warehouse: 'Receive Warehouse',
         od_type_express: 'Delivery Service',
-        od_type_self: 'By Company',
-      },
+        od_type_self: 'By Company'
+      }
     },
     cn: {
       translation: {
@@ -241,6 +247,9 @@ const i18n = createInstance({
         load_shipment_detail: '请选择装载的货物类型。',
         load_alert: '运输警报...!',
         load_alert_detail: '运输方式已更改',
+
+        signature_required: '必须要求签名...!',
+        signature_required_detail: '请填写您的签名',
 
         home: '首页',
         info: '信息',
@@ -321,12 +330,12 @@ const i18n = createInstance({
         od_item_confirmed: '产品清单已完全核实。',
         od_type_warehouse: '收货仓库',
         od_type_express: '快递服务',
-        od_type_self: '按公司分类',
-      },
-    },
-  },
-});
+        od_type_self: '按公司分类'
+      }
+    }
+  }
+})
 
-i18n.use(initReactI18next).init();
+i18n.use(initReactI18next).init()
 
-export default i18n;
+export default i18n

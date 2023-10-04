@@ -9,7 +9,8 @@ import {
   Image,
   ScrollView,
   Alert,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -19,7 +20,7 @@ import FastImage from 'react-native-fast-image'
 import ModalScan from './ModalScan'
 
 // Global Modal
-import ModalCamera from '../../components/ModalCamera'
+// import ModalCamera from '../../components/ModalCamera'
 import ModalSignature from '../../components/ModalSignature'
 
 import {useToast} from 'react-native-toast-notifications'
@@ -46,6 +47,8 @@ const ToggleState = {
 
 const DistributeDetail = ({navigation, route}) => {
   const {order_id} = route?.params
+
+  const [loading, setLoading] = useState(false)
 
   const [list, setList] = useState(false)
   const [done, setDone] = useState(false)
@@ -206,10 +209,14 @@ const DistributeDetail = ({navigation, route}) => {
       item_id: detailSelected?.item_no
     })
 
+    setRemark('')
+    setForce('')
     setToggleState(null)
   }
 
   const onPressConfirm = async (status) => {
+    setLoading(!loading)
+
     const imgName = currentImage?.split('/').pop()
     const imgType = imgName?.split('.').pop()
     const signName = currentSign?.split('/').pop()
@@ -222,10 +229,7 @@ const DistributeDetail = ({navigation, route}) => {
       } else {
         // CHECK Signature required !
         if (currentSign === null) {
-          alertReUse(
-            'Signature must be required...!',
-            `Please fill your signature.`
-          )
+          alertReUse('signature_required', 'signature_required_detail')
         } else {
           // STATUS: DATA ENTRY --> CLOSED/WAITING
           // ==============================
@@ -286,9 +290,12 @@ const DistributeDetail = ({navigation, route}) => {
             : dispatch(setFilterDi('ONSHIP'))
 
           setToggleButton(false)
+
+          setLoading(false)
         }
       }
     }
+
     // else {
     //     // TEST: cancel
     //     // ==============================
@@ -318,7 +325,7 @@ const DistributeDetail = ({navigation, route}) => {
 
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail))
+      ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
       : alert(t(msg), t(detail))
   }
 
@@ -578,12 +585,40 @@ const DistributeDetail = ({navigation, route}) => {
         orderSelected?.status === 'DATA ENTRY' && (
           <View style={styles.buttonGroup}>
             {toggleButton && (
-              <ButtonConfirmComponent
-                text={`${t('confirm')}`}
-                color="#183B00"
-                backgroundColor="#ABFC74"
-                onPress={() => onPressConfirm(true)}
-              />
+              <TouchableOpacity
+                disabled={loading}
+                style={[
+                  styles.button,
+                  styles.shadow,
+                  styles.row,
+                  {justifyContent: 'center', gap: 10},
+                  loading
+                    ? {backgroundColor: '#000'}
+                    : {backgroundColor: '#ABFC74'}
+                ]}
+                onPress={() => onPressConfirm(true)}>
+                {loading ? (
+                  <ActivityIndicator size={25} color="#FFF" />
+                ) : (
+                  <Ionicons
+                    name={'checkmark-outline'}
+                    size={25}
+                    color={'#000'}
+                  />
+                )}
+
+                <Text
+                  style={[
+                    {
+                      color: '#183B00',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    },
+                    loading && {color: '#fff'}
+                  ]}>
+                  {t('confirm')}
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         )}
@@ -649,29 +684,17 @@ const ItemDetail = React.memo(({item, detailSelected}) => {
   )
 })
 
-const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
-  return (
-    <TouchableOpacity
-      style={[styles.button, styles.shadow, {backgroundColor: backgroundColor}]}
-      onPress={onPress}>
-      <Text
-        style={{
-          color: color,
-          fontWeight: 'bold',
-          textAlign: 'center'
-        }}>
-        {text}
-      </Text>
-    </TouchableOpacity>
-  )
-}
-
 const styles = StyleSheet.create({
   container: {
     // flex: 1,
     backgroundColor: '#FFF',
     paddingHorizontal: 10
     // overflow: 'hidden',
+  },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   itemHeader: {
     backgroundColor: '#AE100F',
