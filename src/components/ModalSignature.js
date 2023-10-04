@@ -1,29 +1,50 @@
-import React from 'react';
-import {StyleSheet, View, Text, TouchableOpacity, Platform} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import Modal from 'react-native-modal';
-import Signature from 'react-native-canvas-signature';
-import {useTranslation} from 'react-i18next';
+import React from 'react'
+import {StyleSheet, View, Text, TouchableOpacity, Platform} from 'react-native'
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import Modal from 'react-native-modal'
+import Signature from 'react-native-canvas-signature'
+import {useTranslation} from 'react-i18next'
+import RNFS from 'react-native-fs'
 
 const ModalSignature = ({set, visible, setVisible}) => {
-  const {t} = useTranslation();
+  const {t} = useTranslation()
 
-  const handleOK = sign => {
-    const dataType = sign.split(';')[0];
-    const fileType = sign.split(';')[0].split('/')[1];
+  const handleOK = (sign) => {
+    const dataType = sign.split(';')[0]
+    const fileType = sign.split(';')[0].split('/')[1]
 
-    const path = FileSystem.cacheDirectory + `${sign.slice(-20)}.${fileType}`;
-    FileSystem.writeAsStringAsync(
-      path,
-      sign.replace(`${dataType};base64,`, ''),
-      {encoding: FileSystem.EncodingType.Base64},
-    )
-      .then(() => FileSystem.getInfoAsync(path))
-      .then(data => {
-        set(data.uri);
+    const fileName = `${new Date().getTime()}.${fileType}`
+    const path = RNFS.CachesDirectoryPath + `/${fileName}`
+
+    const base64Content = sign.replace(`${dataType};base64,`, '')
+
+    RNFS.writeFile(path, base64Content, 'base64')
+      .then(() => {
+        return RNFS.stat(path)
       })
-      .catch(console.error);
-  };
+      .then(async (statResult) => {
+        console.log('File info:', statResult)
+
+        set(`file://${statResult.path}`)
+
+        // set(statResult?.path) // Assuming you want to store the file path in state
+      })
+      .catch((error) => {
+        console.error('Error saving or retrieving the image:', error)
+      })
+
+    // const path = FileSystem.cacheDirectory + `${sign.slice(-10)}-SIGN.${fileType}`;
+    // FileSystem.writeAsStringAsync(
+    //   path,
+    //   sign.replace(`${dataType};base64,`, ''),
+    //   {encoding: FileSystem.EncodingType.Base64},
+    // )
+    //   .then(() => FileSystem.getInfoAsync(path))
+    //   .then(data => {
+    //     set(data.uri);
+    //   })
+    //   .catch(console.error);
+  }
 
   return (
     <Modal
@@ -46,7 +67,7 @@ const ModalSignature = ({set, visible, setVisible}) => {
             paddingHorizontal: 10,
             paddingVertical: 5,
             backgroundColor: '#fff',
-            borderRadius: 5,
+            borderRadius: 5
           }}>
           {Platform.OS === 'android' ? (
             <Signature lineWidth={1.5} lineColor="#000" onChange={handleOK} />
@@ -69,8 +90,8 @@ const ModalSignature = ({set, visible, setVisible}) => {
                 {
                   color: '#183B00',
                   fontWeight: 'bold',
-                  textAlign: 'center',
-                },
+                  textAlign: 'center'
+                }
               ]}>
               {t('confirm')}
             </Text>
@@ -78,14 +99,14 @@ const ModalSignature = ({set, visible, setVisible}) => {
         </View>
       </View>
     </Modal>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   row: {
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   container: {
     flex: 1,
@@ -93,33 +114,33 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     borderRadius: 5,
-    overflow: 'hidden',
+    overflow: 'hidden'
   },
   nav: {
     display: 'flex',
     flexDirection: 'row',
     backgroundColor: '#AE100F',
-    borderRadius: 5,
+    borderRadius: 5
   },
   textNav: {
     flex: 1,
     fontSize: 18,
     color: 'white',
     paddingVertical: 15,
-    paddingHorizontal: 10,
+    paddingHorizontal: 10
   },
   closeButton: {
     flex: 0.3,
     justifyContent: 'center',
     alignItems: 'flex-end',
-    paddingRight: 15,
+    paddingRight: 15
   },
   button: {
     maxWidth: '100%',
     padding: 10,
     borderRadius: 5,
-    textAlign: 'center',
-  },
-});
+    textAlign: 'center'
+  }
+})
 
-export default React.memo(ModalSignature);
+export default React.memo(ModalSignature)

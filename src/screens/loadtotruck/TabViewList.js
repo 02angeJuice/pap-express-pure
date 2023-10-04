@@ -23,7 +23,7 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
     {key: 'second', title: `${t('receipt')}`}
   ])
 
-  const renderTabBar = props => {
+  const renderTabBar = (props) => {
     return (
       <TabBar
         {...props}
@@ -96,7 +96,7 @@ const TabViewLeft = ({data, selected, info}) => {
       </DataTable.Header>
 
       {data !== null ? (
-        data?.map(el => (
+        data?.map((el) => (
           <DetailItem
             key={el.row_id}
             item={el}
@@ -184,32 +184,32 @@ const TabViewRight = ({selected}) => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-        <Text>
+        <Text style={{color: '#000'}}>
           {t('container_no')}:{' '}
           {selected?.container_no === null ? '-' : selected?.container_no}{' '}
         </Text>
-        <Text>
+        <Text style={{color: '#000'}}>
           {t('customer')}:{' '}
           {selected?.customer_id === null ? '-' : selected?.customer_id}
         </Text>
       </View>
 
-      <Text>
+      <Text style={{color: '#000'}}>
         {t('date_departure')}:{' '}
         {selected?.date_departure === null ? '-' : selected?.date_departure}
       </Text>
 
-      <Text>
+      <Text style={{color: '#000'}}>
         {t('car_regis')}:{' '}
         {selected?.Chinese_car_registration === null
           ? '-'
           : selected?.Chinese_car_registration}
       </Text>
-      <Text>
+      <Text style={{color: '#000'}}>
         {t('driver')}:{' '}
         {selected?.Chinese_driver === null ? '-' : selected?.Chinese_driver}
       </Text>
-      <Text>
+      <Text style={{color: '#000'}}>
         {t('transport_type')}:{' '}
         {selected?.shipment === null
           ? '-'
@@ -217,10 +217,10 @@ const TabViewRight = ({selected}) => {
           ? `${t('car')}`
           : `${t('ship')}`}
       </Text>
-      <Text>
+      <Text style={{color: '#000'}}>
         {t('phone')}: {selected?.phone === null ? '-' : selected?.phone}
       </Text>
-      <Text>
+      <Text style={{color: '#000'}}>
         {t('status')}: {selected?.status}
       </Text>
     </View>

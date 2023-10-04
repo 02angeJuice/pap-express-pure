@@ -27,7 +27,8 @@ const ModalScan = ({
   setVisible,
   confirm,
   force,
-  forceConfirm
+  forceConfirm,
+  navigation
 }) => {
   const [checkStatus, setCheckStatus] = useState(false)
   const [alert, setAlert] = useState(false)
@@ -56,7 +57,6 @@ const ModalScan = ({
     if (data?.item_no) {
       fetchBox_API(data?.item_no)
     }
-    // }, [reload])
   }, [data, reload])
 
   useEffect(() => {
@@ -67,7 +67,7 @@ const ModalScan = ({
 
       setBoxAvail(box?.filter((el) => el.is_scan_d === 'SCANED').length)
     }
-  }, [reload])
+  }, [box])
 
   // == HANDLE
   // =================================================================
@@ -101,7 +101,8 @@ const ModalScan = ({
         setInput('')
       }
     } else {
-      await insertDetailsBox(item, index, 'distribute')
+      await insertDetailsBox(item, index, 'distribute', navigation)
+
       setReload(!reload)
       setInput('')
     }

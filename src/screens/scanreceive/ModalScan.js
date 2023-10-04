@@ -27,18 +27,120 @@ const ModalScan = ({
   setVisible,
   confirm,
   force,
-  forceConfirm
+  forceConfirm,
+  navigation
 }) => {
   const [checkStatus, setCheckStatus] = useState(false)
   const [alert, setAlert] = useState(false)
 
+  const [input, setInput] = useState('')
+  const [box, setBox] = useState(null)
+  const [reload, setReload] = useState(false)
+
+  const {insertDetailsBox, setBoxAvail} = useScan()
   const {t} = useTranslation()
+
+  const numInputs = Number(data?.qty_box)
+
+  // == API
+  // =================================================================
+  const fetchBox_API = async (item_no) => {
+    const box = await fetchBox(item_no)
+    setBox(box?.data.filter((el) => el.is_scan_d !== 'IDLE'))
+
+    console.log(box?.data.filter((el) => el.is_scan_d !== 'IDLE'))
+  }
+
+  // == EFFECT
+  // =================================================================
+  useEffect(() => {
+    if (data?.item_no) {
+      fetchBox_API(data?.item_no)
+    }
+  }, [data, reload])
+
+  useEffect(() => {
+    if (box?.length > 0) {
+      box?.length === box?.filter((el) => el.is_scan_d === 'DONE').length
+        ? setCheckStatus(true)
+        : setCheckStatus(false)
+
+      setBoxAvail(box?.filter((el) => el.is_scan_d === 'DONE').length)
+    }
+  }, [box])
 
   // == HANDLE
   // =================================================================
-  const test = (status) => {
-    setCheckStatus(status)
+  const handleInputChange = async (value) => {
+    setInput(value.toUpperCase())
+
+    const newValue = value.split('/')
+    const item = newValue[0]
+    const index = Number(newValue[1])
+
+    const isValid = box?.find((el) => el.box_id === value.toUpperCase())
+
+    if (!isValid) {
+      if (value.length > data?.item_no.length + 1) {
+        Platform.OS === 'android'
+          ? Alert.alert(
+              'Invalid Barcode',
+              'The entered barcode is not valid for the current item.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => console.log('OK Pressed')
+                }
+              ]
+            )
+          : alert(
+              'Invalid Barcode',
+              'The entered barcode is not valid for the current item.'
+            )
+
+        setInput('')
+      }
+    } else {
+      await insertDetailsBox(item, index, 'receive', navigation)
+      setReload(!reload)
+      setInput('')
+    }
   }
+
+  const rows = Array.from({length: numInputs}, (_, index) => {
+    const boxId = `${data?.item_no}/${index + 1}`
+    const matchingBox = box?.find((el) => el.box_id === boxId)
+    const isScanned = matchingBox?.is_scan_d === 'DONE'
+
+    return [
+      `${index + 1}`,
+      boxId,
+      matchingBox ? (
+        isScanned ? (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'checkmark-circle-outline'}
+            size={20}
+            color={'green'}
+          />
+        ) : (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'ellipsis-horizontal-outline'}
+            size={10}
+            color={'#000'}
+          />
+        )
+      ) : (
+        <Ionicons
+          style={{alignSelf: 'center'}}
+          name={'close-circle-outline'}
+          size={20}
+          color={'red'}
+        />
+      )
+    ]
+  })
 
   // == COMPONENT ModalScan
   // =================================================================
@@ -61,7 +163,47 @@ const ModalScan = ({
         </View>
 
         {data !== null ? (
-          <ScanDetailList data={data} check={(x) => test(x)} />
+          <View
+            style={{
+              marginVertical: 5,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              backgroundColor: '#fff',
+              borderRadius: 5,
+              flex: 1
+            }}>
+            <Table style={{paddingBottom: 70}}>
+              <Row
+                style={{
+                  borderBottomWidth: 0.5,
+                  paddingBottom: 10,
+                  marginBottom: 5,
+                  borderStyle: 'dashed'
+                }}
+                textStyle={{textAlign: 'center', color: '#000'}}
+                data={[
+                  `#${t('box')}(${numInputs})`,
+                  <TextInput
+                    style={{fontSize: 12, color: '#000'}}
+                    value={input}
+                    onChangeText={handleInputChange}
+                    placeholder={t('enter_barcode')}
+                    placeholderTextColor="#000"
+                    autoFocus={true}
+                    blurOnSubmit={false}
+                    // showSoftInputOnFocus={false}
+                    // editable={!barcodeStatus.every((el) => el === true)}
+                  />,
+                  `${t('status')}`
+                ]}
+              />
+              <Rows
+                style={{marginBottom: 5}}
+                textStyle={{textAlign: 'center', fontSize: 12, color: '#000'}}
+                data={rows}
+              />
+            </Table>
+          </View>
         ) : (
           <Empty />
         )}
@@ -116,166 +258,6 @@ const ModalScan = ({
         </View>
       </View>
     </Modal>
-  )
-}
-
-// == COMPONENT ScanDetailList
-// =================================================================
-const ScanDetailList = ({check, data}) => {
-  const [input, setInput] = useState('')
-  const [box, setBox] = useState(null)
-  const [reload, setReload] = useState(false)
-
-  const {insertDetailsBox, setBoxAvail} = useScan()
-  const {t} = useTranslation()
-
-  const numInputs = Number(data?.qty_box)
-
-  // == API
-  // =================================================================
-  const fetchBox_API = async (item_no) => {
-    const box = await fetchBox(item_no)
-    setBox(box?.data.filter((el) => el.is_scan_d !== 'IDLE'))
-
-    console.log(box?.data.filter((el) => el.is_scan_d !== 'IDLE'))
-  }
-
-  // == EFFECT
-  // =================================================================
-  useEffect(() => {
-    if (data?.item_no) {
-      fetchBox_API(data?.item_no)
-    }
-  }, [data, reload])
-  // }, [reload, data])
-
-  useEffect(() => {
-    if (box?.length > 0) {
-      box?.length === box?.filter((el) => el.is_scan_d === 'DONE').length
-        ? check(true)
-        : check(false)
-
-      setBoxAvail(box?.filter((el) => el.is_scan_d === 'DONE').length)
-    }
-  }, [box])
-
-  // == HANDLE
-  // =================================================================
-  const handleInputChange = async (value) => {
-    setInput(value.toUpperCase())
-
-    const newValue = value.split('/')
-    const item = newValue[0]
-    const index = Number(newValue[1])
-
-    const isValid = box?.find((el) => el.box_id === value.toUpperCase())
-
-    if (!isValid) {
-      if (value.length > data?.item_no.length + 1) {
-        Platform.OS === 'android'
-          ? Alert.alert(
-              'Invalid Barcode',
-              'The entered barcode is not valid for the current item.',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => console.log('OK Pressed')
-                }
-              ]
-            )
-          : alert(
-              'Invalid Barcode',
-              'The entered barcode is not valid for the current item.'
-            )
-
-        setInput('')
-      }
-    } else {
-      await insertDetailsBox(item, index, 'receive')
-      setReload(!reload)
-      setInput('')
-    }
-  }
-
-  const rows = Array.from({length: numInputs}, (_, index) => {
-    const boxId = `${data?.item_no}/${index + 1}`
-    const matchingBox = box?.find((el) => el.box_id === boxId)
-    const isScanned = matchingBox?.is_scan_d === 'DONE'
-
-    return [
-      `${index + 1}`,
-      boxId,
-      matchingBox ? (
-        isScanned ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'checkmark-circle-outline'}
-            size={20}
-            color={'green'}
-          />
-        ) : (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'ellipsis-horizontal-outline'}
-            size={10}
-            color={'#000'}
-          />
-        )
-      ) : (
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'close-circle-outline'}
-          size={20}
-          color={'red'}
-        />
-      )
-    ]
-  })
-
-  // == COMPONENT ScanDetailList
-  // =================================================================
-  return (
-    <View
-      style={{
-        marginVertical: 5,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        backgroundColor: '#fff',
-        borderRadius: 5,
-        flex: 1
-      }}>
-      <Table style={{paddingBottom: 70}}>
-        <Row
-          style={{
-            borderBottomWidth: 0.5,
-            paddingBottom: 10,
-            marginBottom: 5,
-            borderStyle: 'dashed'
-          }}
-          textStyle={{textAlign: 'center', color: '#000'}}
-          data={[
-            `#${t('box')}(${numInputs})`,
-            <TextInput
-              style={{fontSize: 12, color: '#000'}}
-              value={input}
-              onChangeText={handleInputChange}
-              placeholder={t('enter_barcode')}
-              placeholderTextColor="#000"
-              autoFocus={true}
-              blurOnSubmit={false}
-              // showSoftInputOnFocus={false}
-              // editable={!barcodeStatus.every((el) => el === true)}
-            />,
-            `${t('status')}`
-          ]}
-        />
-        <Rows
-          style={{marginBottom: 5}}
-          textStyle={{textAlign: 'center', fontSize: 12, color: '#000'}}
-          data={rows}
-        />
-      </Table>
-    </View>
   )
 }
 

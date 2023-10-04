@@ -14,6 +14,7 @@ import {
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {Empty} from '../../components/SpinnerEmpty'
+import FastImage from 'react-native-fast-image'
 
 import ModalScan from './ModalScan'
 
@@ -35,6 +36,7 @@ import {
   sendItemConfirm,
   sendOrderConfirm
 } from '../../apis'
+import {screenMap} from '../../constants/screenMap'
 
 const ToggleState = {
   SCAN: 'SCAN',
@@ -74,7 +76,7 @@ const DistributeDetail = ({navigation, route}) => {
 
   // == API
   // =================================================================
-  const fetchOrderDetail_API = async distribution_id => {
+  const fetchOrderDetail_API = async (distribution_id) => {
     const detail = await fetchOrderDetail(distribution_id)
     setDetail(detail.data)
   }
@@ -84,7 +86,7 @@ const DistributeDetail = ({navigation, route}) => {
     setItem(item.data[0])
   }
 
-  const fetchOrderSelect_API = async distribution_id => {
+  const fetchOrderSelect_API = async (distribution_id) => {
     const order = await fetchOrderSelect(distribution_id)
     setOrderSelected(order.data[0])
   }
@@ -124,7 +126,7 @@ const DistributeDetail = ({navigation, route}) => {
 
   // == TOGGLE MODAL
   // =================================================================
-  const toggleSetState = newToggleState => {
+  const toggleSetState = (newToggleState) => {
     if (toggleState === newToggleState) {
       setToggleState(null) // Toggle off if pressed again
     } else {
@@ -132,7 +134,7 @@ const DistributeDetail = ({navigation, route}) => {
     }
   }
 
-  const toggleButtonTab = msg => {
+  const toggleButtonTab = (msg) => {
     if (msg === 'done') {
       setDone(true)
       setList(false)
@@ -143,7 +145,7 @@ const DistributeDetail = ({navigation, route}) => {
   }
 
   const setTab = () => {
-    if (detail?.filter(el => el.status === 'DATA ENTRY').length > 0) {
+    if (detail?.filter((el) => el.status === 'DATA ENTRY').length > 0) {
       toggleButtonTab('list')
     } else {
       toggleButtonTab('done')
@@ -152,7 +154,7 @@ const DistributeDetail = ({navigation, route}) => {
 
   // == HANDLE
   // =================================================================
-  const handleSetDetailSelected = target => {
+  const handleSetDetailSelected = (target) => {
     setDetailSelected(target)
     target?.status === 'DATA ENTRY' && setToggleState(ToggleState.SCAN)
   }
@@ -163,8 +165,6 @@ const DistributeDetail = ({navigation, route}) => {
   }
 
   const onPressScanConfirm = async () => {
-    await updateAvailBox(detailSelected?.item_no, boxAvail)
-
     await sendItemConfirm(
       {
         distribution_id: orderSelected?.distribution_id,
@@ -176,102 +176,9 @@ const DistributeDetail = ({navigation, route}) => {
         maker: userName
       },
       refresh
-    ).catch(err => {
-      console.log(err.message)
-
-      if (err.message == 401) {
-        dispatch(resetToken())
-        alertReUse('auth_access_denied', 'auth_access_denied_detail')
-      }
-
-      alertReUse('auth_access_denied', 'auth_access_denied_detail')
-    })
-
-    await fetchOrderItem_API({
-      order_id: orderSelected?.distribution_id,
-      item_id: detailSelected?.item_no
-    })
-
-    toast.show(t('confirmed'), {
-      type: 'success',
-      placement: 'bottom',
-      duration: 4000,
-      offset: 30,
-      animationType: 'slide-in'
-    })
-
-    setToggleState(null)
-  }
-
-  const onPressConfirm = async status => {
-    const imgName = currentImage?.split('/').pop()
-    const imgType = imgName?.split('.').pop()
-    const signName = currentSign?.split('/').pop()
-    const signType = signName?.split('.').pop()
-
-    if (status) {
-      // CHECK Item Detail Status !
-      if (detail?.filter(el => el.status === 'DATA ENTRY').length > 0) {
-        alertReUse('load_invalid', 'load_invalid_detail')
-      } else {
-        // CHECK Signature required !
-        // if (currentSign === null) {
-        //     Alert.alert(
-        //         'Signature must be required...!',
-        //         `Please fill your signature.`
-        //     )
-        // } else {
-        // STATUS: DATA ENTRY --> CLOSED/WAITING
-        // ==============================
-        const obj = new FormData()
-
-        currentSign !== null
-          ? obj.append('files', {
-              uri: currentSign,
-              name: `SIGNATURE-OD.${signType}`,
-              type: `image/${signType}`
-            })
-          : obj.append('files', null)
-
-        currentImage !== null
-          ? obj.append('files', {
-              uri: currentImage,
-              name: `ITEM-OD.${imgType}`,
-              type: `image/${imgType}`
-            })
-          : obj.append('files', null)
-
-        obj.append('id', orderSelected?.distribution_id)
-        // obj.append('status', 'CLOSED')
-        obj.append(
-          'status',
-          orderSelected?.distributeType === 'PDT001' ? 'CLOSED' : 'ONSHIP'
-        )
-        obj.append('maker', userName)
-        obj.append('distributeType', orderSelected?.distributeType)
-
-        await sendOrderConfirm(obj, refresh).catch(err => {
-          console.log(err.message)
-
-          if (err.message == 401) {
-            dispatch(resetToken())
-            alertReUse('auth_access_denied', 'auth_access_denied_detail')
-          }
-
-          alertReUse('auth_access_denied', err.message)
-        })
-
-        // sendConfirm({
-        //     distribution_id: orderSelected?.distribution_id,
-        //     status:
-        //         orderSelected?.distributeType !== 'PDT002'
-        //             ? 'CLOSED'
-        //             : 'WAITING',
-        //     last_update: `${moment().format(
-        //         'YYYY-MM-DDTHH:mm:ss.SSS'
-        //     )}Z`,
-        //     update_by: 'b0_test',
-        // })
+    )
+      .then(async () => {
+        await updateAvailBox(detailSelected?.item_no, boxAvail)
 
         toast.show(t('confirmed'), {
           type: 'success',
@@ -280,13 +187,106 @@ const DistributeDetail = ({navigation, route}) => {
           offset: 30,
           animationType: 'slide-in'
         })
+      })
+      .catch((err) => {
+        console.log(err.message)
 
-        orderSelected?.distributeType === 'PDT001'
-          ? dispatch(setFilterDi('CLOSED'))
-          : dispatch(setFilterDi('ONSHIP'))
+        if (err.message == 401) {
+          dispatch(resetToken())
+          navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
 
-        setToggleButton(false)
-        // }
+          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+        } else {
+          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+        }
+      })
+
+    await fetchOrderItem_API({
+      order_id: orderSelected?.distribution_id,
+      item_id: detailSelected?.item_no
+    })
+
+    setToggleState(null)
+  }
+
+  const onPressConfirm = async (status) => {
+    const imgName = currentImage?.split('/').pop()
+    const imgType = imgName?.split('.').pop()
+    const signName = currentSign?.split('/').pop()
+    const signType = signName?.split('.').pop()
+
+    if (status) {
+      // CHECK Item Detail Status !
+      if (detail?.filter((el) => el.status === 'DATA ENTRY').length > 0) {
+        alertReUse('load_invalid', 'load_invalid_detail')
+      } else {
+        // CHECK Signature required !
+        if (currentSign === null) {
+          alertReUse(
+            'Signature must be required...!',
+            `Please fill your signature.`
+          )
+        } else {
+          // STATUS: DATA ENTRY --> CLOSED/WAITING
+          // ==============================
+          const obj = new FormData()
+
+          currentSign !== null
+            ? obj.append('files', {
+                uri: currentSign,
+                name: `SIGNATURE-OD.${signType}`,
+                type: `image/${signType}`
+              })
+            : obj.append('files', null)
+
+          // currentImage !== null
+          //   ? obj.append('files', {
+          //       uri: currentImage,
+          //       name: `ITEM-OD.${imgType}`,
+          //       type: `image/${imgType}`
+          //     })
+          //   : obj.append('files', null)
+
+          obj.append('files', null)
+
+          obj.append('id', orderSelected?.distribution_id)
+          // obj.append('status', 'CLOSED')
+          obj.append(
+            'status',
+            orderSelected?.distributeType === 'PDT001' ? 'CLOSED' : 'ONSHIP'
+          )
+          obj.append('maker', userName)
+          obj.append('distributeType', orderSelected?.distributeType)
+
+          await sendOrderConfirm(obj, refresh)
+            .then(() => {
+              toast.show(t('confirmed'), {
+                type: 'success',
+                placement: 'bottom',
+                duration: 4000,
+                offset: 30,
+                animationType: 'slide-in'
+              })
+            })
+            .catch((err) => {
+              console.log(err.message)
+
+              if (err.message == 401) {
+                dispatch(resetToken())
+                navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+
+                alertReUse('auth_access_denied', 'auth_access_denied_detail')
+              }
+
+              alertReUse('auth_access_denied', err.message)
+            })
+
+          orderSelected?.distributeType === 'PDT001'
+            ? dispatch(setFilterDi('CLOSED'))
+            : dispatch(setFilterDi('ONSHIP'))
+
+          setToggleButton(false)
+        }
       }
     }
     // else {
@@ -437,7 +437,7 @@ const DistributeDetail = ({navigation, route}) => {
                   fontSize: 10
                 }}>
                 {!done &&
-                  detail?.filter(el => el.status !== 'DATA ENTRY').length}
+                  detail?.filter((el) => el.status !== 'DATA ENTRY').length}
               </Text>
             </View>
           )}
@@ -447,8 +447,8 @@ const DistributeDetail = ({navigation, route}) => {
       {list && !done ? (
         <FlatList
           keyboardShouldPersistTaps="handled"
-          keyExtractor={el => el.row_id}
-          data={detail?.filter(el => el.status === 'DATA ENTRY')}
+          keyExtractor={(el) => el.row_id}
+          data={detail?.filter((el) => el.status === 'DATA ENTRY')}
           initialNumToRender={6}
           windowSize={5}
           renderItem={_renderDetail}
@@ -458,8 +458,8 @@ const DistributeDetail = ({navigation, route}) => {
       ) : (
         <FlatList
           keyboardShouldPersistTaps="handled"
-          keyExtractor={el => el.row_id}
-          data={detail?.filter(el => el.status !== 'DATA ENTRY')}
+          keyExtractor={(el) => el.row_id}
+          data={detail?.filter((el) => el.status !== 'DATA ENTRY')}
           initialNumToRender={6}
           windowSize={5}
           renderItem={_renderDetail}
@@ -476,10 +476,11 @@ const DistributeDetail = ({navigation, route}) => {
           confirm={onPressScanConfirm}
           force={force}
           forceConfirm={onPressForceConfirm}
+          navigation={navigation}
         />
       )}
 
-      {detail?.every(el => el.status !== 'DATA ENTRY') &&
+      {/* {detail?.every((el) => el.status !== 'DATA ENTRY') &&
         orderSelected?.status === 'DATA ENTRY' && (
           <TouchableOpacity
             style={[styles.signatureBox]}
@@ -520,9 +521,9 @@ const DistributeDetail = ({navigation, route}) => {
               />
             )}
           </TouchableOpacity>
-        )}
+        )} */}
 
-      {detail?.every(el => el.status !== 'DATA ENTRY') &&
+      {detail?.every((el) => el.status !== 'DATA ENTRY') &&
         orderSelected?.status === 'DATA ENTRY' && (
           <TouchableOpacity
             style={[styles.signatureBox]}
@@ -531,18 +532,21 @@ const DistributeDetail = ({navigation, route}) => {
             {currentSign !== null || orderSelected?.signature_onship ? (
               <View style={styles.preview}>
                 {currentSign ? (
-                  <Image
-                    resizeMode="contain"
-                    style={{width: '100%', height: 180}}
-                    // source={{
-                    //     uri: orderSelected?.signature_onship
-                    //         ? `${path.IMG}/${orderSelected?.signature_onship}`
-                    //         : currentSign,
-                    // }}
+                  // <Image
+                  //   resizeMode="contain"
+                  //   style={{width: '100%', height: 180}}
+                  //   source={{
+                  //     uri: currentSign
+                  //   }}
+                  // />
 
+                  <FastImage
+                    resizeMode={FastImage.resizeMode.contain}
                     source={{
-                      uri: currentSign
+                      uri: currentSign,
+                      priority: FastImage.priority.normal
                     }}
+                    style={{width: '100%', height: 180}}
                   />
                 ) : (
                   <Image
@@ -557,7 +561,7 @@ const DistributeDetail = ({navigation, route}) => {
             ) : (
               <View style={styles.imageUpload}>
                 <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                <Text>{`${t('signature')}`}</Text>
+                <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
               </View>
             )}
             {toggleState === ToggleState.SIGNATURE && (
@@ -570,7 +574,7 @@ const DistributeDetail = ({navigation, route}) => {
           </TouchableOpacity>
         )}
 
-      {detail?.every(el => el.status !== 'DATA ENTRY') &&
+      {detail?.every((el) => el.status !== 'DATA ENTRY') &&
         orderSelected?.status === 'DATA ENTRY' && (
           <View style={styles.buttonGroup}>
             {toggleButton && (

@@ -1,5 +1,5 @@
 import React from 'react'
-import {StyleSheet, View} from 'react-native'
+import {StyleSheet} from 'react-native'
 import {Provider} from 'react-redux'
 import {PersistGate} from 'redux-persist/integration/react'
 
@@ -13,30 +13,12 @@ import {I18nextProvider} from 'react-i18next'
 import i18n from './src/constants/i18n.js'
 
 import AppContainer from './src/screens/AppContainer.js'
-import Login from './src/screens/Login.js'
 
 import {RefreshContextProvider} from './src/contexts/RefreshContext.js'
 import {ModalScanContextProvider} from './src/contexts/ModalScanContext.js'
-import {useAuthToken} from './src/hooks/index.js'
 
 const App = () => {
-  const {refresh} = useAuthToken()
-
-  // return <AppContainer />
-
-  if (refresh) {
-    return (
-      <View style={styles.container}>
-        <AppContainer />
-      </View>
-    )
-  } else {
-    return (
-      <View style={styles.container}>
-        <Login />
-      </View>
-    )
-  }
+  return <AppContainer />
 }
 
 const styles = StyleSheet.create({

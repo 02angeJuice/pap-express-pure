@@ -7,19 +7,11 @@ import {
   ImageBackground,
   TouchableOpacity,
   Alert,
-  Platform,
-  DevSettings
+  Platform
 } from 'react-native'
 
-import {DismissKeyboardView} from '../utils/DismissKeyboardView'
-
 import {LOGIN} from '../constants/images'
-import {
-  Stack,
-  Button,
-  Pressable,
-  ActivityIndicator
-} from '@react-native-material/core'
+import {ActivityIndicator} from '@react-native-material/core'
 
 import {useController, useForm} from 'react-hook-form'
 import {useTranslation} from 'react-i18next'
@@ -32,8 +24,9 @@ import {
 } from '../store/slices/tokenSlice'
 
 import {sendCheckLoginHH, sendLoginHH} from '../apis/loginApi'
+import {screenMap} from '../constants/screenMap'
 
-const Login = () => {
+const Login = ({navigation}) => {
   const [loading, setLoading] = useState(false)
 
   const {t} = useTranslation()
@@ -122,6 +115,9 @@ const Login = () => {
         console.log('refresh', res.data?.refresh_token)
 
         alertReUse('auth_login_success', 'auth_login_success_detail')
+        // navigation.navigate(screenMap.HomePage)
+
+        navigation.reset({index: 0, routes: [{name: screenMap.HomePage}]})
       } else {
         if (res?.response.data.message === 'alertLoginLimit') {
           console.log('จำนวนล็อคอินเต็ม')
@@ -135,7 +131,7 @@ const Login = () => {
 
   // == HNADLE
   // =================================================================
-  const onSubmit = async data => {
+  const onSubmit = async (data) => {
     setLoading(!loading)
 
     await sendCheckLoginHH_API({

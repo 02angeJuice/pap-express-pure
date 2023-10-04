@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react'
 import {NavigationContainer} from '@react-navigation/native'
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack'
+import {createStackNavigator} from '@react-navigation/stack'
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -21,7 +21,8 @@ import Info from './bottomTab/Info'
 
 import {screenMap} from '../constants/screenMap'
 import {useTranslation} from 'react-i18next'
-import {useSettings} from '../hooks'
+import {useAuthToken, useSettings} from '../hooks'
+import Login from './Login'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -29,6 +30,9 @@ const Tab = createBottomTabNavigator()
 const AppContainer = () => {
   const {t, i18n} = useTranslation()
   const {language} = useSettings()
+  const {refresh} = useAuthToken()
+
+  console.log(refresh)
 
   // == EFFECT
   // =================================================================
@@ -43,21 +47,22 @@ const AppContainer = () => {
       <Stack.Navigator
         screenOptions={{
           animationEnabled: false,
-          // gestureEnabled: true,
-          // gestureDirection: 'horizontal',
-          // ...TransitionPresets.SlideFromRightIOS,
-          // headerMode: 'float',
-          // headerMode: 'screen',
           headerTintColor: '#fff',
           headerStyle: {backgroundColor: '#AE100F'}
         }}>
+        {refresh === null ||
+          (refresh === undefined && (
+            <Stack.Screen
+              options={{headerShown: false}}
+              name={screenMap.Login}
+              component={Login}
+            />
+          ))}
+
         <Stack.Screen
           options={{
-            // title: <CustomHeader />,
-            // headerTitleAlign: 'center',
             headerTitle: (props) => <CustomHeader {...props} />,
             headerRight: (props) => <LanguageFlags {...props} />
-            // header: (props) => <CustomHeader {...props} />,
           }}
           name={screenMap.HomePage}>
           {() => (

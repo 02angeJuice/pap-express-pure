@@ -12,7 +12,7 @@ import Modal from 'react-native-modal'
 const CustomTextInputAlert = ({visible, onClose, forceConfirm}) => {
   const [inputValue, setInputValue] = useState('')
 
-  const handleInputChange = text => {
+  const handleInputChange = (text) => {
     setInputValue(text)
   }
 
@@ -52,6 +52,7 @@ const CustomTextInputAlert = ({visible, onClose, forceConfirm}) => {
           onChangeText={handleInputChange}
           value={inputValue}
           placeholder="Write a message..."
+          placeholderTextColor="#000"
         />
         <View
           style={{
@@ -91,7 +92,8 @@ const styles = {
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 5,
-    marginBottom: 10
+    marginBottom: 10,
+    color: '#000'
   },
   button: {
     backgroundColor: '#fff',

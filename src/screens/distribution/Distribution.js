@@ -1,11 +1,12 @@
-import React, {useEffect, useState, useCallback} from 'react'
+import React, {useEffect, useState, useCallback, useRef} from 'react'
 import {
   StyleSheet,
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList
+  FlatList,
+  Keyboard
 } from 'react-native'
 
 import debounce from 'lodash.debounce'
@@ -26,6 +27,8 @@ const Distribution = ({navigation}) => {
   const [orderSelected, setOrderSelected] = useState(null)
   const [input, setInput] = useState('')
 
+  const inputRef = useRef(null)
+
   const {t} = useTranslation()
   const {filter_di} = useSettings()
 
@@ -38,7 +41,7 @@ const Distribution = ({navigation}) => {
     setOrder(orders.data)
   }
 
-  const fetcOrderSelect_API = async distribution_id => {
+  const fetcOrderSelect_API = async (distribution_id) => {
     const orders = await fetchOrderSelect(distribution_id)
     setOrder(orders.data)
   }
@@ -68,13 +71,13 @@ const Distribution = ({navigation}) => {
     input?.length !== 0 ? fetcOrderSelect_API(input) : fetchOrder_API(filter_di)
   }
 
-  const handleChangeTextInput = text => {
+  const handleChangeTextInput = (text) => {
     const upper = text.toUpperCase()
     setInput(upper)
   }
 
   const handleSetOrderSelected = useCallback(
-    target => {
+    (target) => {
       setOrderSelected(target.distribution_id)
 
       navigation.navigate(screenMap.DistributeDetail, {
@@ -134,7 +137,7 @@ const Distribution = ({navigation}) => {
 
         <Text style={{color: '#000'}}>{t('receipt_no')}</Text>
         <TextInput
-          // ref={inputRef}
+          ref={inputRef}
           style={[
             // styles.shadow,
             styles.groupInput,
@@ -155,6 +158,7 @@ const Distribution = ({navigation}) => {
           // showSoftInputOnFocus={false}
           autoFocus={true}
           // focusable={true}
+          blurOnSubmit={false}
         />
         {input.length > 0 && <ClearButton onPress={() => setInput('')} />}
       </View>
@@ -163,7 +167,7 @@ const Distribution = ({navigation}) => {
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
         style={styles.list}
-        keyExtractor={el => el.distribution_id.toString()}
+        keyExtractor={(el) => el.distribution_id.toString()}
         data={order}
         initialNumToRender={6}
         windowSize={5}

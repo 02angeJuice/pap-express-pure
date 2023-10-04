@@ -27,7 +27,8 @@ const ModalScan = ({
   setVisible,
   confirm,
   force,
-  forceConfirm
+  forceConfirm,
+  navigation
 }) => {
   const [checkStatus, setCheckStatus] = useState(false)
   const [alert, setAlert] = useState(false)
@@ -37,10 +38,9 @@ const ModalScan = ({
   const [reload, setReload] = useState(false)
 
   const {insertDetailsBox, setBoxAvail} = useScan()
+  const {t} = useTranslation()
 
   const numInputs = Number(data?.qty_box)
-
-  const {t} = useTranslation()
 
   // == API
   // =================================================================
@@ -57,7 +57,7 @@ const ModalScan = ({
     if (data?.item_no) {
       fetchBox_API(data?.item_no)
     }
-  }, [reload])
+  }, [data, reload])
 
   useEffect(() => {
     if (box?.length > 0) {
@@ -67,7 +67,7 @@ const ModalScan = ({
 
       setBoxAvail(box?.filter((el) => el.is_scan === 'IDLE').length)
     }
-  }, [reload])
+  }, [box])
 
   // == HANDLE
   // =================================================================
@@ -101,7 +101,7 @@ const ModalScan = ({
         setInput('')
       }
     } else {
-      await insertDetailsBox(item, index, 'unload')
+      await insertDetailsBox(item, index, 'unload', navigation)
       setReload(!reload)
       setInput('')
     }
@@ -180,14 +180,15 @@ const ModalScan = ({
                   marginBottom: 5,
                   borderStyle: 'dashed'
                 }}
-                textStyle={{textAlign: 'center'}}
+                textStyle={{textAlign: 'center', color: '#000'}}
                 data={[
                   `#${t('box')}(${numInputs})`,
                   <TextInput
-                    style={{fontSize: 12}}
+                    style={{fontSize: 12, color: '#000'}}
                     value={input}
                     onChangeText={handleInputChange}
                     placeholder={t('enter_barcode')}
+                    placeholderTextColor="#000"
                     autoFocus={true}
                     blurOnSubmit={false}
                     // showSoftInputOnFocus={false}
@@ -198,7 +199,7 @@ const ModalScan = ({
               />
               <Rows
                 style={{marginBottom: 5}}
-                textStyle={{textAlign: 'center', fontSize: 12}}
+                textStyle={{textAlign: 'center', fontSize: 12, color: '#000'}}
                 data={rows}
               />
             </Table>

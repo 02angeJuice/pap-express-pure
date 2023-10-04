@@ -40,6 +40,7 @@ import {
   sendDetailConfirm,
   sendSignature
 } from '../../apis'
+import {screenMap} from '../../constants/screenMap'
 
 const ToggleState = {
   HEADER: 'HEADER',
@@ -82,14 +83,14 @@ const UnloadFromTruck = ({navigation}) => {
 
   // == API
   // =================================================================
-  const fetchHeaderSelect_API = async receipt_no => {
+  const fetchHeaderSelect_API = async (receipt_no) => {
     const select = await fetchHeaderSelect(receipt_no)
 
     setHeaderSelected(select.data[0])
     setToggleButton(select.data[0]?.status === 'ONSHIP' ? true : false)
   }
 
-  const fetchDetail_API = async receipt_no => {
+  const fetchDetail_API = async (receipt_no) => {
     const detail = await fetchDetail(receipt_no)
     setDetail(detail.data)
   }
@@ -123,7 +124,7 @@ const UnloadFromTruck = ({navigation}) => {
 
   // == TOGGLE MODAL
   // =================================================================
-  const toggleSetState = newToggleState => {
+  const toggleSetState = (newToggleState) => {
     if (toggleState === newToggleState) {
       setToggleState(null) // Toggle off if pressed again
     } else {
@@ -139,11 +140,11 @@ const UnloadFromTruck = ({navigation}) => {
     input?.length !== 0 && fetchHeaderSelect_API(input)
   }
 
-  const handleChangeTextInput = text => {
+  const handleChangeTextInput = (text) => {
     setInput(text.toUpperCase())
   }
 
-  const handleSetHeaderSelected = target => {
+  const handleSetHeaderSelected = (target) => {
     setToggleButton(target.status === 'ONSHIP' ? true : false)
     setToggleState(null)
     setHeaderSelected(target)
@@ -151,12 +152,12 @@ const UnloadFromTruck = ({navigation}) => {
     setCurrentImage(null)
   }
 
-  const handleSetDetailSelected = target => {
+  const handleSetDetailSelected = (target) => {
     setDetailSelected(target)
     target?.status !== 'UNLOADED' && setToggleState(ToggleState.SCAN)
   }
 
-  const handleSetDetailInfo = target => {
+  const handleSetDetailInfo = (target) => {
     setDetailInfo(target)
     setToggleState(ToggleState.DETAIL)
   }
@@ -189,97 +190,8 @@ const UnloadFromTruck = ({navigation}) => {
         update_by: userName
       },
       refresh
-    ).catch(err => {
-      console.log(err.message)
-
-      if (err.message == 401) {
-        dispatch(resetToken())
-        alertReUse('auth_access_denied', 'auth_access_denied_detail')
-      }
-      alertReUse('auth_access_denied', 'auth_access_denied_detail')
-    })
-
-    await fetchDetailSelect_API({
-      header_id: headerSelected?.receipt_no,
-      detail_id: detailSelected?.item_no
-    })
-
-    toast.show(t('confirmed'), {
-      type: 'success',
-      placement: 'bottom',
-      duration: 4000,
-      offset: 30,
-      animationType: 'slide-in'
-    })
-
-    setRemark('')
-    setForce('')
-    setToggleState(null)
-  }
-
-  const onPressConfirm = async status => {
-    const imgName = currentImage?.split('/').pop()
-    const imgType = imgName?.split('.').pop()
-    const signName = currentSign?.split('/').pop()
-    const signType = signName?.split('.').pop()
-
-    if (status) {
-      // CHECK Item Detail Status !
-      if (detail?.filter(el => el.status === 'LOADED').length > 0) {
-        alertReUse('load_invalid', 'load_invalid_detail')
-      } else {
-        // CHECK Signature required !
-
-        // if (currentSign === null) {
-        //     Alert.alert(
-        //         'Signature must be required...!',
-        //         `Please fill your signature.`
-        //     )
-        // } else {
-        // SENT ITEM PICKED --> ONSHIP
-        // ==============================
-        const obj = new FormData()
-
-        obj.append('files', {
-          uri: currentSign,
-          name: `SIGNATURE-1.${signType}`,
-          type: `image/${signType}`
-        })
-
-        currentImage !== null
-          ? obj.append('files', {
-              uri: currentImage,
-              name: `ITEM-02.${imgType}`,
-              type: `image/${imgType}`
-            })
-          : obj.append('files', null)
-
-        obj.append('receipt_no', headerSelected?.receipt_no)
-        obj.append('status', 'ARRIVED')
-
-        await sendSignature(obj, refresh).catch(err => {
-          console.log(err.message)
-        })
-        await sendConfirm(
-          {
-            receipt_no: headerSelected?.receipt_no,
-            statusHeader: 'ARRIVED',
-            statusDetail: 'UNLOADED',
-            date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
-            maker: userName
-          },
-          refresh
-        ).catch(err => {
-          console.log(err.message)
-          dispatch(resetToken())
-
-          if (err.message == 401) {
-            alertReUse('auth_access_denied', 'auth_access_denied_detail')
-          }
-
-          alertReUse('auth_access_denied', 'auth_access_denied_detail')
-        })
-
+    )
+      .then(() => {
         toast.show(t('confirmed'), {
           type: 'success',
           placement: 'bottom',
@@ -287,9 +199,106 @@ const UnloadFromTruck = ({navigation}) => {
           offset: 30,
           animationType: 'slide-in'
         })
+      })
+      .catch((err) => {
+        console.log(err.message)
 
-        setToggleButton(false)
-        // }
+        if (err.message == 401) {
+          dispatch(resetToken())
+
+          navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+        }
+        alertReUse('auth_access_denied', 'auth_access_denied_detail')
+      })
+
+    await fetchDetailSelect_API({
+      header_id: headerSelected?.receipt_no,
+      detail_id: detailSelected?.item_no
+    })
+
+    setRemark('')
+    setForce('')
+    setToggleState(null)
+  }
+
+  const onPressConfirm = async (status) => {
+    const imgName = currentImage?.split('/').pop()
+    const imgType = imgName?.split('.').pop()
+    const signName = currentSign?.split('/').pop()
+    const signType = signName?.split('.').pop()
+
+    if (status) {
+      // CHECK Item Detail Status !
+      if (detail?.filter((el) => el.status === 'LOADED').length > 0) {
+        alertReUse('load_invalid', 'load_invalid_detail')
+      } else {
+        // CHECK Signature required !
+
+        if (currentSign === null) {
+          Alert.alert(
+            'Signature must be required...!',
+            `Please fill your signature.`
+          )
+        } else {
+          // SENT ITEM PICKED --> ONSHIP
+          // ==============================
+          const obj = new FormData()
+
+          obj.append('files', {
+            uri: currentSign,
+            name: `SIGNATURE-1.${signType}`,
+            type: `image/${signType}`
+          })
+
+          currentImage !== null
+            ? obj.append('files', {
+                uri: currentImage,
+                name: `ITEM-02.${imgType}`,
+                type: `image/${imgType}`
+              })
+            : obj.append('files', null)
+
+          obj.append('receipt_no', headerSelected?.receipt_no)
+          obj.append('status', 'ARRIVED')
+
+          await sendSignature(obj, refresh).catch((err) => {
+            console.log(err.message)
+          })
+          await sendConfirm(
+            {
+              receipt_no: headerSelected?.receipt_no,
+              statusHeader: 'ARRIVED',
+              statusDetail: 'UNLOADED',
+              date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+              maker: userName
+            },
+            refresh
+          )
+            .then(() => {
+              toast.show(t('confirmed'), {
+                type: 'success',
+                placement: 'bottom',
+                duration: 4000,
+                offset: 30,
+                animationType: 'slide-in'
+              })
+            })
+            .catch((err) => {
+              console.log(err.message)
+
+              if (err.message == 401) {
+                dispatch(resetToken())
+
+                navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+                alertReUse('auth_access_denied', 'auth_access_denied_detail')
+              }
+
+              alertReUse('auth_access_denied', 'auth_access_denied_detail')
+            })
+
+          setToggleButton(false)
+        }
       }
     }
   }
@@ -459,7 +468,6 @@ const UnloadFromTruck = ({navigation}) => {
       )}
 
       {detailSelected && toggleState === ToggleState.SCAN && (
-        // <ModalScanProvider>
         <ModalScan
           data={detailSelected}
           visible={true}
@@ -467,8 +475,8 @@ const UnloadFromTruck = ({navigation}) => {
           confirm={onPressScanConfirm}
           force={force}
           forceConfirm={onPressForceConfirm}
+          navigation={navigation}
         />
-        // </ModalScanProvider>
       )}
 
       {headerSelected && (
@@ -578,7 +586,7 @@ const UnloadFromTruck = ({navigation}) => {
       {headerSelected && (
         <View style={styles.buttonGroup}>
           {headerSelected?.status !== 'PICKED' &&
-          detail?.every(el => el.status !== 'PICKED') ? (
+          detail?.every((el) => el.status !== 'PICKED') ? (
             toggleButton ? (
               <ButtonConfirmComponent
                 text={`${t('confirm')}`}

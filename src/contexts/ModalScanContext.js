@@ -1,122 +1,89 @@
-import React, { createContext, useState } from 'react'
-import { Platform, Alert } from 'react-native'
-import { useDispatch } from 'react-redux'
-import { resetToken } from '../store/slices/tokenSlice'
+import React, {createContext, useState} from 'react'
+import {Platform, Alert} from 'react-native'
+import {useDispatch, useSelector} from 'react-redux'
+import {resetToken} from '../store/slices/tokenSlice'
 
-import { sendDetailsBox, sendAvailableBox } from '../apis'
+import {sendDetailsBox, sendAvailableBox} from '../apis'
 
-import { useAuthToken } from '../hooks'
-import { useTranslation } from 'react-i18next'
+import {useTranslation} from 'react-i18next'
+import {screenMap} from '../constants/screenMap'
 
 const ModalScanContext = createContext()
 
-const ModalScanContextProvider = ({ children }) => {
-    const { userName, token, refresh } = useAuthToken()
-    const { t } = useTranslation()
+const ModalScanContextProvider = ({children}) => {
+  const {userName, refreshToken} = useSelector((state) => state.token)
 
-    const [boxAvail, setBoxAvail] = useState(null)
+  const {t} = useTranslation()
 
-    console.log(boxAvail)
+  const [boxAvail, setBoxAvail] = useState(null)
 
-    const dispatch = useDispatch()
+  console.log(boxAvail)
 
-    // == API
-    // =================================================================
+  const dispatch = useDispatch()
 
-    const insertDetailsBox = async (item_no, box_id, from) => {
-        await sendDetailsBox(
-            {
-                item_no: item_no,
-                box_id: `${item_no}/${box_id}`,
-                maker: userName,
-                is_scan:
-                    from === 'load'
-                        ? 'SCANED'
-                        : from === 'unload'
-                        ? 'IDLE'
-                        : 'IDLE',
-                is_scan_d:
-                    from === 'distribute'
-                        ? 'SCANED'
-                        : from === 'receive'
-                        ? 'DONE'
-                        : 'IDLE',
-            },
-            refresh
-        ).catch((err) => {
-            console.log(err.message)
+  // == API
+  // =================================================================
 
-            if (err.message == 401) {
-                dispatch(resetToken())
-                Platform.OS === 'android'
-                    ? Alert.alert(
-                          t('auth_access_denied'),
-                          t('auth_access_denied_detail')
-                      )
-                    : alert(
-                          t('auth_access_denied'),
-                          t('auth_access_denied_detail')
-                      )
-            }
+  const insertDetailsBox = async (item_no, box_id, from, navigation) => {
+    await sendDetailsBox(
+      {
+        item_no: item_no,
+        box_id: `${item_no}/${box_id}`,
+        maker: userName,
+        is_scan:
+          from === 'load' ? 'SCANED' : from === 'unload' ? 'IDLE' : 'IDLE',
+        is_scan_d:
+          from === 'distribute'
+            ? 'SCANED'
+            : from === 'receive'
+            ? 'DONE'
+            : 'IDLE'
+      },
+      refreshToken.token
+    ).catch((err) => {
+      console.log(err.message)
 
-            Platform.OS === 'android'
-                ? Alert.alert(
-                      t('auth_access_denied'),
-                      t('auth_access_denied_detail')
-                  )
-                : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-        })
-        // }
-    }
+      if (err.message == 401) {
+        dispatch(resetToken())
+        navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
 
-    const updateAvailBox = async (item_no, box_avail) => {
-        await sendAvailableBox(
-            {
-                item_no: item_no,
-                qty_box_avail: box_avail,
-                update_by: userName,
-            },
-            refresh
-        ).catch((err) => {
-            console.log(err.message)
-            if (err.message == 401) {
-                dispatch(resetToken())
-                Platform.OS === 'android'
-                    ? Alert.alert(
-                          t('auth_access_denied'),
-                          t('auth_access_denied_detail')
-                      )
-                    : alert(
-                          t('auth_access_denied'),
-                          t('auth_access_denied_detail')
-                      )
-            }
+        Platform.OS === 'android'
+          ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+          : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+      }
 
-            Platform.OS === 'android'
-                ? Alert.alert(
-                      t('auth_access_denied'),
-                      t('auth_access_denied_detail')
-                  )
-                : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-        })
+      Platform.OS === 'android'
+        ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+        : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+    })
+    // }
+  }
 
-        // }
-    }
-    // =================================================================
-
-    return (
-        <ModalScanContext.Provider
-            value={{
-                insertDetailsBox,
-                updateAvailBox,
-
-                boxAvail,
-                setBoxAvail,
-            }}
-        >
-            {children}
-        </ModalScanContext.Provider>
+  const updateAvailBox = async (item_no, box_avail) => {
+    await sendAvailableBox(
+      {
+        item_no: item_no,
+        qty_box_avail: box_avail,
+        update_by: userName
+      },
+      refreshToken.token
     )
+    // }
+  }
+  // =================================================================
+
+  return (
+    <ModalScanContext.Provider
+      value={{
+        insertDetailsBox,
+        updateAvailBox,
+
+        boxAvail,
+        setBoxAvail
+      }}>
+      {children}
+    </ModalScanContext.Provider>
+  )
 }
 
-export { ModalScanContext, ModalScanContextProvider }
+export {ModalScanContext, ModalScanContextProvider}
