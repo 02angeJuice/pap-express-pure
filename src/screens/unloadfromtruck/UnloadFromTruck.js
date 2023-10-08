@@ -78,7 +78,7 @@ const UnloadFromTruck = ({navigation}) => {
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
 
-  const {boxAvail} = useScan()
+  const {boxAvail, setBoxAvail} = useScan()
 
   // const { boxAvail } = useModalScanContext()
 
@@ -219,6 +219,8 @@ const UnloadFromTruck = ({navigation}) => {
       header_id: headerSelected?.receipt_no,
       detail_id: detailSelected?.item_no
     })
+
+    setBoxAvail(null)
 
     setRemark('')
     setForce('')

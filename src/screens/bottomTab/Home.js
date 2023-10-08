@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react'
 import {
   StyleSheet,
+  StatusBar,
   SafeAreaView,
   View,
   Text,
@@ -23,8 +24,6 @@ import {screenMap} from '../../constants/screenMap'
 import {resetToken} from '../../store/slices/tokenSlice'
 import {useDispatch} from 'react-redux'
 
-import CustomHeader from '../header/CustomHeader'
-import LanguageFlags from '../header/LanguageFlags'
 import {CheckOnlineWeb} from '../../apis/loginApi'
 
 const Home = ({navigation}) => {
@@ -70,6 +69,8 @@ const Home = ({navigation}) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor="#AE100F" />
+
       <TouchableOpacity
         style={[styles.menu, styles.shadow]}
         onPress={() => navigate(screenMap.LoadToTruck)}>

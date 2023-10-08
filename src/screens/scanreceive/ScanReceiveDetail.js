@@ -73,7 +73,7 @@ const ScanReceiveDetail = ({navigation, route}) => {
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
 
-  const {boxAvail, updateAvailBox} = useScan()
+  const {boxAvail, updateAvailBox, setBoxAvail} = useScan()
 
   const dispatch = useDispatch()
 
@@ -173,8 +173,8 @@ const ScanReceiveDetail = ({navigation, route}) => {
         distribution_id: orderSelected?.distribution_id,
         item_no: detailSelected?.item_no,
         status: 'CLOSED',
-        // force_confirm: force,
-        // remark: remark,
+        force_confirm: force,
+        remark: remark,
         maker: userName
       },
       refresh
@@ -207,6 +207,8 @@ const ScanReceiveDetail = ({navigation, route}) => {
       order_id: orderSelected?.distribution_id,
       item_id: detailSelected?.item_no
     })
+
+    setBoxAvail(null)
 
     setRemark('')
     setForce('')

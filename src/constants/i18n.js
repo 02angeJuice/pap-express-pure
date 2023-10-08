@@ -150,7 +150,7 @@ const i18n = createInstance({
         confirm: 'Confirm',
         force_confirm: 'Force Confirm',
         confirmed: 'Confirmed Successfully',
-        cancel: 'Cancelled',
+        cancel: 'Cancel',
         success: 'Success',
         waiting: 'Waiting',
         code: 'UserId',

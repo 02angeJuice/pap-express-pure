@@ -1,5 +1,6 @@
 import React, {useState} from 'react'
 import {
+  StatusBar,
   StyleSheet,
   View,
   Text,
@@ -11,6 +12,9 @@ import {
   ActivityIndicator
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import VersionCheck from 'react-native-version-check'
+
+// import RNFS from 'react-native-fs'
 
 import {LOGIN} from '../constants/images'
 
@@ -152,6 +156,7 @@ const Login = ({navigation}) => {
   // =================================================================
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor="#6AA3F0" />
       <ImageBackground style={styles.image} resizeMode="cover" source={LOGIN}>
         {/* <DismissKeyboardView> */}
         <View style={styles.groupForm}>
@@ -188,6 +193,12 @@ const Login = ({navigation}) => {
               {t('login')}
             </Text>
           </TouchableOpacity>
+
+          <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+            <Text style={{color: '#000'}}>
+              v.{VersionCheck.getCurrentVersion()}
+            </Text>
+          </View>
         </View>
         {/* </DismissKeyboardView> */}
       </ImageBackground>

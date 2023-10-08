@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Platform
+  Platform,
+  FlatList
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -166,8 +167,6 @@ const ModalScan = ({
           <View
             style={{
               marginVertical: 5,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
               backgroundColor: '#fff',
               borderRadius: 5,
               flex: 1
@@ -176,7 +175,6 @@ const ModalScan = ({
               <Row
                 style={{
                   borderBottomWidth: 0.5,
-                  paddingBottom: 10,
                   marginBottom: 5,
                   borderStyle: 'dashed'
                 }}
@@ -197,10 +195,29 @@ const ModalScan = ({
                   `${t('status')}`
                 ]}
               />
-              <Rows
+              <FlatList
                 style={{marginBottom: 5}}
-                textStyle={{textAlign: 'center', fontSize: 12, color: '#000'}}
+                keyExtractor={(item, index) => index.toString()}
                 data={rows}
+                ItemSeparatorComponent={() => (
+                  <View style={{backgroundColor: '#eeeeee99', height: 1}} />
+                )}
+                initialNumToRender={6}
+                windowSize={5}
+                renderItem={({item, index}) => (
+                  <Row
+                    textStyle={[
+                      {
+                        textAlign: 'center',
+                        fontSize: 12,
+                        marginBottom: 5,
+                        color: '#000',
+                        paddingVertical: 7
+                      }
+                    ]}
+                    data={item}
+                  />
+                )}
               />
             </Table>
           </View>
@@ -252,6 +269,7 @@ const ModalScan = ({
             visible={alert}
             onClose={() => setAlert(!alert)}
             forceConfirm={forceConfirm}
+            remark={data?.remark}
           />
         </View>
       </View>

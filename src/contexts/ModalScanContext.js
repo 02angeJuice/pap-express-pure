@@ -17,7 +17,7 @@ const ModalScanContextProvider = ({children}) => {
 
   const [boxAvail, setBoxAvail] = useState(null)
 
-  console.log(boxAvail)
+  console.log('scan context', boxAvail)
 
   const dispatch = useDispatch()
 

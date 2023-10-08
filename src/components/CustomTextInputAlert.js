@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {
   View,
   TextInput,
@@ -9,17 +9,28 @@ import {
 } from 'react-native'
 import Modal from 'react-native-modal'
 
-const CustomTextInputAlert = ({visible, onClose, forceConfirm}) => {
-  const [inputValue, setInputValue] = useState('')
+const CustomTextInputAlert = ({
+  visible,
+  onClose,
+  forceConfirm,
+  remark = ''
+}) => {
+  const [inputValue, setInputValue] = useState(remark ? remark : '')
+
+  console.log(remark?.length)
+  console.log(inputValue?.length)
 
   const handleInputChange = (text) => {
     setInputValue(text)
   }
 
   const handleConfirm = () => {
-    if (inputValue.length > 0) {
+    if (
+      inputValue.length > remark?.length &&
+      remark?.length !== inputValue?.length
+    ) {
       onClose()
-      forceConfirm(inputValue, 1)
+      forceConfirm(`${inputValue}\n`, 1)
     } else {
       Platform.OS === 'android'
         ? Alert.alert(
@@ -34,7 +45,7 @@ const CustomTextInputAlert = ({visible, onClose, forceConfirm}) => {
   }
 
   const handleClose = () => {
-    setInputValue('')
+    setInputValue(remark ? remark : '')
     onClose()
   }
 
@@ -47,7 +58,7 @@ const CustomTextInputAlert = ({visible, onClose, forceConfirm}) => {
         <TextInput
           multiline
           numberOfLines={5}
-          maxLength={150}
+          maxLength={500}
           style={styles.textInput}
           onChangeText={handleInputChange}
           value={inputValue}
@@ -83,27 +94,31 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center'
-    // alignItems: 'center',
+    // alignItems: 'center'
     // backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   textInput: {
     alignSelf: 'center',
     width: '90%',
+    height: '35%',
     padding: 10,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     borderRadius: 5,
     marginBottom: 10,
-    color: '#000'
+    color: '#000',
+    justifyContent: 'flex-start',
+    fontSize: 18
   },
   button: {
     backgroundColor: '#fff',
-    padding: 5,
     borderRadius: 3,
-    width: 55,
+    width: 70,
+    paddingVertical: 10,
     alignItems: 'center'
   },
   textButton: {
-    color: '#1B73B4'
+    color: '#1B73B4',
+    fontSize: 16
   }
 }
 

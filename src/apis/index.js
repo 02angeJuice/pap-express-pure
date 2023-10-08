@@ -1,12 +1,15 @@
 import axios from 'axios'
 import {path} from '../constants/url'
 
+export const checkVersion = async () => await axios.post(`${path.APK_VERSION}`)
+
 // == GET
 // =================================================================
 export const fetchBox = async (item_no) =>
   await axios.post(
     `${path.URL}/api/hh/receipt/box${item_no && `?item_no=${item_no}`}`
   )
+
 export const fetchHeader = async (status) =>
   await axios.post(
     `${path.URL}/api/hh/receipt/all${status && `?status=${status}`}`

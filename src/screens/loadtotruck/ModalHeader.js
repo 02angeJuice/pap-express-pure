@@ -15,12 +15,12 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
 
   // == API
   // =================================================================
-  const fetchHeader_API = async status => {
+  const fetchHeader_API = async (status) => {
     const header = await fetchHeader(status)
 
     setHeader(
       header.data?.filter(
-        el => el.status !== 'ARRIVED' && el.status !== 'CLOSED'
+        (el) => el.status !== 'ARRIVED' && el.status !== 'CLOSED'
       )
     )
   }
@@ -83,7 +83,7 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
         <FlatList
           keyboardShouldPersistTaps="handled"
           style={[styles.list, {borderRadius: 5}]}
-          keyExtractor={el => el.receipt_no.toString()}
+          keyExtractor={(el) => el.receipt_no.toString()}
           data={header}
           initialNumToRender={6}
           windowSize={5}
@@ -116,11 +116,12 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
           styles.itemHeader,
           item.receipt_no === headerSelected && {
             borderColor: '#FFF',
-            borderWidth: 2,
+            borderWidth: 1,
             borderStyle: 'dashed',
             borderBottomWidth: 0
           },
           item.status_hh === 'EDITING' && {
+            borderColor: '#000',
             backgroundColor: '#FFDA4A'
           }
         ]}>
@@ -158,9 +159,12 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
           styles.itemContent,
           item.receipt_no === headerSelected && {
             borderColor: '#AE100F',
-            borderWidth: 2,
+            borderWidth: 1,
             borderStyle: 'dashed',
             borderTopWidth: 0
+          },
+          item.status_hh === 'EDITING' && {
+            borderColor: '#000'
           }
         ]}>
         <View

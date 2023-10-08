@@ -9,7 +9,8 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
+  StatusBar
 } from 'react-native'
 
 import debounce from 'lodash.debounce'
@@ -83,7 +84,7 @@ const LoadToTruck = ({navigation}) => {
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
 
-  const {boxAvail} = useScan()
+  const {boxAvail, setBoxAvail} = useScan()
 
   const dispatch = useDispatch()
 
@@ -222,6 +223,8 @@ const LoadToTruck = ({navigation}) => {
       header_id: headerSelected?.receipt_no,
       detail_id: detailSelected?.item_no
     })
+
+    setBoxAvail(null)
 
     setRemark('')
     setForce('')
@@ -376,6 +379,8 @@ const LoadToTruck = ({navigation}) => {
       style={styles.container}
       scrollEnabled={true}
       keyboardShouldPersistTaps="handled">
+      {toggleState === ToggleState.SCAN && <StatusBar backgroundColor="#000" />}
+
       <View style={styles.form}>
         <View
           style={[
