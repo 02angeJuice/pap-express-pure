@@ -200,7 +200,6 @@ const Login = ({navigation}) => {
             </Text>
           </View>
         </View>
-        {/* </DismissKeyboardView> */}
       </ImageBackground>
     </View>
   )

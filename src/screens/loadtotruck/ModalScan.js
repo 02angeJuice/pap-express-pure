@@ -161,7 +161,7 @@ const ModalScan = ({
           </TouchableOpacity>
         </View>
 
-        {data !== null ? (
+        {box !== null ? (
           <View
             style={{
               marginVertical: 5,
@@ -204,20 +204,6 @@ const ModalScan = ({
                 initialNumToRender={6}
                 windowSize={5}
                 renderItem={_renderItem}
-                // renderItem={({item}) => (
-                //   <Row
-                //     textStyle={[
-                //       {
-                //         textAlign: 'center',
-                //         fontSize: 12,
-                //         marginBottom: 5,
-                //         color: '#000',
-                //         paddingVertical: 7
-                //       }
-                //     ]}
-                //     data={item}
-                //   />
-                // )}
               />
             </Table>
           </View>

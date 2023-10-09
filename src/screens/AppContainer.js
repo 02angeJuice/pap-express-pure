@@ -49,24 +49,20 @@ const AppContainer = () => {
 
       if (VersionCheck.getCurrentVersion() !== version) {
         Platform.OS === 'android'
-          ? Alert.alert(
-              'PAP Express: Update new version',
-              'Download the new version.',
-              [
-                {
-                  text: t('cancel'),
-                  style: 'cancel'
-                },
-                {
-                  text: t('confirm'),
-                  onPress: () =>
-                    Linking.openURL(
-                      path.APK_DOWNLOAD +
-                        `app-release.apk?time=${new Date().getTime()}`
-                    )
-                }
-              ]
-            )
+          ? Alert.alert(t('version'), t('version_detail'), [
+              {
+                text: t('cancel'),
+                style: 'cancel'
+              },
+              {
+                text: t('confirm'),
+                onPress: () =>
+                  Linking.openURL(
+                    path.APK_DOWNLOAD +
+                      `app-release.apk?time=${new Date().getTime()}`
+                  )
+              }
+            ])
           : console.log(
               path.APK_DOWNLOAD + `app-release.apk?time=${new Date().getTime()}`
             )

@@ -143,6 +143,10 @@ const ModalScan = ({
     ]
   })
 
+  const _renderItem = ({item}) => {
+    return <ScanItem item={item} />
+  }
+
   // == COMPONENT ModalScan
   // =================================================================
   return (
@@ -163,7 +167,7 @@ const ModalScan = ({
           </TouchableOpacity>
         </View>
 
-        {data !== null ? (
+        {box !== null ? (
           <View
             style={{
               marginVertical: 5,
@@ -204,20 +208,7 @@ const ModalScan = ({
                 )}
                 initialNumToRender={6}
                 windowSize={5}
-                renderItem={({item, index}) => (
-                  <Row
-                    textStyle={[
-                      {
-                        textAlign: 'center',
-                        fontSize: 12,
-                        marginBottom: 5,
-                        color: '#000',
-                        paddingVertical: 7
-                      }
-                    ]}
-                    data={item}
-                  />
-                )}
+                renderItem={_renderItem}
               />
             </Table>
           </View>
@@ -278,6 +269,23 @@ const ModalScan = ({
     </Modal>
   )
 }
+
+const ScanItem = React.memo(({item}) => {
+  return (
+    <Row
+      textStyle={[
+        {
+          textAlign: 'center',
+          fontSize: 12,
+          marginBottom: 5,
+          color: '#000',
+          paddingVertical: 7
+        }
+      ]}
+      data={item}
+    />
+  )
+})
 
 const styles = StyleSheet.create({
   input: {

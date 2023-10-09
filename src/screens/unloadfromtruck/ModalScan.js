@@ -84,20 +84,13 @@ const ModalScan = ({
     if (!isValid) {
       if (value.length > data?.item_no.length + 1) {
         Platform.OS === 'android'
-          ? Alert.alert(
-              'Invalid Barcode',
-              'The entered barcode is not valid for the current item.',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => console.log('OK Pressed')
-                }
-              ]
-            )
-          : alert(
-              'Invalid Barcode',
-              'The entered barcode is not valid for the current item.'
-            )
+          ? Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [
+              {
+                text: t('confirm'),
+                onPress: () => console.log('OK Pressed')
+              }
+            ])
+          : alert(t('barcode_invalid'), t('barcode_invalid_detail'))
 
         setInput('')
       }
@@ -143,6 +136,10 @@ const ModalScan = ({
     ]
   })
 
+  const _renderItem = ({item}) => {
+    return <ScanItem item={item} />
+  }
+
   // == COMPONENT ModalScan
   // =================================================================
   return (
@@ -163,7 +160,7 @@ const ModalScan = ({
           </TouchableOpacity>
         </View>
 
-        {data !== null ? (
+        {box !== null ? (
           <View
             style={{
               marginVertical: 5,
@@ -204,20 +201,7 @@ const ModalScan = ({
                 )}
                 initialNumToRender={6}
                 windowSize={5}
-                renderItem={({item, index}) => (
-                  <Row
-                    textStyle={[
-                      {
-                        textAlign: 'center',
-                        fontSize: 12,
-                        marginBottom: 5,
-                        color: '#000',
-                        paddingVertical: 7
-                      }
-                    ]}
-                    data={item}
-                  />
-                )}
+                renderItem={_renderItem}
               />
             </Table>
           </View>
@@ -276,6 +260,23 @@ const ModalScan = ({
     </Modal>
   )
 }
+
+const ScanItem = React.memo(({item}) => {
+  return (
+    <Row
+      textStyle={[
+        {
+          textAlign: 'center',
+          fontSize: 12,
+          marginBottom: 5,
+          color: '#000',
+          paddingVertical: 7
+        }
+      ]}
+      data={item}
+    />
+  )
+})
 
 const styles = StyleSheet.create({
   input: {

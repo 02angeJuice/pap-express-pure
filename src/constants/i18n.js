@@ -13,6 +13,9 @@ const i18n = createInstance({
   resources: {
     th: {
       translation: {
+        version: 'อัปเดตเวอร์ชัน',
+        version_detail: 'ดาวน์โหลดเวอร์ชันใหม่เพื่อใช้งานเวอร์ชันล่าสุด.',
+
         auth_login_invalid: 'เข้าสู่ระบบไม่สำเร็จ',
         auth_login_invalid_detail: 'ตรวจสอบรหัสผู้ใช้ หรือ รหัสผ่าน',
         auth_login_invalid_username:
@@ -34,8 +37,14 @@ const i18n = createInstance({
         load_alert: 'แจ้งเตือนการขนส่ง...!',
         load_alert_detail: 'การขนส่งได้รับการเปลี่ยนแปลง',
 
+        barcode_invalid: 'บาร์โค้ดไม่ถูกต้อง',
+        barcode_invalid_detail: 'บาร์โค้ดที่ป้อนไม่ถูกต้องสำหรับรายการนี้',
+
         signature_required: 'ลายเซ็นต์จำเป็นต้องมี...!',
         signature_required_detail: 'กรุณากรอกลายเซ็นต์ของคุณ',
+
+        text_required: 'ข้อความต้องระบุ...!',
+        text_required_detail: 'โปรดระบุข้อความสำหรับการยืนยันแบบบังคับ.',
 
         home: 'หน้าแรก',
         info: 'ข้อมูลทั่วไป',
@@ -120,6 +129,9 @@ const i18n = createInstance({
     },
     gb: {
       translation: {
+        version: 'Update version',
+        version_detail: 'Download the new version for up to date.',
+
         auth_login_invalid: 'Login Failed',
         auth_login_invalid_detail: 'Please check your username or password',
         auth_login_invalid_username:
@@ -142,8 +154,15 @@ const i18n = createInstance({
         load_alert: 'Shipment Alert...!',
         load_alert_detail: 'Transportation has been changed.',
 
+        barcode_invalid: 'Invalid Barcode',
+        barcode_invalid_detail:
+          'The entered barcode is not valid for the current item.',
+
         signature_required: 'Signature must be required...!',
         signature_required_detail: 'Please fill your signature.',
+
+        text_required: 'Text must be required...!',
+        text_required_detail: 'Please specify a message for force confirm.',
 
         home: 'Home',
         info: 'Information',
@@ -228,6 +247,9 @@ const i18n = createInstance({
     },
     cn: {
       translation: {
+        version: '更新版本',
+        version_detail: '下载最新版本以保持更新。',
+
         auth_login_invalid: '登录失败',
         auth_login_invalid_detail: '请检查您的用户名或密码',
         auth_login_invalid_username: '请输入用户名。用户名不能为空',
@@ -248,8 +270,14 @@ const i18n = createInstance({
         load_alert: '运输警报...!',
         load_alert_detail: '运输方式已更改',
 
+        barcode_invalid: '无效条码',
+        barcode_invalid_detail: '输入的条码对当前物品无效。',
+
         signature_required: '必须要求签名...!',
         signature_required_detail: '请填写您的签名',
+
+        text_required: '必须填写文字...!',
+        text_required_detail: '请为强制确认指定一条消息。',
 
         home: '首页',
         info: '信息',

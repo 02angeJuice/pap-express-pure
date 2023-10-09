@@ -10,25 +10,16 @@ import {
   ActivityIndicator
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import VersionCheck from 'react-native-version-check'
 
 import {useEffect} from 'react'
-import {
-  CheckOnlineWeb,
-  fetchUserProfile,
-  sendLogout,
-  sendRefreshToken
-} from '../../apis/loginApi'
+import {CheckOnlineWeb, fetchUserProfile, sendLogout} from '../../apis/loginApi'
 import {path} from '../../constants/url'
 
 import {useTranslation} from 'react-i18next'
 import {useAuthToken} from '../../hooks'
-import {
-  resetToken,
-  setAccessToken,
-  setRefreshToken
-} from '../../store/slices/tokenSlice'
+import {resetToken} from '../../store/slices/tokenSlice'
 import {useDispatch} from 'react-redux'
-import moment from 'moment'
 import {screenMap} from '../../constants/screenMap'
 
 const Info = ({navigation}) => {
@@ -120,6 +111,10 @@ const Info = ({navigation}) => {
         <InfoItem icon="help-circle" text={t('help')} />
         <InfoItem icon="settings" text={t('setting')} />
       </View>
+      <Text style={{color: '#000', alignSelf: 'flex-end'}}>
+        {' '}
+        v.{VersionCheck.getCurrentVersion()}
+      </Text>
 
       <TouchableOpacity
         disabled={loading}
@@ -238,14 +233,11 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   shadow: {
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 2
+    shadowOffset: {width: 0, height: 2},
+    shadowColor: '#171717',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5
   }
 })
 

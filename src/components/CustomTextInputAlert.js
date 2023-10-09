@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
+import {useTranslation} from 'react-i18next'
 import {
   View,
   TextInput,
@@ -7,6 +8,9 @@ import {
   Alert,
   Platform
 } from 'react-native'
+
+import Ionicons from 'react-native-vector-icons/Ionicons'
+
 import Modal from 'react-native-modal'
 
 const CustomTextInputAlert = ({
@@ -17,8 +21,10 @@ const CustomTextInputAlert = ({
 }) => {
   const [inputValue, setInputValue] = useState(remark ? remark : '')
 
-  console.log(remark?.length)
-  console.log(inputValue?.length)
+  const {t} = useTranslation()
+
+  // console.log(remark?.length)
+  // console.log(inputValue?.length)
 
   const handleInputChange = (text) => {
     setInputValue(text)
@@ -32,21 +38,19 @@ const CustomTextInputAlert = ({
       onClose()
       forceConfirm(`${inputValue}\n`, 1)
     } else {
-      Platform.OS === 'android'
-        ? Alert.alert(
-            'Text must be required...!',
-            'Please specify a message for force confirm.'
-          )
-        : alert(
-            'Text must be required...!',
-            'Please specify a message for force confirm.'
-          )
+      alertReUse('text_required', 'text_required_detail')
     }
   }
 
   const handleClose = () => {
     setInputValue(remark ? remark : '')
     onClose()
+  }
+
+  const alertReUse = (msg, detail) => {
+    Platform.OS === 'android'
+      ? Alert.alert(t(msg), t(detail))
+      : alert(t(msg), t(detail))
   }
 
   return (
@@ -75,12 +79,36 @@ const CustomTextInputAlert = ({
             width: '95%',
             gap: 10
           }}>
-          <TouchableOpacity style={styles.button} onPress={handleConfirm}>
-            <Text style={styles.textButton}>OK</Text>
+          <TouchableOpacity
+            style={[
+              styles.row,
+              styles.button,
+              {justifyContent: 'center', backgroundColor: '#FFE7E7'}
+            ]}
+            onPress={handleClose}>
+            <Ionicons
+              style={{alignSelf: 'center'}}
+              name={'close-outline'}
+              size={20}
+              color={'#E20000'}
+            />
+            <Text style={styles.textButton}>{t('cancel')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={handleClose}>
-            <Text style={styles.textButton}>CLOSE</Text>
+          <TouchableOpacity
+            style={[
+              styles.row,
+              styles.button,
+              {justifyContent: 'center', backgroundColor: '#E7FFDF'}
+            ]}
+            onPress={handleConfirm}>
+            <Ionicons
+              style={{alignSelf: 'center'}}
+              name={'checkmark-outline'}
+              size={20}
+              color={'#24A000'}
+            />
+            <Text style={styles.textButton}>{t('confirm')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -97,6 +125,11 @@ const styles = {
     // alignItems: 'center'
     // backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   textInput: {
     alignSelf: 'center',
     width: '90%',
@@ -112,12 +145,13 @@ const styles = {
   button: {
     backgroundColor: '#fff',
     borderRadius: 3,
-    width: 70,
+    // width: 70,
+    paddingHorizontal: 5,
     paddingVertical: 10,
     alignItems: 'center'
   },
   textButton: {
-    color: '#1B73B4',
+    color: '#000',
     fontSize: 16
   }
 }
