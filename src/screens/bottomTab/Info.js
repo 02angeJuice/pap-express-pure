@@ -111,13 +111,9 @@ const Info = ({navigation}) => {
         <InfoItem icon="help-circle" text={t('help')} />
         <InfoItem icon="settings" text={t('setting')} />
       </View>
-      <Text style={{color: '#000', alignSelf: 'flex-end'}}>
-        {' '}
-        v.{VersionCheck.getCurrentVersion()}
-      </Text>
 
       <TouchableOpacity
-        disabled={loading}
+        // disabled={loading}
         style={[
           styles.signout,
           styles.shadow,
@@ -135,6 +131,10 @@ const Info = ({navigation}) => {
 
         <Text style={styles.signoutText}>{t('logout')}</Text>
       </TouchableOpacity>
+      <Text style={{color: '#000', alignSelf: 'flex-end'}}>
+        {' '}
+        v.{VersionCheck.getCurrentVersion()}
+      </Text>
     </View>
   )
 }

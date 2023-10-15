@@ -4,7 +4,8 @@ import {
   View,
   Text,
   useWindowDimensions,
-  TouchableOpacity
+  TouchableOpacity,
+  ScrollView
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view'
@@ -79,36 +80,38 @@ const TabViewLeft = ({data, selected, info}) => {
   const {t} = useTranslation()
 
   return (
-    <DataTable>
-      <DataTable.Header style={{height: 50}}>
-        <DataTable.Title>
-          <Text style={styles.tableText}>#</Text>
-        </DataTable.Title>
-        <DataTable.Title>
-          <Text style={styles.tableText}>{t('item_name')}</Text>
-        </DataTable.Title>
-        <DataTable.Title>
-          <Text style={styles.tableText}>{t('box')}</Text>
-        </DataTable.Title>
-        <DataTable.Title>
-          <Text style={styles.tableText}>{t('status')}</Text>
-        </DataTable.Title>
-      </DataTable.Header>
+    <ScrollView nestedScrollEnabled={true}>
+      <DataTable>
+        <DataTable.Header style={{height: 50}}>
+          <DataTable.Title>
+            <Text style={styles.tableText}>#</Text>
+          </DataTable.Title>
+          <DataTable.Title>
+            <Text style={styles.tableText}>{t('item_name')}</Text>
+          </DataTable.Title>
+          <DataTable.Title>
+            <Text style={styles.tableText}>{t('box')}</Text>
+          </DataTable.Title>
+          <DataTable.Title>
+            <Text style={styles.tableText}>{t('status')}</Text>
+          </DataTable.Title>
+        </DataTable.Header>
 
-      {data !== null ? (
-        data?.map((el) => (
-          <DetailItem
-            key={el.row_id}
-            item={el}
-            selected={selected}
-            // onPress={() => onPressDetail(el?.item_no)}
-            info={info}
-          />
-        ))
-      ) : (
-        <Empty />
-      )}
-    </DataTable>
+        {data !== null ? (
+          data?.map((el) => (
+            <DetailItem
+              key={el.row_id}
+              item={el}
+              selected={selected}
+              // onPress={() => onPressDetail(el?.item_no)}
+              info={info}
+            />
+          ))
+        ) : (
+          <Empty />
+        )}
+      </DataTable>
+    </ScrollView>
   )
 }
 

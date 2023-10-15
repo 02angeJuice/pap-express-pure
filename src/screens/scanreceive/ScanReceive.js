@@ -25,7 +25,9 @@ import {fetchOrder, fetchOrderSelect} from '../../apis'
 const ScanReceive = ({navigation}) => {
   const [order, setOrder] = useState(null)
   const [orderSelected, setOrderSelected] = useState(null)
+
   const [input, setInput] = useState('')
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
 
   const [toggleType, setToggleType] = useState(false)
   const [type, setType] = useState('all')
@@ -41,12 +43,24 @@ const ScanReceive = ({navigation}) => {
   // =================================================================
   const fetchOrder_API = async () => {
     const orders = await fetchOrder(filter_re)
-    setOrder(orders.data)
+    setOrder(
+      orders?.data.filter((el) =>
+        el.status === 'CLOSED'
+          ? el.distributeType !== 'PDT001'
+          : el.status !== 'DATA ENTRY'
+      )
+    )
   }
 
   const fetcOrderSelect_API = async (distribution_id) => {
     const orders = await fetchOrderSelect(distribution_id)
-    setOrder(orders.data)
+    setOrder(
+      orders?.data.filter((el) =>
+        el.status === 'CLOSED'
+          ? el.distributeType !== 'PDT001'
+          : el.status !== 'DATA ENTRY'
+      )
+    )
   }
 
   // == EFFECT
@@ -68,6 +82,7 @@ const ScanReceive = ({navigation}) => {
 
   // == HANDLE
   // =================================================================
+
   const search = () => {
     input?.length !== 0 ? fetcOrderSelect_API(input) : fetchOrder_API(filter_re)
   }
@@ -75,8 +90,8 @@ const ScanReceive = ({navigation}) => {
   const debouncedSearch = useCallback(debounce(search, 750), [input])
 
   const handleChangeTextInput = (text) => {
-    const upper = text.toUpperCase()
-    setInput(upper)
+    // const upper = text.toUpperCase()
+    setInput(text)
   }
 
   const handleSetOrderSelected = useCallback(
@@ -119,7 +134,9 @@ const ScanReceive = ({navigation}) => {
   // == COMPONENT Distribution
   // =================================================================
   return (
-    <TouchableWithoutFeedback onPress={handlePressOutside}>
+    <TouchableWithoutFeedback
+      onPress={handlePressOutside}
+      onLayout={() => inputRef.current?.focus()}>
       <View style={styles.container}>
         <View
           style={[
@@ -258,12 +275,13 @@ const ScanReceive = ({navigation}) => {
             placeholder={t('enter_barcode')}
             placeholderTextColor="#000"
             value={input}
-            maxLength={12}
+            // maxLength={12}
             editable={true}
-            // showSoftInputOnFocus={false}
             autoFocus={true}
-            // focusable={true}
             blurOnSubmit={false}
+            showSoftInputOnFocus={keyboardFocus}
+            onPressIn={() => setKeyboardFocus(true)}
+            onBlur={() => setKeyboardFocus(false)}
           />
           {input.length > 0 && <ClearButton onPress={() => setInput('')} />}
         </View>
@@ -329,9 +347,12 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
             backgroundColor: '#E3FFD4'
           }
         ]}>
-        <Text style={{color: '#000'}}>
-          {t('receipt_no')}: {item.distribution_id}
-        </Text>
+        <View style={[styles.row, {gap: 3}]}>
+          <Text style={{color: '#000'}}>{t('receipt_no')}:</Text>
+          <Text style={{color: '#000', fontWeight: '500'}}>
+            {item.distribution_id}
+          </Text>
+        </View>
 
         {item.distributeType !== 'PDT001' && (
           <Text style={{color: '#000'}}>
@@ -339,9 +360,17 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
           </Text>
         )}
 
-        <Text style={{color: '#000'}}>
-          {t('recipient')}: {item.first_name} {item.last_name}
-        </Text>
+        <View style={[styles.row, {justifyContent: 'space-between'}]}>
+          <View style={[styles.row, {gap: 3}]}>
+            <Text style={{color: '#000'}}>{t('recipient')}:</Text>
+            <Text style={{color: '#000', fontWeight: 'bold'}}>
+              {item.customer_id}
+            </Text>
+          </View>
+          <Text style={{color: '#000', fontStyle: 'italic'}}>
+            ({item.first_name} {item.last_name})
+          </Text>
+        </View>
 
         <View
           style={[

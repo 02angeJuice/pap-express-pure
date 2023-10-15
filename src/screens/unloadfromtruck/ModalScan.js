@@ -7,7 +7,8 @@ import {
   TextInput,
   Alert,
   Platform,
-  FlatList
+  FlatList,
+  Keyboard
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -35,6 +36,8 @@ const ModalScan = ({
   const [alert, setAlert] = useState(false)
 
   const [input, setInput] = useState('')
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
+
   const [box, setBox] = useState(null)
   const [reload, setReload] = useState(false)
 
@@ -54,6 +57,7 @@ const ModalScan = ({
 
   // == EFFECT
   // =================================================================
+
   useEffect(() => {
     if (data?.item_no) {
       fetchBox_API(data?.item_no)
@@ -160,7 +164,7 @@ const ModalScan = ({
           </TouchableOpacity>
         </View>
 
-        {box !== null ? (
+        {data !== null && (
           <View
             style={{
               marginVertical: 5,
@@ -186,12 +190,14 @@ const ModalScan = ({
                     placeholderTextColor="#000"
                     autoFocus={true}
                     blurOnSubmit={false}
-                    // showSoftInputOnFocus={false}
-                    // editable={!barcodeStatus.every((el) => el === true)}
+                    showSoftInputOnFocus={keyboardFocus}
+                    onPressIn={() => setKeyboardFocus(true)}
+                    onBlur={() => setKeyboardFocus(false)}
                   />,
                   `${t('status')}`
                 ]}
               />
+
               <FlatList
                 style={{marginBottom: 5}}
                 keyExtractor={(item, index) => index.toString()}
@@ -202,11 +208,10 @@ const ModalScan = ({
                 initialNumToRender={6}
                 windowSize={5}
                 renderItem={_renderItem}
+                ListEmptyComponent={<Empty />}
               />
             </Table>
           </View>
-        ) : (
-          <Empty />
         )}
 
         <View

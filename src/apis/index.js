@@ -26,13 +26,26 @@ export const fetchDetailSelect = async (obj) =>
     `${path.URL}/api/hh/receipt/${obj.header_id}/details/${obj.detail_id}`
   )
 
+// export const fetchOrder = async (status) =>
+//   await axios.post(
+//     `${path.URL}/api/hh/distribute/all${status && `?status=${status}`}`
+//   )
+
 export const fetchOrder = async (status) =>
-  await axios.post(
-    `${path.URL}/api/hh/distribute/all${status && `?status=${status}`}`
-  )
+  await axios.post(`${path.URL}/api/hh/distribute/all`, {
+    status: status
+  })
+
+// export const fetchOrderSelect = async (distribution_id) =>
+//   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}`)
+
+// export const fetchOrderSelect = async (distribution_id) =>
+//   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}`)
 
 export const fetchOrderSelect = async (distribution_id) =>
-  await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}`)
+  await axios.post(`${path.URL}/api/hh/distribute/all`, {
+    distribution_id: distribution_id
+  })
 
 export const fetchOrderDetail = async (distribution_id) =>
   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}/detail`)
@@ -141,7 +154,7 @@ export const sendOrderConfirm = async (obj, token) =>
     }
   })
     .then((res) => {
-      console.log('sendSignature SUCCESS, STATUS:', res.status)
+      console.log('sendOrderConfirm SUCCESS, STATUS:', res.status)
       return res.status
     })
     .catch((err) => {

@@ -35,6 +35,8 @@ const ModalScan = ({
   const [alert, setAlert] = useState(false)
 
   const [input, setInput] = useState('')
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
+
   const [box, setBox] = useState(null)
   const [reload, setReload] = useState(false)
 
@@ -167,7 +169,7 @@ const ModalScan = ({
           </TouchableOpacity>
         </View>
 
-        {box !== null ? (
+        {data !== null && (
           <View
             style={{
               marginVertical: 5,
@@ -193,8 +195,9 @@ const ModalScan = ({
                     placeholderTextColor="#000"
                     autoFocus={true}
                     blurOnSubmit={false}
-                    // showSoftInputOnFocus={false}
-                    // editable={!barcodeStatus.every((el) => el === true)}
+                    showSoftInputOnFocus={keyboardFocus}
+                    onPressIn={() => setKeyboardFocus(true)}
+                    onBlur={() => setKeyboardFocus(false)}
                   />,
                   `${t('status')}`
                 ]}
@@ -209,11 +212,10 @@ const ModalScan = ({
                 initialNumToRender={6}
                 windowSize={5}
                 renderItem={_renderItem}
+                ListEmptyComponent={<Empty />}
               />
             </Table>
           </View>
-        ) : (
-          <Empty />
         )}
 
         <View

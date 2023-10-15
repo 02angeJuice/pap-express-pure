@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {
   View,
@@ -13,13 +13,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 
 import Modal from 'react-native-modal'
 
-const CustomTextInputAlert = ({
-  visible,
-  onClose,
-  forceConfirm,
-  remark = ''
-}) => {
-  const [inputValue, setInputValue] = useState(remark ? remark : '')
+const ContainerAlert = ({visible, onClose, container, setContainerOk}) => {
+  const [inputValue, setInputValue] = useState(container)
+
+  useEffect(() => {
+    console.log(',4545', container)
+  }, [])
 
   const {t} = useTranslation()
 
@@ -31,16 +30,24 @@ const CustomTextInputAlert = ({
   }
 
   const handleConfirm = () => {
-    if (inputValue.length > 0) {
-      onClose()
-      forceConfirm(`${inputValue}\n`, 1)
-    } else {
+    // if (inputValue.length > 0) {
+    //   onClose()
+    //   forceConfirm(`${inputValue}\n`, 1)
+    // } else {
+    //   alertReUse('text_required', 'text_required_detail')
+    // }
+
+    if (inputValue == '00') {
       alertReUse('text_required', 'text_required_detail')
+    } else {
+      setContainerOk(inputValue)
+
+      onClose()
     }
   }
 
   const handleClose = () => {
-    setInputValue(remark ? remark : '')
+    setInputValue('')
     onClose()
   }
 
@@ -56,15 +63,29 @@ const CustomTextInputAlert = ({
       animationIn={'pulse'}
       onBackButtonPress={handleClose}>
       <View style={styles.container}>
+        <View
+          style={{
+            backgroundColor: '#AE100F',
+            marginBottom: 5,
+            padding: 10,
+            width: '90%',
+            alignSelf: 'center',
+            borderRadius: 5
+          }}>
+          <Text style={{color: '#fff'}}>ยืนยันตู้คอนเทนเนอร์</Text>
+        </View>
         <TextInput
-          multiline
-          numberOfLines={5}
-          maxLength={500}
+          // multiline
+          // numberOfLines={5}
+          // maxLength={500}
           style={styles.textInput}
           onChangeText={handleInputChange}
+          defaultValue={container}
           value={inputValue}
-          placeholder="Write a message..."
+          placeholder="Enter Container"
           placeholderTextColor="#000"
+          selectTextOnFocus={true}
+          keyboardType="phone-pad"
         />
         <View
           style={{
@@ -130,8 +151,9 @@ const styles = {
   textInput: {
     alignSelf: 'center',
     width: '90%',
-    height: '35%',
+    // height: '35%',
     padding: 10,
+    textAlign: 'center',
     backgroundColor: '#fff',
     borderRadius: 5,
     marginBottom: 10,
@@ -153,4 +175,4 @@ const styles = {
   }
 }
 
-export default CustomTextInputAlert
+export default ContainerAlert

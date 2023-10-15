@@ -31,25 +31,29 @@ const ModalDetail = ({data, visible, setVisible}) => {
             borderRadius: 5
           }}>
           <View>
-            <View
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-              <Text style={{color: '#000'}}>
-                {t('tracking_no')}:{' '}
-                {data?.tracking_no === null ? '-' : data?.tracking_no}{' '}
-              </Text>
-              <Text style={{color: '#000'}}>
-                {t('tracking_four')}:{' '}
-                {data?.item_serial === null ? '-' : data?.item_serial}
-              </Text>
-            </View>
+            <Text style={{color: '#000'}}>
+              {t('customer')}: {data?.customer_id}
+              {data?.collection && `-${data.collection}`}
+            </Text>
             <Text style={{color: '#000'}}>
               {t('item_no')}: {data?.item_no}
             </Text>
+            <Text style={{color: '#000'}}>
+              {t('tracking_four')}:{' '}
+              {data?.item_serial === null ? '-' : data?.item_serial}
+            </Text>
+            <Text style={{color: '#000'}}>
+              {t('tracking_no')}:{' '}
+              {data?.tracking_no === null ? '-' : data?.tracking_no}{' '}
+            </Text>
+            <View
+              style={{
+                borderStyle: 'dashed',
+                borderColor: '#999',
+                borderBottomWidth: 0.5,
+                margin: 2
+              }}
+            />
             <Text style={{color: '#000'}}>
               {t('item_name')}: {data?.item_name}
             </Text>
@@ -70,6 +74,14 @@ const ModalDetail = ({data, visible, setVisible}) => {
               {t('width')}* {t('length')}* {t('height')}: {data?.width}x
               {data?.long}x{data?.height} CM
             </Text>
+            <View
+              style={{
+                borderStyle: 'dashed',
+                borderColor: '#999',
+                borderBottomWidth: 0.5,
+                margin: 2
+              }}
+            />
             <Text style={{color: '#000'}}>
               {t('status')}: {data?.status}
             </Text>

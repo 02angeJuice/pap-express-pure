@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react'
 import {Platform, Alert, Linking} from 'react-native'
-import {NavigationContainer} from '@react-navigation/native'
+import {NavigationContainer, useNavigation} from '@react-navigation/native'
 import {createStackNavigator} from '@react-navigation/stack'
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs'
 
@@ -38,6 +38,7 @@ const AppContainer = () => {
 
   // == API
   // =================================================================
+
   const checkVersion_API = async () => {
     try {
       const res = await checkVersion()

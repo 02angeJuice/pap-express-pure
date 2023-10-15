@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   Platform,
+  StatusBar,
   ActivityIndicator
 } from 'react-native'
 
@@ -71,6 +72,7 @@ const UnloadFromTruck = ({navigation}) => {
   const [remark, setRemark] = useState(null)
 
   const [input, setInput] = useState('')
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
 
   const inputRef = useRef(null)
 
@@ -105,6 +107,7 @@ const UnloadFromTruck = ({navigation}) => {
 
   // == EFFECT
   // =================================================================
+
   useEffect(() => {
     headerSelected?.receipt_no.length > 0 &&
       fetchDetail_API(headerSelected?.receipt_no)
@@ -137,11 +140,11 @@ const UnloadFromTruck = ({navigation}) => {
 
   // == HANDLE
   // =================================================================
-  const debouncedSearch = useCallback(debounce(search, 750), [input])
-
-  function search() {
+  const search = () => {
     input?.length !== 0 && fetchHeaderSelect_API(input)
   }
+
+  const debouncedSearch = useCallback(debounce(search, 750), [input])
 
   const handleChangeTextInput = (text) => {
     setInput(text.toUpperCase())
@@ -174,6 +177,7 @@ const UnloadFromTruck = ({navigation}) => {
     setInput('')
 
     inputRef.current.focus()
+    setKeyboardFocus(false)
   }
 
   const onPressForceConfirm = async (message, status = null) => {
@@ -319,9 +323,12 @@ const UnloadFromTruck = ({navigation}) => {
   // =================================================================
   return (
     <ScrollView
+      onLayout={() => inputRef.current?.focus()}
       style={styles.container}
       scrollEnabled={true}
       keyboardShouldPersistTaps="handled">
+      {toggleState === ToggleState.SCAN && <StatusBar backgroundColor="#000" />}
+
       <View style={styles.form}>
         {/* RECEIPT */}
         <InputComponent title={`${t('receipt_no')}: `}>
@@ -348,10 +355,11 @@ const UnloadFromTruck = ({navigation}) => {
             value={headerSelected ? headerSelected?.receipt_no : input}
             maxLength={11}
             editable={true}
-            // // showSoftInputOnFocus={false}
             autoFocus={true}
-            // focusable={true}
             blurOnSubmit={false}
+            showSoftInputOnFocus={keyboardFocus}
+            onPressIn={() => setKeyboardFocus(true)}
+            onBlur={() => setKeyboardFocus(false)}
           />
 
           <TouchableOpacity

@@ -100,6 +100,7 @@ const Login = ({navigation}) => {
         }
       }
     } catch (error) {
+      setLoading(false)
       console.log('sendCheckLoginHH_API: ', error)
     }
   }
@@ -120,8 +121,6 @@ const Login = ({navigation}) => {
         alertReUse('auth_login_success', 'auth_login_success_detail')
         // navigation.navigate(screenMap.HomePage)
 
-        setLoading(false)
-
         navigation.reset({index: 0, routes: [{name: screenMap.HomePage}]})
       } else {
         if (res?.response.data.message === 'alertLoginLimit') {
@@ -130,6 +129,7 @@ const Login = ({navigation}) => {
         }
       }
     } catch (error) {
+      setLoading(false)
       console.log('sendLoginHH_API: ', error)
     }
   }
@@ -170,7 +170,7 @@ const Login = ({navigation}) => {
           </View>
 
           <TouchableOpacity
-            disabled={loading}
+            // disabled={loading}
             style={[
               styles.button,
               styles.shadow,

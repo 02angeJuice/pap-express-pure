@@ -10,7 +10,8 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  StatusBar
+  StatusBar,
+  Keyboard
 } from 'react-native'
 
 import debounce from 'lodash.debounce'
@@ -45,6 +46,7 @@ import {
   sendSignature
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
+import ContainerAlert from '../../components/ContainerAlert'
 
 const ToggleState = {
   HEADER: 'HEADER',
@@ -75,7 +77,11 @@ const LoadToTruck = ({navigation}) => {
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
 
+  const [alert, setAlert] = useState(false)
+  const [containerOk, setContainerOk] = useState(null)
+
   const [input, setInput] = useState('')
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
 
   const inputRef = useRef(null)
 
@@ -138,11 +144,11 @@ const LoadToTruck = ({navigation}) => {
 
   // == HANDLE
   // =================================================================
-  const debouncedSearch = useCallback(debounce(search, 750), [input])
-
-  function search() {
+  const search = () => {
     input?.length !== 0 && fetchHeaderSelect_API(input)
   }
+
+  const debouncedSearch = useCallback(debounce(search, 750), [input])
 
   const handleChangeTextInput = (text) => {
     const upper = text.toUpperCase()
@@ -175,6 +181,7 @@ const LoadToTruck = ({navigation}) => {
     setCurrentSign(null)
     setInput('')
     setShipment(null)
+    setContainerOk(null)
 
     inputRef.current.focus()
   }
@@ -250,83 +257,90 @@ const LoadToTruck = ({navigation}) => {
         if (currentSign === null) {
           alertReUse('signature_required', 'signature_required_detail')
         } else {
-          // SENT ITEM PICKED --> ONSHIP
-          // ==============================
-          const obj = new FormData()
+          if (containerOk !== null) {
+            // SENT ITEM PICKED --> ONSHIP
+            // ==============================
+            const obj = new FormData()
 
-          obj.append('files', {
-            uri: currentSign,
-            name: `SIGNATURE-1.${signType}`,
-            type: `image/${signType}`
-          })
-
-          currentImage !== null
-            ? obj.append('files', {
-                uri: currentImage,
-                name: `ITEM-02.${imgType}`,
-                type: `image/${imgType}`
-              })
-            : obj.append('files', null)
-
-          obj.append('receipt_no', headerSelected?.receipt_no)
-          obj.append('status', 'ONSHIP')
-
-          await sendSignature(obj, refresh).catch((err) => {
-            console.log(err.message)
-          })
-          await sendShipmentConfirm(
-            {
-              receipt_no: headerSelected?.receipt_no,
-              shipment_confirm:
-                headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
-                  ? null
-                  : 1
-            },
-            refresh
-          ).catch((err) => {
-            console.log(err.message)
-          })
-
-          await sendConfirm(
-            {
-              receipt_no: headerSelected?.receipt_no,
-              statusHeader: 'ONSHIP',
-              statusDetail: 'LOADED',
-              date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
-              maker: userName
-            },
-            refresh
-          )
-            .then(() => {
-              toast.show(t('confirmed'), {
-                type: 'success',
-                placement: 'bottom',
-                duration: 4000,
-                offset: 30,
-                animationType: 'slide-in'
-              })
+            obj.append('files', {
+              uri: currentSign,
+              name: `SIGNATURE-1.${signType}`,
+              type: `image/${signType}`
             })
-            .catch((err) => {
-              console.log(err.message)
 
-              if (err.message == 401) {
-                dispatch(resetToken())
-                navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+            currentImage !== null
+              ? obj.append('files', {
+                  uri: currentImage,
+                  name: `ITEM-02.${imgType}`,
+                  type: `image/${imgType}`
+                })
+              : obj.append('files', null)
+
+            obj.append('receipt_no', headerSelected?.receipt_no)
+            obj.append('status', 'ONSHIP')
+
+            await sendSignature(obj, refresh).catch((err) => {
+              console.log(err.message)
+            })
+            await sendShipmentConfirm(
+              {
+                receipt_no: headerSelected?.receipt_no,
+                shipment_confirm:
+                  headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
+                    ? null
+                    : 1
+              },
+              refresh
+            ).catch((err) => {
+              console.log(err.message)
+            })
+
+            await sendConfirm(
+              {
+                receipt_no: headerSelected?.receipt_no,
+                statusHeader: 'ONSHIP',
+                statusDetail: 'LOADED',
+                date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+                maker: userName
+              },
+              refresh
+            )
+              .then(() => {
+                toast.show(t('confirmed'), {
+                  type: 'success',
+                  placement: 'bottom',
+                  duration: 4000,
+                  offset: 30,
+                  animationType: 'slide-in'
+                })
+              })
+              .catch((err) => {
+                console.log(err.message)
+
+                if (err.message == 401) {
+                  dispatch(resetToken())
+                  navigation.reset({
+                    index: 0,
+                    routes: [{name: screenMap.Login}]
+                  })
+
+                  alertReUse('auth_access_denied', 'auth_access_denied_detail')
+                }
 
                 alertReUse('auth_access_denied', 'auth_access_denied_detail')
-              }
+              })
 
-              alertReUse('auth_access_denied', 'auth_access_denied_detail')
-            })
+            headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
+              alertReUse('load_alert', 'load_alert_detail')
 
-          headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
-            alertReUse('load_alert', 'load_alert_detail')
+            setCurrentImage(null)
+            setCurrentSign(null)
+            setToggleButton(false)
 
-          setCurrentImage(null)
-          setCurrentSign(null)
-          setToggleButton(false)
-
-          setLoading(false)
+            setLoading(false)
+          } else {
+            setAlert(!alert)
+          }
         }
       }
     }
@@ -372,10 +386,24 @@ const LoadToTruck = ({navigation}) => {
       : alert(t(msg), t(detail))
   }
 
+  const handleContainerClose = () => {
+    setAlert(!alert)
+    setLoading(false)
+  }
+
+  const handleLayout = () => {
+    inputRef.current?.focus()
+    // if (keyboardFocus) {
+    //   setKeyboardFocus(false)
+    // }
+    Keyboard.dismiss()
+  }
+
   // == COMPONENT LoadToTruck
   // =================================================================
   return (
     <ScrollView
+      onLayout={handleLayout}
       style={styles.container}
       scrollEnabled={true}
       keyboardShouldPersistTaps="handled">
@@ -448,19 +476,12 @@ const LoadToTruck = ({navigation}) => {
             value={headerSelected ? headerSelected?.receipt_no : input}
             maxLength={11}
             editable={true}
-            // // showSoftInputOnFocus={false}
             autoFocus={true}
-            // focusable={true}
             blurOnSubmit={false}
+            showSoftInputOnFocus={keyboardFocus}
+            onPressIn={() => setKeyboardFocus(true)}
+            onBlur={() => setKeyboardFocus(false)}
           />
-
-          {/* <ButtonComponent
-                        text="#RECEIPT"
-                        color="#fff"
-                        backgroundColor="#2a52be"
-                        flex={0.3}
-                        onPress={() => toggleSetState(ToggleState.HEADER)}
-                    /> */}
 
           <TouchableOpacity
             style={[
@@ -472,7 +493,7 @@ const LoadToTruck = ({navigation}) => {
               }
             ]}
             onPress={() => toggleSetState(ToggleState.HEADER)}>
-            <View style={[styles.row, {justifyContent: 'center'}]}>
+            <View style={[styles.row, {justifyContent: 'center', gap: 2}]}>
               <Ionicons
                 style={{alignSelf: 'center'}}
                 // name={'document-text-outline'}
@@ -493,60 +514,90 @@ const LoadToTruck = ({navigation}) => {
             </View>
           </TouchableOpacity>
         </InputComponent>
-        <InputComponent title={`${t('item_no')}: `}>
-          <TextInput
-            style={[
-              // styles.shadow,
-              styles.groupInput,
-              {
-                backgroundColor: '#D2D2D2',
-                fontWeight: 'bold',
-                flex: 0.75,
-                color: '#000'
-              }
-            ]}
-            defaultValue={detailSelected?.item_no}
-            editable={false}
-          />
-          {/* <ButtonComponent
-                        text="CLEAR"
-                        color="#fff"
-                        backgroundColor="#AE100F"
-                        flex={0.3}
-                        onPress={() => onPressClear()}
-                    /> */}
 
-          <TouchableOpacity
-            style={[
-              styles.clearButton,
-              styles.shadow,
-              {
-                backgroundColor: '#AE100F',
-                flex: 0.3
-              }
-            ]}
-            onPress={() => onPressClear()}>
-            <View style={[styles.row, {justifyContent: 'center'}]}>
-              <Ionicons
-                style={{alignSelf: 'center'}}
-                // name={'document-text-outline'}
-                name={'document-outline'}
-                size={20}
-                color="#fff"
-              />
-              <Text
-                style={[
-                  {
-                    color: '#fff',
-                    fontSize: 14,
-                    textAlign: 'center'
-                  }
-                ]}>
-                {t('clear')}
-              </Text>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 5,
+            justifyContent: 'space-between'
+          }}>
+          <View style={{display: 'flex', flex: 0.333, flexDirection: 'column'}}>
+            <View>
+              <Text style={{color: '#000'}}>เลขตู้</Text>
             </View>
-          </TouchableOpacity>
-        </InputComponent>
+            <TouchableOpacity
+              disabled={!headerSelected && true}
+              onPress={() => headerSelected && setAlert(!alert)}>
+              <TextInput
+                style={[
+                  styles.groupInput,
+                  {
+                    backgroundColor: '#D2D2D2',
+                    fontWeight: 'bold',
+                    color: '#000',
+
+                    borderWidth: 1,
+                    borderStyle: 'dashed',
+                    borderColor: '#999'
+                  }
+                ]}
+                defaultValue={headerSelected?.container_no}
+                value={containerOk && containerOk}
+                editable={false}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={{display: 'flex', flex: 0.333, flexDirection: 'column'}}>
+            <View>
+              <Text style={{color: '#000'}}>ลูกค้า</Text>
+            </View>
+            <TextInput
+              style={[
+                styles.groupInput,
+                {
+                  backgroundColor: '#D2D2D2',
+                  fontWeight: 'bold',
+                  color: '#000'
+                }
+              ]}
+              defaultValue={headerSelected?.customer_id}
+              editable={false}
+            />
+          </View>
+
+          <View
+            style={{display: 'flex', flex: 0.3, justifyContent: 'flex-end'}}>
+            <TouchableOpacity
+              style={[
+                styles.clearButton,
+                styles.shadow,
+                {backgroundColor: '#AE100F'}
+              ]}
+              onPress={() => onPressClear()}>
+              <View style={[styles.row, {justifyContent: 'center', gap: 2}]}>
+                <Ionicons
+                  style={{alignSelf: 'center'}}
+                  // name={'document-text-outline'}
+                  name={'trash-bin-outline'}
+                  size={20}
+                  color="#fff"
+                />
+                <Text
+                  style={[
+                    {
+                      color: '#fff',
+                      fontSize: 14,
+                      textAlign: 'center'
+                    }
+                  ]}>
+                  {t('clear')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {toggleState === ToggleState.HEADER && (
@@ -726,6 +777,14 @@ const LoadToTruck = ({navigation}) => {
           )}
         </View>
       )}
+
+      <ContainerAlert
+        visible={alert}
+        onClose={handleContainerClose}
+        // forceConfirm={forceConfirm}
+        container={headerSelected?.container_no}
+        setContainerOk={setContainerOk}
+      />
     </ScrollView>
   )
 }
@@ -786,7 +845,6 @@ const styles = StyleSheet.create({
   groupInput: {
     backgroundColor: '#F4F4F4',
     borderColor: '#7A7A7A',
-    // borderWidth: 0.5,
     borderRadius: 5,
     paddingHorizontal: 6,
     width: '100%'
@@ -797,7 +855,7 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 10,
     borderRadius: 5,
-    paddingVertical: 10
+    paddingVertical: 15
   },
   buttonGroup: {
     display: 'flex',

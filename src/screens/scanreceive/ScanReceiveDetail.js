@@ -351,17 +351,13 @@ const ScanReceiveDetail = ({navigation, route}) => {
         <Text style={{color: '#000'}}>
           {t('receipt')}: {orderSelected?.distribution_id}
         </Text>
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center'
-          }}>
+
+        <View style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
           <Text style={{color: '#000'}}>{t('transport_type')}: </Text>
           <View
             style={[
               styles.status,
+              styles.row,
               orderSelected?.distributeType === 'PDT001'
                 ? styles.PICKED
                 : orderSelected?.distributeType === 'PDT002'
@@ -369,10 +365,24 @@ const ScanReceiveDetail = ({navigation, route}) => {
                 : styles.ARRIVED,
               {
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: 5,
+                borderColor: '#000',
+                borderWidth: 0.5
               }
             ]}>
-            <Text style={{padding: 2}}>
+            <Ionicons
+              color={'#000'}
+              name={
+                orderSelected?.distributeType === 'PDT001'
+                  ? 'home'
+                  : orderSelected?.distributeType === 'PDT002'
+                  ? 'bag-handle'
+                  : 'business'
+              }
+              size={15}
+            />
+            <Text style={{padding: 2, color: '#000'}}>
               {orderSelected?.distributeType === 'PDT001'
                 ? `${t('od_type_warehouse')}`
                 : orderSelected?.distributeType === 'PDT002'
@@ -641,15 +651,28 @@ const ItemDetail = React.memo(({item, detailSelected}) => {
         </Text>
       </View>
       <View style={styles.itemContent}>
-        {/* <Text>
-                    {t('customer')}: {item.customer_id}
-                </Text>
-                <Text>
-                    {t('phone')}: {item.phone}
-                </Text> */}
+        <Text style={{color: '#000'}}>
+          {t('customer')}: {item.customer_id}
+          {item?.collection && `-${item.collection}`}
+        </Text>
         <Text style={{color: '#000'}}>
           {t('item_no')}: {item.item_no}
         </Text>
+        <Text style={{color: '#000'}}>
+          {t('tracking_four')}:
+          {item.item_serial === null ? '-' : item.item_serial}
+        </Text>
+        <Text style={{color: '#000'}}>
+          {t('tracking_no')}:{item.tracking_no ? item.tracking_no : ' -'}
+        </Text>
+        <View
+          style={{
+            borderStyle: 'dashed',
+            borderColor: '#999',
+            borderBottomWidth: 0.5,
+            margin: 2
+          }}
+        />
         <Text style={{color: '#000'}}>
           {t('item_name')}: {item.item_name}
         </Text>
@@ -666,6 +689,14 @@ const ItemDetail = React.memo(({item, detailSelected}) => {
           {t('instructions')}:{' '}
           {item.shipping_Instructions ? item.shipping_Instructions : `-`}
         </Text>
+        <View
+          style={{
+            borderStyle: 'dashed',
+            borderColor: '#999',
+            borderBottomWidth: 0.5,
+            margin: 2
+          }}
+        />
         <Text style={{color: '#000'}}>
           {t('status')}: {item.status}
         </Text>
@@ -716,15 +747,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   PICKED: {
-    backgroundColor: '#4AB800',
+    backgroundColor: '#CFFFAE',
     color: '#183B00'
   },
   ONSHIP: {
-    backgroundColor: '#009DFF',
+    backgroundColor: '#B5E3FF',
     color: '#003F67'
   },
   ARRIVED: {
-    backgroundColor: '#FF003C',
+    backgroundColor: '#FFC4D2',
     color: '#4A0011'
   },
   buttonGroup: {

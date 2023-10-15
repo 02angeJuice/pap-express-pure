@@ -27,7 +27,9 @@ import {fetchOrder, fetchOrderSelect} from '../../apis'
 const Distribution = ({navigation}) => {
   const [order, setOrder] = useState(null)
   const [orderSelected, setOrderSelected] = useState(null)
+
   const [input, setInput] = useState('')
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
 
   const [toggleType, setToggleType] = useState(false)
   const [type, setType] = useState('all')
@@ -43,12 +45,26 @@ const Distribution = ({navigation}) => {
   // =================================================================
   const fetchOrder_API = async () => {
     const orders = await fetchOrder(filter_di)
-    setOrder(orders.data)
+    if (filter_di === 'CLOSED') {
+      setOrder(orders?.data.filter((el) => el.distributeType === 'PDT001'))
+    } else if (filter_di === 'PDT002' || filter_di === 'PDT003') {
+      setOrder(orders?.data.filter((el) => el.status !== 'CLOSED'))
+    } else {
+      setOrder(
+        orders?.data.filter((el) =>
+          el.status === 'CLOSED' ? el.distributeType === 'PDT001' : el
+        )
+      )
+    }
   }
 
   const fetcOrderSelect_API = async (distribution_id) => {
     const orders = await fetchOrderSelect(distribution_id)
-    setOrder(orders.data)
+    setOrder(
+      orders?.data.filter((el) =>
+        el.status === 'CLOSED' ? el.distributeType === 'PDT001' : el
+      )
+    )
   }
 
   // == EFFECT
@@ -77,8 +93,8 @@ const Distribution = ({navigation}) => {
   const debouncedSearch = useCallback(debounce(search, 1000), [input])
 
   const handleChangeTextInput = (text) => {
-    const upper = text.toUpperCase()
-    setInput(upper)
+    // const upper = text.toUpperCase()
+    setInput(text)
   }
 
   const handleSetOrderSelected = useCallback(
@@ -97,15 +113,15 @@ const Distribution = ({navigation}) => {
   }
 
   const handleChangeType = (change) => {
-    dispatch(setFilterDi(change))
     setType(change)
+    dispatch(setFilterDi(change))
     setToggleType(false)
   }
 
   const handleChangeStatus = (change) => {
+    setType('all')
     dispatch(setFilterDi(change))
     setToggleType(false)
-    setType('all')
   }
 
   const _renderitem = ({item}) => {
@@ -121,7 +137,9 @@ const Distribution = ({navigation}) => {
   // == COMPONENT Distribution
   // =================================================================
   return (
-    <TouchableWithoutFeedback onPress={handlePressOutside}>
+    <TouchableWithoutFeedback
+      onPress={handlePressOutside}
+      onLayout={() => inputRef.current?.focus()}>
       <View style={styles.container}>
         <View
           style={[
@@ -266,12 +284,13 @@ const Distribution = ({navigation}) => {
             placeholder={t('enter_barcode')}
             placeholderTextColor="#000"
             value={input}
-            maxLength={12}
+            // maxLength={12}
             editable={true}
-            // showSoftInputOnFocus={false}
             autoFocus={true}
-            // focusable={true}
             blurOnSubmit={false}
+            showSoftInputOnFocus={keyboardFocus}
+            onPressIn={() => setKeyboardFocus(true)}
+            onBlur={() => setKeyboardFocus(false)}
           />
           {input.length > 0 && <ClearButton onPress={() => setInput('')} />}
         </View>
@@ -337,9 +356,12 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
             backgroundColor: '#E3FFD4'
           }
         ]}>
-        <Text style={{color: '#000'}}>
-          {t('receipt_no')}: {item.distribution_id}
-        </Text>
+        <View style={[styles.row, {gap: 3}]}>
+          <Text style={{color: '#000'}}>{t('receipt_no')}:</Text>
+          <Text style={{color: '#000', fontWeight: '500'}}>
+            {item.distribution_id}
+          </Text>
+        </View>
 
         {item.distributeType !== 'PDT001' && (
           <Text style={{color: '#000'}}>
@@ -347,9 +369,17 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
           </Text>
         )}
 
-        <Text style={{color: '#000'}}>
-          {t('recipient')}: {item.first_name} {item.last_name}
-        </Text>
+        <View style={[styles.row, {justifyContent: 'space-between'}]}>
+          <View style={[styles.row, {gap: 3}]}>
+            <Text style={{color: '#000'}}>{t('recipient')}:</Text>
+            <Text style={{color: '#000', fontWeight: 'bold'}}>
+              {item.customer_id}
+            </Text>
+          </View>
+          <Text style={{color: '#000', fontStyle: 'italic'}}>
+            ({item.first_name} {item.last_name})
+          </Text>
+        </View>
 
         <View
           style={[
