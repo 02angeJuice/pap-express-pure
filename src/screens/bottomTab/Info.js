@@ -31,8 +31,11 @@ const Info = ({navigation}) => {
 
   const dispatch = useDispatch()
 
+  console.log(userName)
+
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const checkRefreshToken = async () => {
     const res = await CheckOnlineWeb(refresh)
       .then(() => {
@@ -54,34 +57,43 @@ const Info = ({navigation}) => {
 
   const fetchUserProfile_API = async (user_id) => {
     const res = await fetchUserProfile(user_id)
+
+    console.log(res)
     setProfile(res.data[0])
   }
 
+  // ----------------------------------------------------------
   // == EFFECT
-  // =================================================================
+  // ----------------------------------------------------------
   useEffect(() => {
     if (userName) {
       fetchUserProfile_API(userName)
     }
   }, [])
 
+  // ----------------------------------------------------------
   // == HANDLE
-  // =================================================================
+  // ----------------------------------------------------------
   const handleLogout = async () => {
     setLoading(!loading)
+    console.log('logout')
 
-    if (await checkRefreshToken()) {
-      await sendLogout(refresh).then(() => {
-        setLoading(false)
-      })
-      dispatch(resetToken())
-    }
+    // if (await checkRefreshToken()) {
+    //   await sendLogout(refresh)
+    //     .then(() => {
+    //       setLoading(false)
+    //     })
+    //     .catch()
+    //   dispatch(resetToken())
+    // }
+    dispatch(resetToken())
 
     navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
   }
 
-  // == COMPONENT Info
-  // =================================================================
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <View style={styles.container}>
       <View style={[styles.infoMenu, styles.shadow]}>
@@ -97,13 +109,18 @@ const Info = ({navigation}) => {
               />
             )}
 
-            <View>
-              <Text
-                style={{
-                  color: '#fff'
-                }}>{`${profile?.first_name} ${profile?.last_name}`}</Text>
-              <Text style={{color: '#fff'}}>{`ID:  ${profile?.user_id}`}</Text>
-            </View>
+            {profile && (
+              <View>
+                <Text
+                  style={{
+                    color: '#fff'
+                  }}>
+                  {`${profile?.first_name} ${profile?.last_name}`}
+                </Text>
+                <Text
+                  style={{color: '#fff'}}>{`ID:  ${profile?.user_id}`}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -139,6 +156,9 @@ const Info = ({navigation}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
 const InfoItem = ({icon, text, nav}) => {
   return (
     <TouchableOpacity style={styles.infoMenuItem} onPress={nav ? nav : null}>
@@ -156,6 +176,9 @@ const InfoItem = ({icon, text, nav}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,

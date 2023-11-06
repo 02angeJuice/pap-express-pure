@@ -5,6 +5,9 @@ import {path} from '../../constants/url'
 import FastImage from 'react-native-fast-image'
 
 const CustomHeader = () => {
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <View style={[styles.row, {justifyContent: 'center', gap: 0}]}>
       <FastImage
@@ -33,6 +36,9 @@ const CustomHeader = () => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   row: {
     display: 'flex',

@@ -77,8 +77,9 @@ const DistributeDetail = ({navigation, route}) => {
 
   const dispatch = useDispatch()
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const fetchOrderDetail_API = async (distribution_id) => {
     const detail = await fetchOrderDetail(distribution_id)
     setDetail(detail.data)
@@ -94,8 +95,9 @@ const DistributeDetail = ({navigation, route}) => {
     setOrderSelected(order.data[0])
   }
 
+  // ----------------------------------------------------------
   // == EFFECT
-  // =================================================================
+  // ----------------------------------------------------------
   useEffect(() => {
     fetchOrderSelect_API(order_id)
   }, [])
@@ -127,8 +129,9 @@ const DistributeDetail = ({navigation, route}) => {
       })
   }, [detailSelected])
 
-  // == TOGGLE MODAL
-  // =================================================================
+  // ----------------------------------------------------------
+  // == HANDLE
+  // ----------------------------------------------------------
   const toggleSetState = (newToggleState) => {
     if (toggleState === newToggleState) {
       setToggleState(null) // Toggle off if pressed again
@@ -155,8 +158,6 @@ const DistributeDetail = ({navigation, route}) => {
     }
   }
 
-  // == HANDLE
-  // =================================================================
   const handleSetDetailSelected = (target) => {
     setDetailSelected(target)
     target?.status === 'DATA ENTRY' && setToggleState(ToggleState.SCAN)
@@ -187,8 +188,8 @@ const DistributeDetail = ({navigation, route}) => {
           type: 'success',
           placement: 'bottom',
           duration: 4000,
-          offset: 30,
-          animationType: 'slide-in'
+          offset: 30
+          // animationType: 'slide-in'
         })
       })
       .catch((err) => {
@@ -270,8 +271,8 @@ const DistributeDetail = ({navigation, route}) => {
                 type: 'success',
                 placement: 'bottom',
                 duration: 4000,
-                offset: 30,
-                animationType: 'slide-in'
+                offset: 30
+                // animationType: 'slide-in'
               })
             })
             .catch((err) => {
@@ -318,7 +319,7 @@ const DistributeDetail = ({navigation, route}) => {
     //         placement: 'bottom',
     //         duration: 4000,
     //         offset: 30,
-    //         animationType: 'slide-in',
+    //         // animationType: 'slide-in',
     //     })
 
     //     setToggleButton(true)
@@ -335,8 +336,9 @@ const DistributeDetail = ({navigation, route}) => {
     return <ItemDetail item={item} detailSelected={handleSetDetailSelected} />
   }
 
-  // == COMPONENT DistributeDetail
-  // =================================================================
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View
@@ -470,7 +472,14 @@ const DistributeDetail = ({navigation, route}) => {
           initialNumToRender={6}
           windowSize={5}
           renderItem={_renderDetail}
-          ListEmptyComponent={<Empty text={t('od_item_confirmed')} />}
+          ListEmptyComponent={
+            <Empty
+              text={
+                detail?.filter((el) => el.status === 'DATA ENTRY') &&
+                t('od_item_confirmed')
+              }
+            />
+          }
           scrollEnabled={false}
         />
       ) : (
@@ -481,7 +490,14 @@ const DistributeDetail = ({navigation, route}) => {
           initialNumToRender={6}
           windowSize={5}
           renderItem={_renderDetail}
-          ListEmptyComponent={<Empty text={t('od_item_empty')} />}
+          ListEmptyComponent={
+            <Empty
+              text={
+                detail?.filter((el) => el.status !== 'DATA ENTRY') &&
+                t('od_item_empty')
+              }
+            />
+          }
           scrollEnabled={false}
         />
       )}
@@ -490,7 +506,10 @@ const DistributeDetail = ({navigation, route}) => {
         <ModalScan
           data={item}
           visible={true}
-          setVisible={() => toggleSetState(null)}
+          setVisible={() => {
+            toggleSetState(null)
+            setItem(null)
+          }}
           confirm={onPressScanConfirm}
           force={force}
           forceConfirm={onPressForceConfirm}
@@ -544,7 +563,14 @@ const DistributeDetail = ({navigation, route}) => {
       {detail?.every((el) => el.status !== 'DATA ENTRY') &&
         orderSelected?.status === 'DATA ENTRY' && (
           <TouchableOpacity
-            style={[styles.signatureBox]}
+            style={[
+              styles.signatureBox,
+              !currentSign && {
+                borderWidth: 1,
+                borderStyle: 'dashed',
+                borderColor: '#7A7A7A'
+              }
+            ]}
             onPress={() => toggleSetState(ToggleState.SIGNATURE)}
             disabled={orderSelected?.status !== 'DATA ENTRY'}>
             {currentSign !== null || orderSelected?.signature_onship ? (
@@ -637,8 +663,9 @@ const DistributeDetail = ({navigation, route}) => {
   )
 }
 
-// == COMPONENT ItemDetail
-// =================================================================
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
 const ItemDetail = React.memo(({item, detailSelected}) => {
   const {t} = useTranslation()
 
@@ -670,11 +697,11 @@ const ItemDetail = React.memo(({item, detailSelected}) => {
           {t('item_no')}: {item.item_no}
         </Text>
         <Text style={{color: '#000'}}>
-          {t('tracking_four')}:
-          {item.item_serial === null ? '-' : item.item_serial}
+          {t('tracking_four')}:{' '}
+          {item.item_serial === null ? ' -' : item.item_serial}
         </Text>
         <Text style={{color: '#000'}}>
-          {t('tracking_no')}:{item.tracking_no ? item.tracking_no : ' -'}
+          {t('tracking_no')}: {item.tracking_no ? item.tracking_no : ' -'}
         </Text>
         <View
           style={{
@@ -694,11 +721,11 @@ const ItemDetail = React.memo(({item, detailSelected}) => {
           {t('box_amount_actual')} （{t('box')}）: {item.qty_box_avail}
         </Text>
         <Text style={{flex: 1, flexWrap: 'wrap', color: '#000'}}>
-          {t('annotations')}: {item.remark ? item.remark : `-`}
+          {t('annotations')}: {item.remark ? item.remark : ` -`}
         </Text>
         <Text style={{flex: 1, flexWrap: 'wrap', color: '#000'}}>
           {t('instructions')}:{' '}
-          {item.shipping_Instructions ? item.shipping_Instructions : `-`}
+          {item.shipping_Instructions ? item.shipping_Instructions : ` -`}
         </Text>
         <View
           style={{
@@ -716,12 +743,14 @@ const ItemDetail = React.memo(({item, detailSelected}) => {
   )
 })
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
     backgroundColor: '#FFF',
-    paddingHorizontal: 10
-    // overflow: 'hidden',
+    paddingHorizontal: 5
   },
   row: {
     display: 'flex',
@@ -745,7 +774,6 @@ const styles = StyleSheet.create({
   },
   item: {
     marginVertical: 8,
-    // marginTop: 8,
     overflow: 'hidden',
     borderRadius: 8
   },

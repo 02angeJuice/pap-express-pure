@@ -1,4 +1,4 @@
-import {View, Text} from 'react-native'
+import {View, Text, ActivityIndicator} from 'react-native'
 
 export const Spinning = ({visible}) => {
   return (
@@ -11,10 +11,16 @@ export const Spinning = ({visible}) => {
   )
 }
 
-export const Empty = ({text = 'Loading...'}) => {
+export const Empty = ({text, spin}) => {
   return (
-    <View>
-      <Text style={{color: '#000'}}>{text}</Text>
+    <View style={{marginTop: '5%'}}>
+      {text ? (
+        <Text style={{color: '#000'}}>{text}</Text>
+      ) : (
+        <ActivityIndicator size={20} color="#999" />
+      )}
+      {/* {spin && <ActivityIndicator size={20} color="#999" />}
+      {text && <Text style={{color: '#000'}}>{text}</Text>} */}
     </View>
   )
 }

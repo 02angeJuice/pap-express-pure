@@ -21,9 +21,9 @@ const ModalScanContextProvider = ({children}) => {
 
   const dispatch = useDispatch()
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
-
+  // ----------------------------------------------------------
   const insertDetailsBox = async (item_no, box_id, from, navigation) => {
     await sendDetailsBox(
       {
@@ -70,7 +70,7 @@ const ModalScanContextProvider = ({children}) => {
     )
     // }
   }
-  // =================================================================
+  // ----------------------------------------------------------
 
   return (
     <ModalScanContext.Provider

@@ -82,18 +82,24 @@ const TabViewLeft = ({data, selected, info}) => {
     <ScrollView nestedScrollEnabled={true}>
       <DataTable>
         <DataTable.Header style={{height: 50}}>
-          <DataTable.Title>
+          <DataTable.Title style={{flex: 0.5}}>
             <Text style={styles.tableText}>#</Text>
           </DataTable.Title>
-          <DataTable.Title>
+          <DataTable.Title style={{flex: 3}}>
+            <Text style={styles.tableText}>{t('tracking_four')}</Text>
+          </DataTable.Title>
+          <DataTable.Title style={{flex: 2}}>
             <Text style={styles.tableText}>{t('item_name')}</Text>
           </DataTable.Title>
-          <DataTable.Title>
+          <DataTable.Title
+            style={{flex: 1, justifyContent: 'flex-end', paddingRight: '10%'}}>
             <Text style={styles.tableText}>{t('box')}</Text>
           </DataTable.Title>
-          <DataTable.Title>
+          <DataTable.Title style={{flex: 2, justifyContent: 'flex-start'}}>
             <Text style={styles.tableText}>{t('status')}</Text>
           </DataTable.Title>
+
+          <DataTable.Title style={{flex: 1}}></DataTable.Title>
         </DataTable.Header>
 
         {data !== null ? (
@@ -115,25 +121,9 @@ const TabViewLeft = ({data, selected, info}) => {
 }
 
 const DetailItem = ({item, selected, info}) => {
-  const CellComponent = ({text}) => {
-    return (
-      <DataTable.Cell>
-        <Text
-        // style={[
-        //     styles.titleText,
-        //     selected?.item_no === item.item_no
-        //         ? styles.selected
-        //         : styles.unselect,
-        // ]}
-        >
-          {text}
-        </Text>
-      </DataTable.Cell>
-    )
-  }
-
   return (
     <DataTable.Row
+      style={{paddingRight: 0}}
       key={item.row_id}
       onPress={() => item?.status === 'LOADED' && selected(item)}
       // onPress={() => selected(item)}
@@ -143,10 +133,26 @@ const DetailItem = ({item, selected, info}) => {
       //         : '',
       // ]}
     >
-      <CellComponent text={item.row_id} />
-      <CellComponent text={item.item_name} />
-      <CellComponent text={`${item.qty_box}`} />
-      <DataTable.Cell>
+      <DataTable.Cell
+        style={{
+          flex: 0.5,
+          borderRightWidth: 0.75,
+          borderStyle: 'dashed',
+          borderColor: '#eee'
+        }}>
+        <Text>{item.row_id}</Text>
+      </DataTable.Cell>
+      <DataTable.Cell style={{flex: 2, justifyContent: 'center'}}>
+        <Text>{item.item_serial}</Text>
+      </DataTable.Cell>
+      <DataTable.Cell style={{flex: 3, justifyContent: 'flex-start'}}>
+        <Text>{item.item_name}</Text>
+      </DataTable.Cell>
+      <DataTable.Cell style={{flex: 0.75, justifyContent: 'flex-end'}}>
+        <Text>{item.qty_box}</Text>
+      </DataTable.Cell>
+      <DataTable.Cell
+        style={{flex: 2.5, justifyContent: 'flex-end', paddingRight: '2%'}}>
         <View
           style={[
             styles.status,
@@ -156,20 +162,23 @@ const DetailItem = ({item, selected, info}) => {
               ? styles.LOADED
               : styles.UNLOAD
           ]}>
-          <Text style={{fontSize: 10}}>{item.status}</Text>
+          <Text style={{fontSize: 10, color: '#ffff'}}>{item.status}</Text>
         </View>
       </DataTable.Cell>
-
-      <TouchableOpacity
-        style={{justifyContent: 'center', alignItems: 'center'}}
+      <DataTable.Cell
+        style={{
+          flex: 2,
+          // backgroundColor: 'pink',
+          justifyContent: 'center'
+        }}
         onPress={() => info(item)}>
         <Ionicons
           style={styles.rightIcon}
-          name={'search'}
-          size={17}
+          name={'search-circle'}
+          size={40}
           color={'#777'}
         />
-      </TouchableOpacity>
+      </DataTable.Cell>
     </DataTable.Row>
   )
 }
@@ -191,7 +200,6 @@ const TabViewRight = ({selected}) => {
           {selected?.container_no === null ? '-' : selected?.container_no}{' '}
         </Text>
         <Text style={{color: '#000'}}>
-          {t('customer')}:{' '}
           {selected?.customer_id === null ? '-' : selected?.customer_id}
         </Text>
       </View>
@@ -234,6 +242,9 @@ const TabViewRight = ({selected}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     marginTop: 15,

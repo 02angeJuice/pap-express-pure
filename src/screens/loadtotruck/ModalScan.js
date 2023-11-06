@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react'
+import React, {useEffect, useState, useRef, useCallback} from 'react'
 import {
   StyleSheet,
   View,
@@ -6,21 +6,19 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Platform,
-  FlatList
+  FlatList,
+  Keyboard,
+  Modal,
+  ActivityIndicator
 } from 'react-native'
-
+import Clipboard from '@react-native-clipboard/clipboard'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import Modal from 'react-native-modal'
-import {Table, Row, Rows} from 'react-native-table-component'
-
 import CustomTextInputAlert from '../../components/CustomTextInputAlert'
 import {Empty} from '../../components/SpinnerEmpty'
-
 import {useTranslation} from 'react-i18next'
 import {useScan} from '../../hooks'
-
 import {fetchBox} from '../../apis'
+import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
 const ModalScan = ({
   data,
@@ -31,138 +29,152 @@ const ModalScan = ({
   forceConfirm,
   navigation
 }) => {
+  const [loading, setLoading] = useState(false)
+  const [scan, setScan] = useState(false)
+  const [items, setItems] = useState([])
   const [checkStatus, setCheckStatus] = useState(false)
-  const [alert, setAlert] = useState(false)
-
+  const [alertContainer, setAlertContainer] = useState(false)
+  const [alertBarcode, setAlertBarcode] = useState(false)
+  const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
-  const [keyboardFocus, setKeyboardFocus] = useState(false)
-
   const [box, setBox] = useState(null)
   const [reload, setReload] = useState(false)
 
   const {insertDetailsBox, setBoxAvail} = useScan()
-
   const {t} = useTranslation()
-
   const numInputs = Number(data?.qty_box)
+  const scanRef = useRef(null)
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const fetchBox_API = async (item_no) => {
+    setLoading(true)
     const box = await fetchBox(item_no)
     setBox(box?.data)
-
     console.log(box?.data)
+    setLoading(false)
   }
 
-  // == EFFECT
-  // =================================================================
-  useEffect(() => {
-    if (data?.item_no) {
-      fetchBox_API(data?.item_no)
+  const generateItems = (numInput) => {
+    const newItems = []
+    for (let i = 0; i < numInput; i++) {
+      newItems.push({box_id: `${data?.item_no}/${i + 1}`, is_scan: null})
     }
-  }, [data, reload])
+    return newItems
+  }
+
+  // ----------------------------------------------------------
+  // == EFFECT
+  // ----------------------------------------------------------
+  useEffect(() => {
+    if (barcode.length != 0) {
+      handleInputSubmit(barcode)
+    }
+
+    console.log(barcode)
+  }, [barcode])
 
   useEffect(() => {
-    if (box?.length > 0) {
-      Number(data?.qty_box) ===
-      box?.filter((el) => el.is_scan === 'SCANED').length
-        ? setCheckStatus(true)
-        : setCheckStatus(false)
+    data?.qty_box && setItems(generateItems(numInputs))
+  }, [])
 
+  useEffect(() => {
+    scanRef.current && scanRef.current?.focus()
+    fetchBox_API(data?.item_no)
+    setBoxAvail(box?.filter((el) => el.is_scan === 'SCANED').length)
+
+    const interval = setInterval(() => {
+      fetchBox_API(data?.item_no)
       setBoxAvail(box?.filter((el) => el.is_scan === 'SCANED').length)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [scan])
+
+  useEffect(() => {
+    box?.length != 0 && items?.every((el) => el.is_scan === 'SCANED')
+      ? setCheckStatus(true)
+      : setCheckStatus(false)
+
+    if (box) {
+      const newItems = items.map((el) => {
+        const foundBox = box?.find((b) => b.box_id === el.box_id)
+        return {
+          ...el,
+          is_scan: foundBox ? foundBox.is_scan : null
+        }
+      })
+
+      setItems(newItems)
     }
   }, [box])
 
+  // ----------------------------------------------------------
   // == HANDLE
-  // =================================================================
+  // ----------------------------------------------------------
   const handleInputChange = async (value) => {
+    value.includes(data?.item_no) && setScan(!scan)
     setInput(value.toUpperCase())
+  }
 
-    const newValue = value.split('/')
-    const item = newValue[0]
-    const index = Number(newValue[1])
-
-    const isValid = item === data?.item_no && index > 0 && index <= numInputs
+  const handleInputSubmit = async (text) => {
+    const newValue = text.split('/')
+    const isValid =
+      newValue[0] === data?.item_no &&
+      newValue[1] > 0 &&
+      newValue[1] <= numInputs
 
     if (!isValid) {
-      if (value.length > data?.item_no.length + 1) {
-        Platform.OS === 'android'
-          ? Alert.alert(
-              'Invalid Barcode',
-              'The entered barcode is not valid for the current item.',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => console.log('OK Pressed')
-                }
-              ]
-            )
-          : alert(
-              'Invalid Barcode',
-              'The entered barcode is not valid for the current item.'
-            )
-
+      if (
+        (newValue[0] !== 'P' && newValue[0] !== 'p') ||
+        text.length > data?.item_no.length + 1
+      ) {
+        Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
+          cancelable: true
+        })
         setInput('')
       }
     } else {
-      await insertDetailsBox(item, index, 'load', navigation)
-      setReload(!reload)
+      setReload(true)
+      await insertDetailsBox(
+        newValue[0],
+        Number(newValue[1]),
+        'load',
+        navigation
+      )
+      setReload(false)
+
+      const updatedItems = items.map((item) =>
+        item.box_id === `${newValue[0]}/${newValue[1]}`
+          ? {...item, is_scan: 'SCANED'}
+          : item
+      )
+      setItems(updatedItems)
+      setScan(!scan)
       setInput('')
     }
   }
 
-  const rows = Array.from({length: numInputs}, (_, index) => {
-    const boxId = `${data?.item_no}/${index + 1}`
-    const matchingBox = box?.find((el) => el.box_id === boxId)
-    const isScanned = matchingBox?.is_scan === 'SCANED'
-
-    return [
-      `${index + 1}`,
-      boxId,
-      isScanned ? (
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'checkmark-circle-outline'}
-          size={20}
-          color={'green'}
-        />
-      ) : (
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'ellipsis-horizontal-outline'}
-          size={10}
-          color={'#000'}
-        />
-      )
-    ]
-  })
-
-  const _renderItem = ({item}) => {
+  const renderItem = useCallback(({item}) => {
     return <ScanItem item={item} />
-  }
-
-  // == COMPONENT ModalScan
-  // =================================================================
+  }, [])
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <Modal
-      isVisible={visible}
-      animationInTiming={1}
-      animationOutTiming={1}
-      onBackButtonPress={() => setVisible(!visible)}>
-      <View style={styles.container}>
-        <View style={styles.nav}>
-          <Text style={styles.textNav}>
-            {t('item_no')} {data?.item_no}
-          </Text>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setVisible(!visible)}>
-            <Ionicons name="close" size={25} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        {data !== null && (
+      visible={visible}
+      transparent={true}
+      statusBarTranslucent={true}
+      // animationType="slide"
+      onRequestClose={() => setVisible(!visible)}>
+      <View style={styles.modalContainer}>
+        <TouchableOpacity
+          style={[styles.closeButton]}
+          onPress={() => setVisible(!visible)}>
+          <Ionicons name="close" size={30} color="#7a7a7a" />
+        </TouchableOpacity>
+        <View style={styles.container}>
           <View
             style={{
               marginVertical: 5,
@@ -170,117 +182,242 @@ const ModalScan = ({
               borderRadius: 5,
               flex: 1
             }}>
-            <Table style={{paddingBottom: 70}}>
-              <Row
-                style={{
+            <View
+              style={[
+                styles.row,
+                {
+                  justifyContent: 'space-between',
                   borderBottomWidth: 0.5,
                   marginBottom: 5,
                   borderStyle: 'dashed'
-                }}
-                textStyle={{textAlign: 'center', color: '#000'}}
-                data={[
-                  `#${t('box')}(${numInputs})`,
-                  <TextInput
-                    style={{fontSize: 12, color: '#000'}}
-                    value={input}
-                    onChangeText={handleInputChange}
-                    placeholder={t('enter_barcode')}
-                    placeholderTextColor="#000"
-                    autoFocus={true}
-                    blurOnSubmit={false}
-                    showSoftInputOnFocus={keyboardFocus}
-                    onPressIn={() => setKeyboardFocus(true)}
-                    onBlur={() => setKeyboardFocus(false)}
-                  />,
-                  `${t('status')}`
-                ]}
-              />
+                }
+              ]}>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  width: '100%'
+                }}>
+                <Text style={{color: '#000', fontSize: 20}}>{`#${t('box')}(${
+                  box ? box?.length : ''
+                })`}</Text>
+              </View>
+              <View style={{flex: 2, alignItems: 'center'}}>
+                <TextInput
+                  ref={scanRef}
+                  style={{
+                    fontSize: 20,
+                    color: '#000'
+                  }}
+                  value={input}
+                  onChangeText={handleInputChange}
+                  placeholder={t('enter_barcode')}
+                  placeholderTextColor="#999"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => handleInputSubmit(input)}
+                  selectTextOnFocus={true}
+                  onStartShouldSetResponder={() => {
+                    Keyboard.dismiss()
+                    return false
+                  }}
+                  showSoftInputOnFocus={false}
+                  onPressOut={() => setAlertBarcode(!alertBarcode)}
+                />
+              </View>
 
-              <FlatList
-                style={{marginBottom: 5}}
-                keyExtractor={(item, index) => index.toString()}
-                data={rows}
-                ItemSeparatorComponent={() => (
-                  <View style={{backgroundColor: '#eeeeee99', height: 1}} />
-                )}
-                initialNumToRender={6}
-                windowSize={5}
-                renderItem={_renderItem}
-                ListEmptyComponent={<Empty />}
-              />
-            </Table>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center'
+                }}>
+                {/* <Text style={{fontSize: 20, color: '#000'}}>{t('status')}</Text> */}
+              </View>
+            </View>
+
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              // keyboardShouldPersistTaps="always"
+              style={{marginBottom: 5}}
+              keyExtractor={(item, index) => index.toString()}
+              data={items}
+              ItemSeparatorComponent={() => (
+                <View
+                  style={{
+                    borderBottomWidth: 0.5,
+                    borderStyle: 'dashed',
+                    borderColor: '#999999'
+                  }}
+                />
+              )}
+              initialNumToRender={1}
+              windowSize={10}
+              renderItem={renderItem}
+              ListEmptyComponent={<Empty text={box && t('empty')} />}
+            />
           </View>
-        )}
 
-        <View
-          style={[
-            styles.row,
-            {
-              justifyContent: 'space-between',
-              gap: 5
-            }
-          ]}>
-          {checkStatus || force ? (
-            <TouchableOpacity
-              style={[styles.button, {backgroundColor: '#ABFC74', flex: 1}]}
-              onPress={() => confirm()}>
-              <Text
+          <View
+            style={[
+              styles.row,
+              {
+                justifyContent: 'space-between',
+                gap: 5
+              }
+            ]}>
+            {(loading && !box) || reload ? (
+              <TouchableOpacity
+                disabled={loading}
                 style={[
+                  styles.button,
+                  styles.row,
                   {
-                    color: '#183B00',
-                    fontWeight: 'bold',
-                    textAlign: 'center'
+                    flex: 1,
+                    justifyContent: 'center',
+                    gap: 10,
+                    backgroundColor: '#FFF'
                   }
                 ]}>
-                {t('confirm')}
-              </Text>
-            </TouchableOpacity>
-          ) : (
+                <ActivityIndicator size={20} color="#999" />
+                <Text
+                  style={[
+                    {
+                      color: '#999',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }
+                  ]}>
+                  Loading...
+                </Text>
+              </TouchableOpacity>
+            ) : checkStatus || force ? (
+              <TouchableOpacity
+                style={[styles.button, {backgroundColor: '#ABFC74', flex: 1}]}
+                onPress={() => confirm()}>
+                <Text
+                  style={[
+                    {
+                      color: '#183B00',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }
+                  ]}>
+                  {t('confirm')}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.button, {backgroundColor: '#FFE683', flex: 1}]}
+                onPress={() => setAlertContainer(!alertContainer)}>
+                <Text
+                  style={[
+                    {
+                      color: '#5E4600',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }
+                  ]}>
+                  {t('force_confirm')}
+                </Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               style={[styles.button, {backgroundColor: '#fff', flex: 1}]}
-              onPress={() => setAlert(!alert)}>
+              onPress={() => setVisible(!visible)}>
               <Text
                 style={[
                   {
-                    color: '#183B00',
+                    color: '#000',
                     fontWeight: 'bold',
                     textAlign: 'center'
                   }
                 ]}>
-                {t('force_confirm')}
+                {t('close')}
               </Text>
             </TouchableOpacity>
-          )}
 
-          <CustomTextInputAlert
-            visible={alert}
-            onClose={() => setAlert(!alert)}
-            forceConfirm={forceConfirm}
-            remark={data?.remark}
-          />
+            <CustomTextInputAlert
+              visible={alertContainer}
+              onClose={() => setAlertContainer(!alertContainer)}
+              forceConfirm={forceConfirm}
+              remark={data?.remark}
+            />
+
+            <BarcodeInputAlert
+              visible={alertBarcode}
+              onClose={() => setAlertBarcode(!alertBarcode)}
+              setBarcode={setBarcode}
+              item_no={data?.item_no}
+            />
+          </View>
         </View>
       </View>
     </Modal>
   )
 }
 
-const ScanItem = React.memo(({item}) => {
-  return (
-    <Row
-      textStyle={[
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
+const ScanItem = React.memo(({item}) => (
+  <View key={item.box_id}>
+    <View
+      style={[
+        styles.row,
         {
-          textAlign: 'center',
-          fontSize: 12,
-          marginBottom: 5,
-          color: '#000',
-          paddingVertical: 7
+          justifyContent: 'space-between',
+          marginVertical: 3
         }
-      ]}
-      data={item}
-    />
-  )
-})
+      ]}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          width: '100%'
+        }}>
+        <Text style={{color: '#000', fontSize: 20}}>
+          {item.box_id?.split('/')[1]}
+        </Text>
+      </View>
+      <View style={{flex: 2, alignItems: 'center'}}>
+        <TouchableOpacity
+          onLongPress={async () => {
+            Clipboard.setString(item.box_id)
+            console.log('copy ', item.box_id)
+            // await Clipboard.getString()
+          }}>
+          <Text style={{color: '#000', fontSize: 20}}>{item.box_id}</Text>
+        </TouchableOpacity>
+      </View>
 
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center'
+        }}>
+        {item?.is_scan === 'SCANED' ? (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'checkmark-circle-outline'}
+            size={20}
+            color={'green'}
+          />
+        ) : (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'ellipsis-horizontal-outline'}
+            size={10}
+            color={'#000'}
+          />
+        )}
+      </View>
+    </View>
+  </View>
+))
+
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   input: {
     width: 200,
@@ -288,6 +425,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     marginBottom: 10
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 25,
+    paddingBottom: 10,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
   row: {
     display: 'flex',
@@ -299,7 +443,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    // backgroundColor: '#fff',
     borderRadius: 5,
     overflow: 'hidden'
   },
@@ -317,10 +460,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10
   },
   closeButton: {
-    flex: 0.3,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 15
+    zIndex: 2,
+    position: 'absolute',
+    right: 12,
+    top: 35,
+    transform: [{translateY: -5}]
   },
   button: {
     maxWidth: '100%',

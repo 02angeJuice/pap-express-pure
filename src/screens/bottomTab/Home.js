@@ -33,8 +33,9 @@ const Home = ({navigation}) => {
 
   const dispatch = useDispatch()
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const checkRefreshToken = async () => {
     const res = await CheckOnlineWeb(refresh)
       .then(() => {
@@ -54,8 +55,9 @@ const Home = ({navigation}) => {
     return res
   }
 
+  // ----------------------------------------------------------
   // == EFFECT
-  // =================================================================
+  // ----------------------------------------------------------
   useEffect(() => {
     language !== i18n.language && i18n.changeLanguage(language)
     checkRefreshToken()
@@ -67,6 +69,9 @@ const Home = ({navigation}) => {
     }
   }
 
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#AE100F" />
@@ -115,6 +120,9 @@ const Home = ({navigation}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
 const DisplayMenu = ({text, fileIcon, x = 100, y = 100}) => {
   return (
     <View style={styles.menuItem}>
@@ -131,6 +139,9 @@ const DisplayMenu = ({text, fileIcon, x = 100, y = 100}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     display: 'flex',

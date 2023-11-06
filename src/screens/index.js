@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import {Platform, Alert, Linking} from 'react-native'
 import {NavigationContainer, useNavigation} from '@react-navigation/native'
 import {createStackNavigator} from '@react-navigation/stack'
@@ -27,18 +27,41 @@ import {useTranslation} from 'react-i18next'
 import {useAuthToken, useSettings} from '../hooks'
 import {checkVersion} from '../apis'
 import {path} from '../constants/url'
+import {useDispatch} from 'react-redux'
+import {resetToken} from '../store/slices/tokenSlice'
+import {CheckOnlineWeb} from '../apis/loginApi'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
 
-const AppContainer = () => {
+const Screen = ({navigation}) => {
   const {t, i18n} = useTranslation()
   const {language} = useSettings()
   const {refresh} = useAuthToken()
+  const [auth, setAuth] = useState(false)
+
+  const dispatch = useDispatch()
 
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
+  const checkRefreshToken = async () => {
+    const res = await CheckOnlineWeb(refresh)
+      .then(() => {
+        return true
+      })
+      .catch(() => {
+        dispatch(resetToken())
+
+        navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+        Platform.OS === 'android'
+          ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+          : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+
+        return false
+      })
+  }
+
   const checkVersion_API = async () => {
     try {
       const res = await checkVersion()
@@ -81,75 +104,76 @@ const AppContainer = () => {
   useEffect(() => {
     language && i18n.changeLanguage(language)
     checkVersion_API()
+    // checkRefreshToken()
+    // navigation.navigate('Login')
   }, [])
 
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
-  return (
-    <NavigationContainer>
+
+  if (!refresh) {
+    return <Login />
+  } else {
+    return (
       <Stack.Navigator
         screenOptions={{
           animationEnabled: false,
           headerTintColor: '#fff',
           headerStyle: {backgroundColor: '#AE100F'}
         }}>
-        {refresh ? (
-          <Stack.Screen
-            options={{
-              headerTitle: (props) => <CustomHeader {...props} />,
-              headerRight: (props) => <LanguageFlags {...props} />
-            }}
-            name={screenMap.HomePage}>
-            {() => (
-              <Tab.Navigator
-                screenOptions={({route}) => ({
-                  tabBarIcon: ({focused, color, size}) => {
-                    let iconName
+        <Stack.Screen
+          options={{
+            headerTitle: (props) => <CustomHeader {...props} />,
+            headerRight: (props) => <LanguageFlags {...props} />
+          }}
+          name={screenMap.HomePage}>
+          {() => (
+            <Tab.Navigator
+              screenOptions={({route}) => ({
+                tabBarIcon: ({focused, color, size}) => {
+                  let iconName
 
-                    if (route.name === 'Home') {
-                      iconName = focused ? 'home' : 'home-outline'
-                    } else if (route.name === 'Information') {
-                      iconName = focused ? 'person' : 'person-outline'
-                    } else if (route.name === 'Settings') {
-                      iconName = focused ? 'list' : 'list-outline'
-                    }
+                  if (route.name === 'Home') {
+                    iconName = focused ? 'home' : 'home-outline'
+                  } else if (route.name === 'Information') {
+                    iconName = focused ? 'person' : 'person-outline'
+                  } else if (route.name === 'Settings') {
+                    iconName = focused ? 'list' : 'list-outline'
+                  }
 
-                    return (
-                      <Ionicons name={iconName} size={size} color={color} />
-                    )
-                  },
+                  return <Ionicons name={iconName} size={size} color={color} />
+                },
 
-                  tabBarActiveTintColor: '#ED2B2A',
-                  tabBarInactiveTintColor: 'gray'
-                })}>
-                <Tab.Screen
-                  name="Home"
-                  component={Home}
-                  options={{
-                    title: t('home'),
-                    headerShown: false
-                  }}
-                />
+                tabBarActiveTintColor: '#ED2B2A',
+                tabBarInactiveTintColor: 'gray'
+              })}>
+              <Tab.Screen
+                name="Home"
+                component={Home}
+                options={{
+                  title: t('home'),
+                  headerShown: false
+                }}
+              />
 
-                <Tab.Screen
-                  name="Information"
-                  component={Info}
-                  options={{
-                    title: t('info'),
-                    headerShown: false
-                  }}
-                />
-              </Tab.Navigator>
-            )}
-          </Stack.Screen>
-        ) : (
-          <Stack.Screen
-            options={{headerShown: false}}
-            name={screenMap.Login}
-            component={Login}
-          />
-        )}
+              <Tab.Screen
+                name="Information"
+                component={Info}
+                options={{
+                  title: t('info'),
+                  headerShown: false
+                }}
+              />
+            </Tab.Navigator>
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen
+          options={{headerShown: false}}
+          name={screenMap.Login}
+          component={Login}
+        />
 
         <Stack.Screen
           options={{title: t('load_to_truck')}}
@@ -201,8 +225,8 @@ const AppContainer = () => {
           component={ScanReceiveDetail}
         />
       </Stack.Navigator>
-    </NavigationContainer>
-  )
+    )
+  }
 }
 
-export default AppContainer
+export default Screen

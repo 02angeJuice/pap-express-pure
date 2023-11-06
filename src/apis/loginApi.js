@@ -9,7 +9,8 @@ export const CheckOnlineWeb = async (token) =>
   )
 
 // == GET
-// =================================================================
+// ----------------------------------------------------------
+
 export const fetchUserProfile = async (user_id, token) =>
   await axios.post(
     `${path.URL}/user/${user_id}`,
@@ -18,7 +19,8 @@ export const fetchUserProfile = async (user_id, token) =>
   )
 
 // == POST
-// =================================================================
+// ----------------------------------------------------------
+
 export const sendRefreshToken = async (token) =>
   await axios
     .post(

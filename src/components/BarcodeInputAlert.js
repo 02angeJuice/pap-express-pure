@@ -1,38 +1,22 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useRef} from 'react'
 import {useTranslation} from 'react-i18next'
 import {
   View,
   TextInput,
   TouchableOpacity,
   Text,
-  Alert,
-  Platform,
   Modal,
-  TouchableWithoutFeedback,
   KeyboardAvoidingView
 } from 'react-native'
-
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
-const ContainerAlert = ({
-  visible,
-  onClose,
-  container_no,
-  setContainerOk,
-  containerOk
-}) => {
-  const [inputValue, setInputValue] = useState(
-    containerOk ? containerOk : container_no
-  )
-
+const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
+  const [inputValue, setInputValue] = useState('')
   const {t} = useTranslation()
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
-  useEffect(() => {
-    container_no && setInputValue(container_no)
-  }, [container_no])
 
   // ----------------------------------------------------------
   // == HANDLE
@@ -42,23 +26,14 @@ const ContainerAlert = ({
   }
 
   const handleConfirm = () => {
-    if (inputValue == '00') {
-      alertReUse('container_required', 'container_required_detail')
-    } else {
-      setContainerOk(inputValue)
-      onClose()
-    }
-  }
-
-  const handleClose = () => {
-    setInputValue(containerOk ? containerOk : container_no)
+    setBarcode(`${item_no}/${inputValue}`)
+    setInputValue('')
     onClose()
   }
 
-  const alertReUse = (msg, detail) => {
-    Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail))
-      : alert(t(msg), t(detail))
+  const handleClose = () => {
+    setInputValue('')
+    onClose()
   }
 
   // ----------------------------------------------------------
@@ -69,14 +44,13 @@ const ContainerAlert = ({
       visible={visible}
       transparent={true}
       statusBarTranslucent={true}
-      // // animationType="fade"
       onRequestClose={handleClose}>
       {/* <TouchableWithoutFeedback onPress={handleClose}> */}
       <View style={styles.modalContainer}>
         <KeyboardAvoidingView style={{flex: 1}} behavior="padding">
           <View style={styles.container}>
             <View style={styles.nav}>
-              <Text style={styles.textNav}>{t('item_container')}</Text>
+              <Text style={styles.textNav}>{t('enter_barcode_title')}</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleClose}>
@@ -95,11 +69,12 @@ const ContainerAlert = ({
               <TextInput
                 onChangeText={handleInputChange}
                 style={styles.textInput}
-                // defaultValue={container_no}
                 value={inputValue}
-                placeholder={t('enter_container')}
-                placeholderTextColor="#000"
+                placeholder={t('enter_barcode_box')}
+                placeholderTextColor="#999"
                 selectTextOnFocus={true}
+                // autoFocus={true}
+                // showSoftInputOnFocus={true}
                 keyboardType="numeric"
               />
             </View>
@@ -109,9 +84,7 @@ const ContainerAlert = ({
                 display: 'flex',
                 flexDirection: 'row',
                 justifyContent: 'flex-end',
-
                 alignItems: 'center',
-                // width: '95%',
                 gap: 10
               }}>
               <TouchableOpacity
@@ -216,4 +189,4 @@ const styles = {
   }
 }
 
-export default React.memo(ContainerAlert)
+export default React.memo(BarcodeInputAlert)

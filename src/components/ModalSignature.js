@@ -1,7 +1,14 @@
 import React, {useState} from 'react'
-import {StyleSheet, View, Text, TouchableOpacity, Platform} from 'react-native'
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+  Modal,
+  TouchableWithoutFeedback
+} from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import Modal from 'react-native-modal'
 import Signature from 'react-native-canvas-signature'
 import {useTranslation} from 'react-i18next'
 import RNFS from 'react-native-fs'
@@ -10,6 +17,9 @@ const ModalSignature = ({set, visible, setVisible}) => {
   const [signature, setSignature] = useState(null)
   const {t} = useTranslation()
 
+  // ----------------------------------------------------------
+  // == HANDLE
+  // ----------------------------------------------------------
   const handleOK = async (sign) => {
     const dataType = sign.split(';')[0]
     const fileType = sign.split(';')[0].split('/')[1]
@@ -31,69 +41,85 @@ const ModalSignature = ({set, visible, setVisible}) => {
       })
   }
 
-  const handleConfirm = () => {
-    set(signature)
-    setVisible(!visible)
-  }
-
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <Modal
-      isVisible={visible}
-      animationInTiming={1}
-      animationOutTiming={1}
-      onBackButtonPress={() => setVisible(!visible)}>
-      <View style={styles.container}>
-        <View style={styles.nav}>
-          <Text style={styles.textNav}>{t('signature')}</Text>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setVisible(!visible)}>
-            <Ionicons name="close" size={25} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            marginVertical: 5,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            backgroundColor: '#fff',
-            borderRadius: 5
-          }}>
-          {Platform.OS === 'android' ? (
-            <Signature lineWidth={1.5} lineColor="#000" onChange={handleOK} />
-          ) : (
-            <View style={[styles.row, {gap: 5}]}>
-              <Text>{t('signature_support')}</Text>
-            </View>
-          )}
-        </View>
+      visible={visible}
+      transparent={true}
+      statusBarTranslucent={true}
+      // animationType="slide"
+      onRequestClose={() => setVisible(!visible)}>
+      {/* <TouchableWithoutFeedback onPress={() => setVisible(!visible)}> */}
+      <View style={styles.modalContainer}>
+        <View style={styles.container}>
+          <View style={styles.nav}>
+            <Text style={styles.textNav}>{t('signature')}</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setVisible(!visible)}>
+              <Ionicons name="close" size={25} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              marginVertical: 5,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              backgroundColor: '#fff',
+              borderRadius: 5
+            }}>
+            {Platform.OS === 'android' ? (
+              <Signature lineWidth={1.5} lineColor="#000" onChange={handleOK} />
+            ) : (
+              <View style={[styles.row, {gap: 5}]}>
+                <Text>{t('signature_support')}</Text>
+              </View>
+            )}
+          </View>
 
-        <View>
-          <TouchableOpacity
-            style={[styles.button, {backgroundColor: '#ABFC74'}]}
-            onPress={handleConfirm}>
-            <Text
-              style={[
-                {
-                  color: '#183B00',
-                  fontWeight: 'bold',
-                  textAlign: 'center'
-                }
-              ]}>
-              {t('confirm')}
-            </Text>
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={[styles.button, {backgroundColor: '#ABFC74'}]}
+              onPress={() => {
+                set(signature)
+                setVisible(!visible)
+              }}>
+              <Text
+                style={[
+                  {
+                    color: '#183B00',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }
+                ]}>
+                {t('confirm')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
+      {/* </TouchableWithoutFeedback> */}
     </Modal>
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   row: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 25,
+    paddingBottom: 10,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
   container: {
     flex: 1,

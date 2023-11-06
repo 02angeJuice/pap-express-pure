@@ -1,7 +1,12 @@
-import React, {useState, useEffect} from 'react'
-import {StyleSheet, View, Text, TouchableOpacity, FlatList} from 'react-native'
-
-import Modal from 'react-native-modal'
+import React, {useState, useEffect, useCallback} from 'react'
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  Modal
+} from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {Empty} from '../../components/SpinnerEmpty'
 import {fetchHeader} from '../../apis'
@@ -10,11 +15,11 @@ import {useTranslation} from 'react-i18next'
 const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
   const [header, setHeader] = useState(null)
   const [status, setStatus] = useState('PICKED')
-
   const {t} = useTranslation()
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const fetchHeader_API = async (status) => {
     const header = await fetchHeader(status)
 
@@ -25,25 +30,34 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
     )
   }
 
+  // ----------------------------------------------------------
   // == EFFECT
-  // =================================================================
+  // ----------------------------------------------------------
   useEffect(() => {
     fetchHeader_API(status)
   }, [status])
 
-  const _renderitem = ({item}) => (
-    <HeaderItem item={item} onPress={onPress} headerSelected={headerSelected} />
+  const renderItem = useCallback(
+    ({item}) => (
+      <HeaderItem
+        item={item}
+        onPress={onPress}
+        headerSelected={headerSelected}
+      />
+    ),
+    []
   )
-
-  // == COMPONENT ModalHeader
-  // =================================================================
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
-    <View style={{flex: 0.3}}>
-      <Modal
-        isVisible={visible}
-        animationInTiming={1}
-        animationOutTiming={1}
-        onBackButtonPress={() => setVisible(!visible)}>
+    <Modal
+      visible={visible}
+      transparent={true}
+      statusBarTranslucent={true}
+      // animationType="slide"
+      onRequestClose={() => setVisible(!visible)}>
+      <View style={styles.modalContainer}>
         <View style={styles.nav}>
           <Text style={styles.textNav}>{t('load_to_truck')}</Text>
           <TouchableOpacity
@@ -80,16 +94,18 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
             onPress={() => setStatus('ONSHIP')}
           />
         </View>
+
         <FlatList
           keyboardShouldPersistTaps="handled"
           style={[styles.list, {borderRadius: 5}]}
           keyExtractor={(el) => el.receipt_no.toString()}
           data={header}
-          initialNumToRender={6}
+          initialNumToRender={1}
           windowSize={5}
-          renderItem={_renderitem}
+          renderItem={renderItem}
           ListEmptyComponent={<Empty text={t('empty')} />}
         />
+
         <ButtonComponent
           text={t('close')}
           fontWeight="bold"
@@ -99,19 +115,21 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
           backgroundColor="#FFF"
           onPress={() => setVisible(false)}
         />
-      </Modal>
-    </View>
+      </View>
+    </Modal>
   )
 }
 
-// == COMPONENT HeaderItem
-// =================================================================
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
 const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
   const {t} = useTranslation()
 
   return (
     <TouchableOpacity style={[styles.item]} onPress={() => onPress(item)}>
       <View
+        key={item?.receipt_no}
         style={[
           styles.itemHeader,
           item.receipt_no === headerSelected && {
@@ -287,10 +305,20 @@ const ButtonComponent = ({
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden'
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 25,
+    paddingBottom: 10,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
   filter: {
     paddingHorizontal: 4,

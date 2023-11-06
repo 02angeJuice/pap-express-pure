@@ -14,20 +14,25 @@ const LanguageFlags = () => {
 
   const dispatch = useDispatch()
 
+  // ----------------------------------------------------------
   // == EFFECT
-  // =================================================================
+  // ----------------------------------------------------------
   useEffect(() => {
     language !== i18n.language && i18n.changeLanguage(language)
   }, [language])
 
+  // ----------------------------------------------------------
   // == HANDLE
-  // =================================================================
+  // ----------------------------------------------------------
   const handleChangeLanguage = (lang) => {
     dispatch(setLanguage(lang))
     i18n.changeLanguage(lang)
     setToggleLanguage(false)
   }
 
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <View style={{marginRight: 10}}>
       <TouchableOpacity onPress={() => setToggleLanguage(!toggleLanguage)}>
@@ -82,6 +87,9 @@ const LanguageFlags = () => {
   )
 }
 
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
 const FlagItem = ({lang, text, handle, flag}) => {
   return (
     <TouchableOpacity
@@ -101,6 +109,9 @@ const FlagItem = ({lang, text, handle, flag}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   row: {
     display: 'flex',

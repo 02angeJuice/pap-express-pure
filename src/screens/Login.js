@@ -9,12 +9,12 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import VersionCheck from 'react-native-version-check'
-
-// import RNFS from 'react-native-fs'
 
 import {LOGIN} from '../constants/images'
 
@@ -44,8 +44,9 @@ const Login = ({navigation}) => {
 
   const dispatch = useDispatch()
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const sendCheckLoginHH_API = async ({user_id, password}) => {
     try {
       const res = await sendCheckLoginHH({user_id, password})
@@ -134,8 +135,9 @@ const Login = ({navigation}) => {
     }
   }
 
-  // == HNADLE
-  // =================================================================
+  // ----------------------------------------------------------
+  // == HANDLE
+  // ----------------------------------------------------------
   const onSubmit = async (data) => {
     setLoading(!loading)
 
@@ -152,59 +154,64 @@ const Login = ({navigation}) => {
       : alert(t(msg), t(detail))
   }
 
-  // == COMPONENT Login
-  // =================================================================
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#6AA3F0" />
-      <ImageBackground style={styles.image} resizeMode="cover" source={LOGIN}>
-        {/* <DismissKeyboardView> */}
-        <View style={styles.groupForm}>
-          <View style={styles.groupInput}>
-            {/* <Text style={styles.labelText}>{t('username')}</Text> */}
-            <Input name="username" control={control} />
-          </View>
-          <View style={styles.groupInput}>
-            {/* <Text style={styles.labelText}>{t('password')}</Text> */}
-            <Input name="password" control={control} />
-          </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ImageBackground style={styles.image} resizeMode="cover" source={LOGIN}>
+          <View style={styles.groupForm}>
+            <View style={styles.groupInput}>
+              {/* <Text style={styles.labelText}>{t('username')}</Text> */}
+              <Input name="username" control={control} />
+            </View>
+            <View style={styles.groupInput}>
+              {/* <Text style={styles.labelText}>{t('password')}</Text> */}
+              <Input name="password" control={control} />
+            </View>
 
-          <TouchableOpacity
-            // disabled={loading}
-            style={[
-              styles.button,
-              styles.shadow,
-              styles.row,
-              {justifyContent: 'center', gap: 10},
-              loading && {backgroundColor: '#000'}
-            ]}
-            onPress={handleSubmit(onSubmit)}>
-            {loading ? (
-              <ActivityIndicator size={25} color="#FFF" />
-            ) : (
-              <Ionicons name={'log-in-outline'} size={25} color={'#000'} />
-            )}
-
-            <Text
+            <TouchableOpacity
+              // disabled={loading}
               style={[
-                {color: '#183B00', fontSize: 18, fontWeight: 'bold'},
-                loading && {color: '#fff'}
-              ]}>
-              {t('login')}
-            </Text>
-          </TouchableOpacity>
+                styles.button,
+                styles.shadow,
+                styles.row,
+                {justifyContent: 'center', gap: 10},
+                loading && {backgroundColor: '#000'}
+              ]}
+              onPress={handleSubmit(onSubmit)}>
+              {loading ? (
+                <ActivityIndicator size={25} color="#FFF" />
+              ) : (
+                <Ionicons name={'log-in-outline'} size={25} color={'#000'} />
+              )}
 
-          <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
-            <Text style={{color: '#000'}}>
-              v.{VersionCheck.getCurrentVersion()}
-            </Text>
+              <Text
+                style={[
+                  {color: '#183B00', fontSize: 18, fontWeight: 'bold'},
+                  loading && {color: '#fff'}
+                ]}>
+                {t('login')}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+              <Text style={[{color: '#000'}]}>
+                v.{VersionCheck.getCurrentVersion()}
+              </Text>
+            </View>
           </View>
-        </View>
-      </ImageBackground>
+        </ImageBackground>
+      </TouchableWithoutFeedback>
     </View>
   )
 }
 
+// ----------------------------------------------------------
+// == COMPONENT
+// ----------------------------------------------------------
 const Input = ({name, control}) => {
   const {field} = useController({
     control,
@@ -226,10 +233,12 @@ const Input = ({name, control}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1
-    // marginTop: StatusBar.currentHeight || 0,
   },
   row: {
     display: 'flex',
@@ -257,7 +266,6 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: 20,
     color: '#222'
-    // fontWeight: 'bold',
   },
   input: {
     backgroundColor: '#F4F4F4',
@@ -284,6 +292,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5
   },
+  shadowText: {
+    textShadowOffset: {width: 0, height: 3},
+    textShadowColor: '#000',
+    textShadowRadius: 5
+  },
 
   checkboxContainer: {
     flexDirection: 'row',
@@ -302,4 +315,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default Login
+export default React.memo(Login)

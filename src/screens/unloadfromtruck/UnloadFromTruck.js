@@ -9,31 +9,26 @@ import {
   Image,
   Alert,
   Platform,
-  StatusBar,
-  ActivityIndicator
+  Keyboard,
+  ActivityIndicator,
+  TouchableWithoutFeedback
 } from 'react-native'
-
 import debounce from 'lodash.debounce'
 import moment from 'moment'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-
 import TabViewList from './TabViewList'
 import ModalHeader from './ModalHeader'
 import ModalDetail from './ModalDetail'
 import ModalScan from './ModalScan'
-
 // == Global Modal
 import ModalCamera from '../../components/ModalCamera'
 import ModalSignature from '../../components/ModalSignature'
-
 import {path} from '../../constants/url'
-
 import {useToast} from 'react-native-toast-notifications'
 import {useTranslation} from 'react-i18next'
 import {useAuthToken, useScan} from '../../hooks'
 import {useDispatch} from 'react-redux'
 import {resetToken} from '../../store/slices/tokenSlice'
-
 import {
   fetchDetail,
   fetchDetailSelect,
@@ -43,6 +38,7 @@ import {
   sendSignature
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
+import socket from '../../utils/socket'
 
 const ToggleState = {
   HEADER: 'HEADER',
@@ -54,82 +50,67 @@ const ToggleState = {
 
 const UnloadFromTruck = ({navigation}) => {
   const [loading, setLoading] = useState(false)
-
   const [toggleState, setToggleState] = useState(null)
   const [toggleButton, setToggleButton] = useState(false)
-
   const [headerSelected, setHeaderSelected] = useState(null)
-
   const [detail, setDetail] = useState(null)
   const [detailSelected, setDetailSelected] = useState(null)
-
   const [detailInfo, setDetailInfo] = useState(null)
-
   const [currentSign, setCurrentSign] = useState(null)
   const [currentImage, setCurrentImage] = useState(null)
-
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
-
   const [input, setInput] = useState('')
-  const [keyboardFocus, setKeyboardFocus] = useState(false)
-
   const inputRef = useRef(null)
-
   const toast = useToast()
+
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
-
   const {boxAvail, setBoxAvail} = useScan()
-
-  // const { boxAvail } = useModalScanContext()
-
   const dispatch = useDispatch()
 
+  // ----------------------------------------------------------
   // == API
-  // =================================================================
+  // ----------------------------------------------------------
   const fetchHeaderSelect_API = async (receipt_no) => {
     const select = await fetchHeaderSelect(receipt_no)
-
     setHeaderSelected(select.data[0])
     setToggleButton(select.data[0]?.status === 'ONSHIP' ? true : false)
   }
-
   const fetchDetail_API = async (receipt_no) => {
     const detail = await fetchDetail(receipt_no)
     setDetail(detail.data)
   }
-
   const fetchDetailSelect_API = async ({header_id, detail_id}) => {
     const select = await fetchDetailSelect({header_id, detail_id})
     setDetailSelected(select.data[0])
   }
 
+  // ----------------------------------------------------------
   // == EFFECT
-  // =================================================================
-
+  // ----------------------------------------------------------
+  useEffect(() => {
+    inputRef.current && inputRef.current?.focus()
+  }, [])
   useEffect(() => {
     headerSelected?.receipt_no.length > 0 &&
       fetchDetail_API(headerSelected?.receipt_no)
   }, [headerSelected?.receipt_no])
-
   useEffect(() => {
-    // fetchHeader_API()
     headerSelected?.receipt_no &&
       fetchHeaderSelect_API(headerSelected?.receipt_no)
   }, [toggleButton])
-
   useEffect(() => {
     headerSelected?.receipt_no && fetchDetail_API(headerSelected?.receipt_no)
   }, [detailSelected])
-
   useEffect(() => {
     debouncedSearch()
     return debouncedSearch.cancel
   }, [input, debouncedSearch])
 
-  // == TOGGLE MODAL
-  // =================================================================
+  // ----------------------------------------------------------
+  // == HANDLE
+  // ----------------------------------------------------------
   const toggleSetState = (newToggleState) => {
     if (toggleState === newToggleState) {
       setToggleState(null) // Toggle off if pressed again
@@ -137,37 +118,29 @@ const UnloadFromTruck = ({navigation}) => {
       setToggleState(newToggleState)
     }
   }
-
-  // == HANDLE
-  // =================================================================
   const search = () => {
     input?.length !== 0 && fetchHeaderSelect_API(input)
   }
-
   const debouncedSearch = useCallback(debounce(search, 750), [input])
-
   const handleChangeTextInput = (text) => {
     setInput(text.toUpperCase())
   }
-
   const handleSetHeaderSelected = (target) => {
     setToggleButton(target.status === 'ONSHIP' ? true : false)
     setToggleState(null)
     setHeaderSelected(target)
     setCurrentSign(null)
     setCurrentImage(null)
+    setInput('')
   }
-
   const handleSetDetailSelected = (target) => {
     setDetailSelected(target)
     target?.status !== 'UNLOADED' && setToggleState(ToggleState.SCAN)
   }
-
   const handleSetDetailInfo = (target) => {
     setDetailInfo(target)
     setToggleState(ToggleState.DETAIL)
   }
-
   const onPressClear = () => {
     setHeaderSelected(null)
     setDetail(null)
@@ -175,11 +148,8 @@ const UnloadFromTruck = ({navigation}) => {
     setCurrentImage(null)
     setCurrentSign(null)
     setInput('')
-
     inputRef.current.focus()
-    setKeyboardFocus(false)
   }
-
   const onPressForceConfirm = async (message, status = null) => {
     setRemark(message)
     setForce(status)
@@ -203,8 +173,8 @@ const UnloadFromTruck = ({navigation}) => {
           type: 'success',
           placement: 'bottom',
           duration: 4000,
-          offset: 30,
-          animationType: 'slide-in'
+          offset: 30
+          // animationType: 'slide-in'
         })
       })
       .catch((err) => {
@@ -225,7 +195,6 @@ const UnloadFromTruck = ({navigation}) => {
     })
 
     setBoxAvail(null)
-
     setRemark('')
     setForce('')
     setToggleState(null)
@@ -288,8 +257,8 @@ const UnloadFromTruck = ({navigation}) => {
                 type: 'success',
                 placement: 'bottom',
                 duration: 4000,
-                offset: 30,
-                animationType: 'slide-in'
+                offset: 30
+                // animationType: 'slide-in'
               })
             })
             .catch((err) => {
@@ -297,346 +266,380 @@ const UnloadFromTruck = ({navigation}) => {
 
               if (err.message == 401) {
                 dispatch(resetToken())
-
                 navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
                 alertReUse('auth_access_denied', 'auth_access_denied_detail')
               }
-
               alertReUse('auth_access_denied', 'auth_access_denied_detail')
             })
 
           setToggleButton(false)
-
           setLoading(false)
         }
       }
     }
   }
-
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
       ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
       : alert(t(msg), t(detail))
   }
 
-  // == COMPONENT UnloadFromTruck
-  // =================================================================
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
-    <ScrollView
-      onLayout={() => inputRef.current?.focus()}
-      style={styles.container}
-      scrollEnabled={true}
-      keyboardShouldPersistTaps="handled">
-      {toggleState === ToggleState.SCAN && <StatusBar backgroundColor="#000" />}
-
-      <View style={styles.form}>
-        {/* RECEIPT */}
-        <InputComponent title={`${t('receipt_no')}: `}>
-          <TextInput
-            ref={inputRef}
-            style={[
-              styles.groupInput,
-              {
-                fontWeight: 'normal',
-                flex: 0.75,
-                color: '#000'
-              },
-              headerSelected?.status_hh === 'EDITING'
-                ? {
-                    backgroundColor: '#FFDA4A',
-                    borderColor: '#000',
-                    borderWidth: 1
-                  }
-                : {backgroundColor: '#D2D2D2'}
-            ]}
-            onChangeText={handleChangeTextInput}
-            placeholder={t('enter_barcode')}
-            placeholderTextColor="#000"
-            value={headerSelected ? headerSelected?.receipt_no : input}
-            maxLength={11}
-            editable={true}
-            autoFocus={true}
-            blurOnSubmit={false}
-            showSoftInputOnFocus={keyboardFocus}
-            onPressIn={() => setKeyboardFocus(true)}
-            onBlur={() => setKeyboardFocus(false)}
-          />
-
-          <TouchableOpacity
-            style={[
-              styles.clearButton,
-              styles.shadow,
-              {
-                backgroundColor: '#2a52be',
-                flex: 0.3
-              }
-            ]}
-            onPress={() => toggleSetState(ToggleState.HEADER)}>
-            <View style={[styles.row, {justifyContent: 'center'}]}>
-              <Ionicons
-                style={{alignSelf: 'center'}}
-                name={'document-text-outline'}
-                size={20}
-                color="#fff"
-              />
-              <Text
-                style={[
-                  {
-                    color: '#fff',
-                    fontSize: 14,
-                    textAlign: 'center'
-                  }
-                ]}>
-                {t('receipt')}
-              </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ScrollView
+        style={styles.container}
+        scrollEnabled={true}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.form}>
+          {/* RECEIPT */}
+          <View style={{display: 'flex', flexDirection: 'column', gap: 0}}>
+            <View>
+              <Text style={{color: '#000'}}>{t('receipt_no')}</Text>
             </View>
-          </TouchableOpacity>
-        </InputComponent>
-        <InputComponent title={`${t('item_no')}: `}>
-          <TextInput
-            style={[
-              // styles.shadow,
-              styles.groupInput,
-              {
-                backgroundColor: '#D2D2D2',
-                fontWeight: 'bold',
-                flex: 0.75,
-                color: '#000'
-              }
-            ]}
-            defaultValue={detailSelected?.item_no}
-            editable={false}
-          />
-
-          <TouchableOpacity
-            style={[
-              styles.clearButton,
-              styles.shadow,
-              {
-                backgroundColor: '#AE100F',
-                flex: 0.3
-              }
-            ]}
-            onPress={() => onPressClear()}>
-            <View style={[styles.row, {justifyContent: 'center'}]}>
-              <Ionicons
-                style={{alignSelf: 'center'}}
-                name={'document-outline'}
-                size={20}
-                color="#fff"
-              />
-              <Text
-                style={[
-                  {
-                    color: '#fff',
-                    fontSize: 14,
-                    textAlign: 'center'
-                  }
-                ]}>
-                {t('clear')}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </InputComponent>
-      </View>
-
-      {toggleState === ToggleState.HEADER && (
-        <ModalHeader
-          headerSelected={headerSelected?.receipt_no}
-          onPress={handleSetHeaderSelected}
-          visible={true}
-          setVisible={() => toggleSetState(null)}
-        />
-      )}
-
-      {detail?.length > 0 && (
-        <TabViewList
-          detail={detail}
-          headSelected={headerSelected}
-          detailSelected={handleSetDetailSelected}
-          detailInfo={handleSetDetailInfo}
-        />
-      )}
-
-      {detailInfo && toggleState === ToggleState.DETAIL && (
-        <ModalDetail
-          data={detailInfo}
-          visible={true}
-          setVisible={() => toggleSetState(null)}
-        />
-      )}
-
-      {detailSelected && toggleState === ToggleState.SCAN && (
-        <ModalScan
-          data={detailSelected}
-          visible={true}
-          setVisible={() => toggleSetState(null)}
-          confirm={onPressScanConfirm}
-          force={force}
-          forceConfirm={onPressForceConfirm}
-          navigation={navigation}
-        />
-      )}
-
-      {headerSelected && (
-        <TouchableOpacity
-          style={[styles.signatureBox]}
-          onPress={() => toggleSetState(ToggleState.CAMERA)}
-          disabled={headerSelected?.status === 'ARRIVED'}>
-          {currentImage !== null || headerSelected?.img_item_arrive ? (
-            <View style={styles.preview}>
-              {currentImage ? (
-                <Image
-                  resizeMode={'contain'}
-                  style={{width: '100%', height: 180}}
-                  source={{
-                    uri: currentImage
-                  }}
+            <View style={styles.groupForm}>
+              <View style={{flex: 1}}>
+                <TextInput
+                  ref={inputRef}
+                  style={[
+                    styles.groupInput,
+                    {
+                      fontWeight: 'normal',
+                      flex: 0.75,
+                      color: '#000'
+                    },
+                    headerSelected?.status_hh === 'EDITING'
+                      ? {
+                          backgroundColor: '#FFDA4A',
+                          borderColor: '#000',
+                          borderWidth: 1
+                        }
+                      : {backgroundColor: '#D2D2D2'}
+                  ]}
+                  onChangeText={handleChangeTextInput}
+                  placeholder={t('enter_barcode')}
+                  placeholderTextColor="#000"
+                  value={headerSelected ? headerSelected?.receipt_no : input}
+                  editable={true}
+                  blurOnSubmit={false}
+                  onSubmitEditing={Keyboard.dismiss}
                 />
-              ) : (
-                <Image
-                  resizeMode={'contain'}
-                  style={{width: '100%', height: 180}}
-                  source={{
-                    uri: `${path.IMG}/${headerSelected?.img_item_arrive}`
-                  }}
-                />
-              )}
-            </View>
-          ) : (
-            <View style={styles.imageUpload}>
-              <Ionicons name="image-outline" size={45} color="#4d4d4d" />
-              <Text style={{color: '#000'}}>{`${t('photo')} / ${t(
-                'camera'
-              )}`}</Text>
-            </View>
-          )}
+              </View>
 
-          {toggleState === ToggleState.CAMERA && (
-            <ModalCamera
-              set={setCurrentImage}
-              visible={true}
-              setVisible={() => toggleSetState(null)}
-            />
-          )}
-        </TouchableOpacity>
-      )}
-
-      {headerSelected && (
-        <TouchableOpacity
-          style={[styles.signatureBox]}
-          onPress={() => toggleSetState(ToggleState.SIGNATURE)}
-          disabled={headerSelected?.status === 'ARRIVED'}>
-          {currentSign !== null || headerSelected?.signature_arrive ? (
-            <View style={styles.preview}>
-              {currentSign ? (
-                <Image
-                  resizeMode="contain"
-                  style={{width: '100%', height: 180}}
-                  source={{
-                    uri: currentSign
-                  }}
-                />
-              ) : (
-                <Image
-                  resizeMode={'contain'}
-                  style={{width: '100%', height: 180}}
-                  source={{
-                    uri: `${path.IMG}/${headerSelected?.signature_arrive}`
-                  }}
-                />
-              )}
-            </View>
-          ) : (
-            <View style={styles.imageUpload}>
-              <Ionicons name="pencil" size={40} color="#4d4d4d" />
-              <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
-            </View>
-          )}
-          {toggleState === ToggleState.SIGNATURE && (
-            <ModalSignature
-              set={setCurrentSign}
-              visible={true}
-              setVisible={() => toggleSetState(null)}
-            />
-          )}
-        </TouchableOpacity>
-      )}
-
-      {headerSelected && (
-        <View style={styles.buttonGroup}>
-          {headerSelected?.status !== 'PICKED' &&
-          detail?.every((el) => el.status !== 'PICKED') ? (
-            toggleButton ? (
               <TouchableOpacity
-                disabled={loading}
                 style={[
-                  styles.button,
+                  styles.clearButton,
                   styles.shadow,
-                  styles.row,
-                  {justifyContent: 'center', gap: 10},
-                  loading
-                    ? {backgroundColor: '#000'}
-                    : {backgroundColor: '#ABFC74'}
+                  {
+                    backgroundColor: '#2a52be',
+                    flex: 0.3
+                  }
                 ]}
-                onPress={() => onPressConfirm(true)}>
-                {loading ? (
-                  <ActivityIndicator size={25} color="#FFF" />
-                ) : (
+                onPress={() => toggleSetState(ToggleState.HEADER)}>
+                <View style={[styles.row, {justifyContent: 'center', gap: 1}]}>
                   <Ionicons
-                    name={'checkmark-outline'}
-                    size={25}
-                    color={'#000'}
+                    style={{alignSelf: 'center'}}
+                    // name={'document-text-outline'}
+                    name={'document-text-outline'}
+                    size={20}
+                    color="#fff"
+                  />
+                  <Text
+                    style={[
+                      {
+                        color: '#fff',
+                        fontSize: 14,
+                        textAlign: 'center'
+                      }
+                    ]}>
+                    {t('receipt')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 5,
+              justifyContent: 'space-between'
+            }}>
+            <View style={{display: 'flex', flex: 0.3, flexDirection: 'column'}}>
+              <View>
+                <Text style={{color: '#000'}}>{t('container_no')}</Text>
+              </View>
+
+              <TextInput
+                style={[
+                  styles.groupInput,
+                  {
+                    backgroundColor: '#D2D2D2',
+                    fontWeight: 'bold',
+                    fontSize: 15,
+
+                    color: '#000',
+                    textAlign: 'center'
+                  }
+                ]}
+                defaultValue={headerSelected?.container_no}
+                editable={false}
+              />
+            </View>
+
+            <View style={{display: 'flex', flex: 0.4, flexDirection: 'column'}}>
+              <View>
+                <Text style={{color: '#000'}}>{t('customer')}</Text>
+              </View>
+              <TextInput
+                style={[
+                  styles.groupInput,
+                  {
+                    backgroundColor: '#D2D2D2',
+                    fontWeight: 'bold',
+                    color: '#000'
+                  }
+                ]}
+                defaultValue={headerSelected?.customer_id}
+                editable={false}
+              />
+            </View>
+
+            <View
+              style={{display: 'flex', flex: 0.3, justifyContent: 'flex-end'}}>
+              <TouchableOpacity
+                style={[
+                  styles.clearButton,
+                  styles.shadow,
+                  {backgroundColor: '#AE100F'}
+                ]}
+                onPress={() => onPressClear()}>
+                <View style={[styles.row, {justifyContent: 'center', gap: 1}]}>
+                  <Ionicons
+                    style={{alignSelf: 'center'}}
+                    // name={'document-text-outline'}
+                    name={'trash-bin-outline'}
+                    size={20}
+                    color="#fff"
+                  />
+                  <Text
+                    style={[
+                      {
+                        color: '#fff',
+                        fontSize: 14,
+                        textAlign: 'center'
+                      }
+                    ]}>
+                    {t('clear')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {toggleState === ToggleState.HEADER && (
+          <ModalHeader
+            headerSelected={headerSelected?.receipt_no}
+            onPress={handleSetHeaderSelected}
+            visible={true}
+            setVisible={() => toggleSetState(null)}
+          />
+        )}
+
+        {detail?.length > 0 && (
+          <TabViewList
+            detail={detail}
+            headSelected={headerSelected}
+            detailSelected={handleSetDetailSelected}
+            detailInfo={handleSetDetailInfo}
+          />
+        )}
+
+        {detailInfo && toggleState === ToggleState.DETAIL && (
+          <ModalDetail
+            data={detailInfo}
+            visible={true}
+            setVisible={() => toggleSetState(null)}
+          />
+        )}
+
+        {detailSelected && toggleState === ToggleState.SCAN && (
+          <ModalScan
+            data={detailSelected}
+            visible={true}
+            setVisible={() => {
+              toggleSetState(null)
+              setDetailSelected(null)
+            }}
+            confirm={onPressScanConfirm}
+            force={force}
+            forceConfirm={onPressForceConfirm}
+            navigation={navigation}
+          />
+        )}
+
+        {headerSelected && (
+          <TouchableOpacity
+            style={[styles.signatureBox]}
+            onPress={() => toggleSetState(ToggleState.CAMERA)}
+            disabled={headerSelected?.status === 'ARRIVED'}>
+            {currentImage !== null || headerSelected?.img_item_arrive ? (
+              <View style={styles.preview}>
+                {currentImage ? (
+                  <Image
+                    resizeMode={'contain'}
+                    style={{width: '100%', height: 180}}
+                    source={{
+                      uri: currentImage
+                    }}
+                  />
+                ) : (
+                  <Image
+                    resizeMode={'contain'}
+                    style={{width: '100%', height: 180}}
+                    source={{
+                      uri: `${path.IMG}/${headerSelected?.img_item_arrive}`
+                    }}
                   />
                 )}
+              </View>
+            ) : (
+              <View style={styles.imageUpload}>
+                <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                <Text style={{color: '#000'}}>{`${t('photo')} / ${t(
+                  'camera'
+                )}`}</Text>
+              </View>
+            )}
 
-                <Text
+            {toggleState === ToggleState.CAMERA && (
+              <ModalCamera
+                set={setCurrentImage}
+                visible={true}
+                setVisible={() => toggleSetState(null)}
+              />
+            )}
+          </TouchableOpacity>
+        )}
+
+        {headerSelected && (
+          <TouchableOpacity
+            style={[
+              styles.signatureBox,
+              !currentSign && {
+                borderWidth: 1,
+                borderStyle: 'dashed',
+                borderColor: '#7A7A7A'
+              }
+            ]}
+            onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+            disabled={headerSelected?.status === 'ARRIVED'}>
+            {currentSign !== null || headerSelected?.signature_arrive ? (
+              <View style={styles.preview}>
+                {currentSign ? (
+                  <Image
+                    resizeMode="contain"
+                    style={{width: '100%', height: 180}}
+                    source={{
+                      uri: currentSign
+                    }}
+                  />
+                ) : (
+                  <Image
+                    resizeMode={'contain'}
+                    style={{width: '100%', height: 180}}
+                    source={{
+                      uri: `${path.IMG}/${headerSelected?.signature_arrive}`
+                    }}
+                  />
+                )}
+              </View>
+            ) : (
+              <View style={styles.imageUpload}>
+                <Ionicons name="pencil" size={40} color="#4d4d4d" />
+                <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
+              </View>
+            )}
+            {toggleState === ToggleState.SIGNATURE && (
+              <ModalSignature
+                set={setCurrentSign}
+                visible={true}
+                setVisible={() => toggleSetState(null)}
+              />
+            )}
+          </TouchableOpacity>
+        )}
+
+        {headerSelected && (
+          <View style={styles.buttonGroup}>
+            {headerSelected?.status !== 'PICKED' &&
+            detail?.every((el) => el.status !== 'PICKED') ? (
+              toggleButton ? (
+                <TouchableOpacity
+                  disabled={loading}
                   style={[
-                    {
-                      color: '#183B00',
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      fontSize: 18
-                    },
-                    loading && {color: '#fff'}
-                  ]}>
-                  {t('confirm')}
-                </Text>
-              </TouchableOpacity>
+                    styles.button,
+                    styles.shadow,
+                    styles.row,
+                    {justifyContent: 'center', gap: 10},
+                    loading
+                      ? {backgroundColor: '#000'}
+                      : {backgroundColor: '#ABFC74'}
+                  ]}
+                  onPress={() => onPressConfirm(true)}>
+                  {loading ? (
+                    <ActivityIndicator size={25} color="#FFF" />
+                  ) : (
+                    <Ionicons
+                      name={'checkmark-outline'}
+                      size={25}
+                      color={'#000'}
+                    />
+                  )}
+
+                  <Text
+                    style={[
+                      {
+                        color: '#183B00',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        fontSize: 18
+                      },
+                      loading && {color: '#fff'}
+                    ]}>
+                    {t('confirm')}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <ButtonConfirmComponent
+                  text={`${t('success')}`}
+                  color="#000"
+                  backgroundColor="#fff"
+                  // onPress={() => onPressConfirm(false)}
+                />
+              )
             ) : (
               <ButtonConfirmComponent
                 text={`${t('success')}`}
                 color="#000"
                 backgroundColor="#fff"
-                // onPress={() => onPressConfirm(false)}
               />
-            )
-          ) : (
-            <ButtonConfirmComponent
-              text={`${t('success')}`}
-              color="#000"
-              backgroundColor="#fff"
-            />
-          )}
-        </View>
-      )}
-    </ScrollView>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </TouchableWithoutFeedback>
   )
 }
 
+// ----------------------------------------------------------
 // == COMPONENT
-// =================================================================
-const InputComponent = ({title, children}) => {
-  return (
-    <View style={{display: 'flex', flexDirection: 'column', gap: 0}}>
-      <View>
-        <Text style={{color: '#000'}}>{title}</Text>
-      </View>
-      <View style={styles.groupForm}>{children}</View>
-    </View>
-  )
-}
-
+// ----------------------------------------------------------
 const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   return (
     <TouchableOpacity
@@ -654,10 +657,13 @@ const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 15,
+    paddingHorizontal: 5,
     paddingTop: 10,
     backgroundColor: '#fff'
   },
@@ -680,12 +686,9 @@ const styles = StyleSheet.create({
   groupInput: {
     backgroundColor: '#F4F4F4',
     borderColor: '#7A7A7A',
-    // borderWidth: 0.5,
     borderRadius: 5,
-    // padding: 6,
     paddingHorizontal: 6,
     width: '100%'
-    // height:
   },
   tab: {
     flex: 1
@@ -693,7 +696,7 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 10,
     borderRadius: 5,
-    paddingVertical: 10
+    paddingVertical: 15
   },
   buttonGroup: {
     display: 'flex',
@@ -736,5 +739,4 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   }
 })
-
-export default UnloadFromTruck
+export default React.memo(UnloadFromTruck)

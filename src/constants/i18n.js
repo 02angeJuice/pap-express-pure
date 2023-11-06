@@ -46,6 +46,15 @@ const i18n = createInstance({
         text_required: 'ข้อความต้องระบุ...!',
         text_required_detail: 'โปรดระบุข้อความสำหรับการยืนยันแบบบังคับ.',
 
+        container_required: 'เลขตู้ไม่ถูกต้อง',
+        container_required_detail: 'โปรดระบุเลขตู้ที่ถูกต้อง',
+
+        write_message: 'พิมพ์ข้อความ...',
+        enter_container: 'กรอกหมายเลขตู้',
+
+        enter_barcode_title: 'ป้อนบาร์โค้ดด้วยตนเอง',
+        enter_barcode_box: 'กรอกหมายเลขกล่อง',
+
         home: 'หน้าแรก',
         info: 'ข้อมูลทั่วไป',
         confirm: 'ยืนยัน',
@@ -88,10 +97,11 @@ const i18n = createInstance({
         item_name: 'ชื่อสินค้า',
         item_list: 'รายการสินค้า',
         item_detail: 'รายละเอียดสินค้า',
+        item_container: 'ยืนยันตู้คอนเทนเนอร์',
         receipt_no: 'เลขที่เอกสาร',
         transport_type: 'ประเภทการขนส่ง',
         transport_select: 'เลือกการขนส่ง',
-        container_no: 'ตู้ที่',
+        container_no: 'เลขตู้',
         date_departure: 'วันที่ออกเดินทาง',
         date_arrival: 'วันที่มาถึง',
         car: 'รถ',
@@ -113,7 +123,7 @@ const i18n = createInstance({
         driver: 'คนขับรถ',
         car_regis: 'ทะเบียนรถ',
         tracking_no: 'เลขแท็กจากจีน',
-        tracking_four: 'เลขที่สินค้า (4 ตัว)',
+        tracking_four: 'เลขที่สินค้า （4 ตัว）',
         width: 'ขนาดกว้าง',
         length: 'ขนาดยาว',
         height: 'ขนาดสูง',
@@ -164,6 +174,15 @@ const i18n = createInstance({
         text_required: 'Text must be required...!',
         text_required_detail: 'Please specify a message for force confirm.',
 
+        container_required: 'Invalid container number',
+        container_required_detail: 'Please provide a valid container number',
+
+        write_message: 'Write a message...',
+        enter_container: 'Enter container number',
+
+        enter_barcode_title: 'Barcode Manually',
+        enter_barcode_box: 'Enter box number',
+
         home: 'Home',
         info: 'Information',
         confirm: 'Confirm',
@@ -206,6 +225,7 @@ const i18n = createInstance({
         item_name: 'Product',
         item_list: 'Product List',
         item_detail: 'Product Details',
+        item_container: 'Confirm Container',
         receipt_no: 'Receipt Code',
         transport_type: 'Transport Type',
         transport_select: 'Select Transportation',
@@ -231,7 +251,7 @@ const i18n = createInstance({
         driver: 'Driver',
         car_regis: 'Vehicle Registration',
         tracking_no: 'Tracking No',
-        tracking_four: 'Tracking (Four)',
+        tracking_four: 'Tracking （Four）',
         width: 'Width',
         length: 'Length',
         height: 'Height',
@@ -279,6 +299,15 @@ const i18n = createInstance({
         text_required: '必须填写文字...!',
         text_required_detail: '请为强制确认指定一条消息。',
 
+        container_required: '货柜号码无效',
+        container_required_detail: '请提供有效的货柜号码',
+
+        write_message: '写消息...',
+        enter_container: '输入集装箱编号',
+
+        enter_barcode_title: '手动输入条形码',
+        enter_barcode_box: '输入盒子编号',
+
         home: '首页',
         info: '信息',
         confirm: '确认',
@@ -322,6 +351,7 @@ const i18n = createInstance({
         item_name: '产品名称',
         item_list: '产品列表',
         item_detail: '产品信息',
+        item_container: '确认容器',
         receipt_no: '收据代码',
         transport_type: '运输类型',
         transport_select: '选择交通',
@@ -347,7 +377,7 @@ const i18n = createInstance({
         driver: '司机',
         car_regis: '车辆登记',
         tracking_no: '运单号',
-        tracking_four: '收货单号（订单号）',
+        tracking_four: '收货单号 （订单号）',
         width: '宽度',
         length: '长度',
         height: '高度',

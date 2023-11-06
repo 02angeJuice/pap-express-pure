@@ -1,38 +1,35 @@
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect} from 'react'
 import {
   StyleSheet,
-  StatusBar,
   View,
   Text,
   TouchableOpacity,
-  ImageBackground,
-  SafeAreaView,
-  Alert,
-  Platform,
-  PermissionsAndroid
+  Modal,
+  PermissionsAndroid,
+  TouchableWithoutFeedback
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
-import Modal from 'react-native-modal'
 import {useTranslation} from 'react-i18next'
 
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker'
-// import {
-//   Camera,
-//   CameraPermissionStatus,
-//   useCameraDevices
-// } from 'react-native-vision-camera'
-// "react-native-vision-camera": "^2.15.3",
+
 import {CameraRoll} from '@react-native-camera-roll/camera-roll'
 
 const ModalCamera = ({set, visible, setVisible}) => {
   const {t} = useTranslation()
 
+  // ----------------------------------------------------------
+  // == EFFECT
+  // ----------------------------------------------------------
   useEffect(() => {
     requestPermission()
   }, [])
 
+  // ----------------------------------------------------------
+  // == HANDLE
+  // ----------------------------------------------------------
   const requestPermission = async () => {
     try {
       console.log('asking for permission')
@@ -86,99 +83,131 @@ const ModalCamera = ({set, visible, setVisible}) => {
     }
   }
 
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
     <Modal
-      isVisible={visible}
-      animationInTiming={1}
-      animationOutTiming={1}
-      onBackButtonPress={() => setVisible(!visible)}>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: '#fff',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: 15
-        }}>
-        <TouchableOpacity
-          onPress={__imagePicker}
+      // animationType="fade"
+      visible={visible}
+      transparent={true}
+      statusBarTranslucent={true}
+      onRequestClose={() => setVisible(!visible)}>
+      {/* <TouchableWithoutFeedback onPress={() => setVisible(!visible)} > */}
+      <View style={styles.modalContainer}>
+        <View style={{flex: 1}}></View>
+        <View
           style={{
-            width: 130,
-            borderRadius: 4,
-            backgroundColor: '#183B00',
-            flexDirection: 'row',
-            justifyContent: 'center',
+            flex: 0.8,
+            backgroundColor: '#fff',
+            paddingTop: 20,
+            gap: 7,
             alignItems: 'center',
-            gap: 5,
-            height: 40
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            borderRadius: 15
           }}>
-          <Ionicons name="image-outline" size={20} color="#fff" />
-          <Text
+          <TouchableOpacity
+            onPress={__imagePicker}
             style={{
-              color: '#fff',
-              fontWeight: 'bold',
-              textAlign: 'center'
+              width: '90%',
+              borderRadius: 4,
+              backgroundColor: '#183B00',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 5,
+              height: 50
             }}>
-            {t('photo')}
-          </Text>
-        </TouchableOpacity>
+            <Ionicons name="image-outline" size={20} color="#fff" />
+            <Text
+              style={{
+                color: '#fff',
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }}>
+              {t('photo')}
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={__imageCamera}
-          style={{
-            marginTop: 100,
-            width: 130,
-            borderRadius: 4,
-            backgroundColor: '#14274e',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 5,
-            height: 40
-          }}>
-          <Ionicons name="camera-outline" size={20} color="#fff" />
-          <Text
+          <TouchableOpacity
+            onPress={__imageCamera}
             style={{
-              color: '#fff',
-              fontWeight: 'bold',
-              textAlign: 'center'
+              width: '90%',
+              borderRadius: 4,
+              backgroundColor: '#14274e',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 5,
+              height: 50
             }}>
-            {t('camera')}
-          </Text>
-        </TouchableOpacity>
+            <Ionicons name="camera-outline" size={20} color="#fff" />
+            <Text
+              style={{
+                color: '#fff',
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }}>
+              {t('camera')}
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={{
-            marginTop: 100,
-            width: 130,
-            borderRadius: 4,
-            backgroundColor: '#AE100F',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: 40
-          }}
-          onPress={() => setVisible(!visible)}>
-          <Text
+          <View
             style={{
-              color: '#fff',
-              fontWeight: 'bold',
-              textAlign: 'center'
+              flex: 1,
+              width: '90%',
+              justifyContent: 'flex-end',
+              marginBottom: 10
             }}>
-            {t('close')}
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                // marginTop: 20,
+
+                borderRadius: 4,
+                backgroundColor: '#fff',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+
+                height: 40,
+                borderWidth: 1,
+                borderColor: '#999'
+              }}
+              onPress={() => setVisible(!visible)}>
+              <Text
+                style={{
+                  color: '#000',
+                  fontWeight: 'bold',
+                  textAlign: 'center'
+                }}>
+                {t('close')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
+      {/* </TouchableWithoutFeedback> */}
     </Modal>
   )
 }
 
+// ----------------------------------------------------------
+// == STYLE
+// ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     borderRadius: 15,
-
     overflow: 'hidden'
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 25,
+    paddingBottom: 10,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
   row: {
     display: 'flex',
