@@ -12,27 +12,18 @@ import {
   ActivityIndicator,
   ScrollView
 } from 'react-native'
-import Clipboard from '@react-native-clipboard/clipboard'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import CustomTextInputAlert from '../../components/CustomTextInputAlert'
 import {Empty} from '../../components/SpinnerEmpty'
 import {useTranslation} from 'react-i18next'
 import {useScan} from '../../hooks'
-import {fetchBox, hh_sel_box_by_receipt} from '../../apis'
+import {fetchBox, hh_sel_box_by_od} from '../../apis'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
-
-const generateItems = (numInput, item_no) => {
-  const newItems = []
-  for (let i = 0; i < numInput; i++) {
-    newItems.push({box_id: `${item_no}/${i + 1}`, is_scan: null})
-  }
-  return newItems
-}
 
 const Scan = ({
   detail,
   checkScan,
-  data,
+  distribute_id,
   visible,
   setVisible,
   confirm,
@@ -40,8 +31,7 @@ const Scan = ({
   forceConfirm,
   navigation
 }) => {
-  const [items, setItems] = useState([])
-  const [alertContainer, setAlertContainer] = useState(false)
+  const [alert, setAlert] = useState(false)
   const [alertBarcode, setAlertBarcode] = useState(false)
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
@@ -49,44 +39,29 @@ const Scan = ({
 
   const {insertDetailsBox, setBoxAvail} = useScan()
   const {t} = useTranslation()
-  const numInputs = Number(data?.qty_box)
   const scanRef = useRef(null)
 
   const [redata, setredata] = useState(false)
 
   // ----------------------------------------------------------
-  // == API
+  // == EFFECT
   // ----------------------------------------------------------
-  // const fetchBox_API = async (item_no) => {
-  //   setLoading(true)
-  //   try {
-  //     const box = await fetchBox(item_no)
-  //     setBox(box?.data)
-  //     console.log('fetchBox')
-  //   } catch (error) {
-  //     Alert.alert('Something went wrong!', error.message)
-  //   }
-  //   setLoading(false)
-  // }
-
   useEffect(() => {
     const fetch_hh_sel_box_by_receipt = async () => {
+      // console.log(headerSelected?.receipt_no)
       try {
-        const res = await hh_sel_box_by_receipt(data?.receipt_no)
+        const res = await hh_sel_box_by_od(distribute_id)
+        // console.log(res)
         setBox(res)
       } catch (error) {
         console.log(error)
       }
     }
 
-    if (data?.receipt_no) {
+    if (distribute_id) {
       fetch_hh_sel_box_by_receipt()
     }
-  }, [redata, data?.receipt_no])
-
-  // ----------------------------------------------------------
-  // == EFFECT
-  // ----------------------------------------------------------
+  }, [redata, distribute_id])
 
   useEffect(() => {
     if (barcode.length != 0) {
@@ -95,35 +70,35 @@ const Scan = ({
   }, [barcode])
 
   // useEffect(() => {
-  //   setBoxAvail(box?.filter((el) => el.is_scan === 'SCANED').length)
+  //   scanRef.current && scanRef.current?.focus()
+  //   fetchBox_API(data?.item_no)
 
-  //   box?.length != 0 && items?.every((el) => el.is_scan === 'SCANED')
+  //   const interval = setInterval(() => {
+  //     fetchBox_API(data?.item_no)
+  //   }, 10000)
+
+  //   return () => clearInterval(interval)
+  // }, [scan])
+
+  // useEffect(() => {
+  //   setBoxAvail(box?.filter((el) => el.is_scan_d === 'SCANED').length)
+
+  //   box?.length != 0 && box?.every((el) => el.is_scan_d === 'SCANED')
   //     ? setCheckStatus(true)
   //     : setCheckStatus(false)
-
-  //   if (box) {
-  //     const newItems = items.map((el) => {
-  //       const foundBox = box?.find((b) => b.box_id === el.box_id)
-  //       return {
-  //         ...el,
-  //         is_scan: foundBox ? foundBox.is_scan : null
-  //       }
-  //     })
-
-  //     setItems(newItems)
-  //   }
   // }, [box])
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
   const handleInputChange = async (value) => {
-    value.includes(data?.item_no) && setScan(!scan)
+    value.includes(distribute_id) && setScan(!scan)
     setInput(value.toUpperCase())
   }
 
   const handleInputSubmit = async (text) => {
     const newValue = text.split('/')
+    // const isValid = box?.find((el) => el.box_id === text)
 
     const checked = checkScan(newValue[0], newValue[1])
 
@@ -131,29 +106,24 @@ const Scan = ({
       Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
         cancelable: true
       })
+
       setInput('')
     } else {
       await insertDetailsBox(
         newValue[0],
         Number(newValue[1]),
-        'load',
+        'distribute',
         navigation
       )
       setredata((el) => !el)
 
-      // const updatedItems = await Promise.all(
-      //   items.map((item) =>
-      //     item.box_id === `${newValue[0]}/${newValue[1]}`
-      //       ? {...item, is_scan: 'SCANED'}
-      //       : item
-      //   )
-      // )
-
-      // setItems(updatedItems)
-
       setInput('')
     }
   }
+
+  // const renderItem = useCallback(({item}) => {
+  //   return <ScanItem item={item} />
+  // }, [])
 
   // ----------------------------------------------------------
   // == MAIN
@@ -208,29 +178,22 @@ const Scan = ({
               placeholderTextColor="#009DFF"
               blurOnSubmit={false}
               onSubmitEditing={() => handleInputSubmit(input)}
+              autoFocus={true}
               selectTextOnFocus={true}
               onStartShouldSetResponder={() => {
                 Keyboard.dismiss()
                 return false
               }}
               showSoftInputOnFocus={false}
-              // onPressOut={() => setAlertBarcode(!alertBarcode)}
+              onPressOut={() => setAlertBarcode(!alertBarcode)}
             />
           </View>
 
-          <TouchableOpacity
+          <View
             style={{
               flex: 1,
               alignItems: 'center'
-            }}
-            onLongPress={() => setAlertBarcode(!alertBarcode)}>
-            <Ionicons
-              style={styles.rightIcon}
-              name={'hammer-outline'}
-              size={30}
-              color="#eee"
-            />
-          </TouchableOpacity>
+            }}></View>
         </View>
 
         {box !== null ? (
@@ -255,24 +218,18 @@ const Scan = ({
       </View>
 
       {/* <CustomTextInputAlert
-            visible={alertContainer}
-            onClose={() => setAlertContainer(!alertContainer)}
-            forceConfirm={forceConfirm}
-            remark={data?.remark}
-          />
-
-          <BarcodeInputAlert
-            visible={alertBarcode}
-            onClose={() => setAlertBarcode(!alertBarcode)}
-            setBarcode={setBarcode}
-            item_no={data?.item_no}
-          /> */}
+        visible={alert}
+        onClose={() => setAlert(!alert)}
+        forceConfirm={forceConfirm}
+        remark={data?.remark}
+      /> */}
 
       {alertBarcode && (
         <BarcodeInputAlert
           visible={alertBarcode}
           onClose={() => setAlertBarcode(!alertBarcode)}
           setBarcode={setBarcode}
+          // item_no={item?.item_no}
         />
       )}
     </View>
@@ -284,13 +241,12 @@ const Scan = ({
 // ----------------------------------------------------------
 const ScanItem = React.memo(({item, idx}) => (
   <View
-    key={item.box_id}
+    key={item?.box_id}
     style={[
       styles.row,
       {
         justifyContent: 'space-between',
-        marginVertical: 3,
-        backgroundColor: item?.is_scan === 'SCANED' ? '#ABFC7430' : null
+        marginVertical: 3
       },
       idx &&
         idx !== 1 && {
@@ -316,7 +272,7 @@ const ScanItem = React.memo(({item, idx}) => (
         width: '100%'
       }}>
       <Text style={{color: '#000', fontSize: 20}}>
-        {item.box_id?.split('/')[1]}
+        {item.box_id.split('/')[1]}
       </Text>
     </View>
     <View style={{flex: 2, alignItems: 'center'}}>
@@ -334,18 +290,18 @@ const ScanItem = React.memo(({item, idx}) => (
         flex: 1,
         alignItems: 'center'
       }}>
-      {item?.is_scan === 'SCANED' ? (
+      {item?.is_scan_d === 'DONE' ? (
         <Ionicons
           style={{alignSelf: 'center'}}
           name={'checkmark-circle-outline'}
-          size={25}
+          size={20}
           color={'green'}
         />
       ) : (
         <Ionicons
           style={{alignSelf: 'center'}}
           name={'ellipsis-horizontal-outline'}
-          size={20}
+          size={10}
           color={'#000'}
         />
       )}

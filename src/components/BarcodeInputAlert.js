@@ -9,30 +9,49 @@ import {
   KeyboardAvoidingView
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import Clipboard from '@react-native-clipboard/clipboard'
 
 const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
   const [inputValue, setInputValue] = useState('')
+  const [clip, setClip] = useState('')
   const {t} = useTranslation()
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
+  useEffect(() => {
+    // You can use this effect to check the clipboard value when the component mounts
+    getClipboardContent()
+  }, [])
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
+  const getClipboardContent = async () => {
+    try {
+      const clipboardContent = await Clipboard.getString()
+      console.log('Clipboard Content:', clipboardContent)
+      setClip(clipboardContent)
+    } catch (error) {
+      console.error('Error getting clipboard content:', error)
+    }
+  }
+
   const handleInputChange = (text) => {
     setInputValue(text)
   }
 
   const handleConfirm = () => {
-    setBarcode(`${item_no}/${inputValue}`)
+    setBarcode(`${clip}/${inputValue}`)
+    setClip('')
     setInputValue('')
+    Clipboard.setString('')
     onClose()
   }
 
   const handleClose = () => {
     setInputValue('')
+    Clipboard.setString('')
     onClose()
   }
 
@@ -66,17 +85,25 @@ const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
                 backgroundColor: '#fff',
                 borderRadius: 5
               }}>
-              <TextInput
-                onChangeText={handleInputChange}
-                style={styles.textInput}
-                value={inputValue}
-                placeholder={t('enter_barcode_box')}
-                placeholderTextColor="#999"
-                selectTextOnFocus={true}
-                // autoFocus={true}
-                // showSoftInputOnFocus={true}
-                keyboardType="numeric"
-              />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-evenly',
+                  alignItems: 'center'
+                }}>
+                <Text style={{color: '#000', fontSize: 20}}>{clip}/</Text>
+                <TextInput
+                  onChangeText={handleInputChange}
+                  style={styles.textInput}
+                  value={inputValue}
+                  placeholder={t('enter_barcode_box')}
+                  placeholderTextColor="#999"
+                  selectTextOnFocus={true}
+                  // autoFocus={true}
+                  // showSoftInputOnFocus={true}
+                  keyboardType="numeric"
+                />
+              </View>
             </View>
 
             <View
@@ -185,7 +212,7 @@ const styles = {
   },
   textButton: {
     color: '#000',
-    fontSize: 16
+    fontSize: 20
   }
 }
 

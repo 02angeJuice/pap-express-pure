@@ -5,16 +5,23 @@ import {
   Text,
   useWindowDimensions,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  FlatList
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view'
 import {DataTable} from 'react-native-paper'
+import Clipboard from '@react-native-clipboard/clipboard'
 import {Empty} from '../../components/SpinnerEmpty'
 
 import {useTranslation} from 'react-i18next'
+import ModalDetail from './ModalDetail'
 
-const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
+const ToggleState = {
+  DETAIL: 'DETAIL'
+}
+
+const TabViewList = ({detail}) => {
   const {t} = useTranslation()
 
   const layout = useWindowDimensions()
@@ -49,15 +56,9 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
   const renderScene = ({route}) => {
     switch (route.key) {
       case 'first':
-        return (
-          <TabViewLeft
-            data={detail}
-            selected={detailSelected}
-            info={detailInfo}
-          />
-        )
+        return <TabViewLeft data={detail} />
       case 'second':
-        return <TabViewRight selected={headSelected} />
+        return <TabViewRight />
       default:
         return null
     }
@@ -77,8 +78,25 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
   )
 }
 
-const TabViewLeft = ({data, selected, info}) => {
+const TabViewLeft = ({data}) => {
   const {t} = useTranslation()
+  const [toggleState, setToggleState] = useState(null)
+  const [information, setInformation] = useState(null)
+
+  const toggleSetState = (newToggleState) => {
+    toggleState === newToggleState
+      ? setToggleState(newToggleState)
+      : setToggleState(null)
+  }
+
+  const renderItem = ({item}) => (
+    <DetailItem
+      key={item.row_id}
+      item={item}
+      setInformation={setInformation}
+      setToggleState={setToggleState}
+    />
+  )
 
   return (
     <ScrollView nestedScrollEnabled={true}>
@@ -109,20 +127,33 @@ const TabViewLeft = ({data, selected, info}) => {
             <DetailItem
               key={el.row_id}
               item={el}
-              selected={selected}
-              // onPress={() => onPressDetail(el?.item_no)}
-              info={info}
+              setInformation={setInformation}
+              setToggleState={setToggleState}
             />
           ))
         ) : (
           <Empty />
         )}
+
+        {/* <FlatList
+          data={data}
+          keyExtractor={(item) => item.row_id.toString()}
+          renderItem={renderItem}
+          ListEmptyComponent={<Empty />}
+        /> */}
       </DataTable>
+      {information && toggleState === ToggleState.DETAIL && (
+        <ModalDetail
+          data={information}
+          visible={toggleState === ToggleState.DETAIL}
+          setVisible={() => toggleSetState(null)}
+        />
+      )}
     </ScrollView>
   )
 }
 
-const DetailItem = ({item, selected, info}) => {
+const DetailItem = ({item, setInformation, setToggleState}) => {
   return (
     <DataTable.Row
       style={{paddingRight: 0}}
@@ -135,57 +166,62 @@ const DetailItem = ({item, selected, info}) => {
       //         : '',
       // ]}
     >
-      <DataTable.Cell
-        style={{
-          flex: 0.5,
-          borderRightWidth: 0.75,
-          borderStyle: 'dashed',
-          borderColor: '#eee'
-        }}>
-        <Text style={{color: '#000'}}>{item.row_id}</Text>
-      </DataTable.Cell>
-      <DataTable.Cell style={{flex: 2, justifyContent: 'center'}}>
-        <Text style={{color: '#000'}}>{item.item_serial}</Text>
-      </DataTable.Cell>
-      <DataTable.Cell
-        style={{flex: 3, justifyContent: 'flex-start'}}
-        onLongPress={() => {
-          Clipboard.setString(item.item_no)
-          console.log('copy ', item.item_no)
-        }}>
-        <Text style={{color: '#000'}}>{item.item_no}</Text>
-      </DataTable.Cell>
-      <DataTable.Cell style={{flex: 0.75, justifyContent: 'flex-end'}}>
-        <Text style={{color: '#000'}}>{item.qty_box}</Text>
-      </DataTable.Cell>
-      <DataTable.Cell
-        style={{flex: 2.5, justifyContent: 'flex-end', paddingRight: '2%'}}>
-        <View
-          style={[
-            styles.status,
-            item.status === 'PICKED'
-              ? styles.PICKED
-              : item.status === 'LOADED'
-              ? styles.LOADED
-              : styles.UNLOAD
-          ]}>
-          <Text style={{fontSize: 10, color: '#ffff'}}>{item.status}</Text>
-        </View>
-      </DataTable.Cell>
-      <DataTable.Cell
-        style={{
-          flex: 2,
-          // backgroundColor: 'pink',
-          justifyContent: 'center'
-        }}
-        onPress={() => info(item)}>
-        <Ionicons
-          style={styles.rightIcon}
-          name={'search-circle'}
-          size={40}
-          color={'#777'}
-        />
-      </DataTable.Cell>
+      <>
+        <DataTable.Cell
+          style={{
+            flex: 0.5,
+            borderRightWidth: 0.75,
+            borderStyle: 'dashed',
+            borderColor: '#eee'
+          }}>
+          <Text style={{color: '#000'}}>{item.row_id}</Text>
+        </DataTable.Cell>
+        <DataTable.Cell style={{flex: 2, justifyContent: 'center'}}>
+          <Text style={{color: '#000'}}>{item.item_serial}</Text>
+        </DataTable.Cell>
+        <DataTable.Cell
+          style={{flex: 3, justifyContent: 'flex-start'}}
+          onLongPress={() => {
+            Clipboard.setString(item.item_no)
+            console.log('copy ', item.item_no)
+          }}>
+          <Text style={{color: '#000'}}>{item.item_no}</Text>
+        </DataTable.Cell>
+        <DataTable.Cell style={{flex: 0.75, justifyContent: 'flex-end'}}>
+          <Text style={{color: '#000'}}>{item.qty_box}</Text>
+        </DataTable.Cell>
+        <DataTable.Cell
+          style={{flex: 2.5, justifyContent: 'flex-end', paddingRight: '2%'}}>
+          <View
+            style={[
+              styles.status,
+              item.status === 'PICKED'
+                ? styles.PICKED
+                : item.status === 'LOADED'
+                ? styles.LOADED
+                : styles.UNLOAD
+            ]}>
+            <Text style={{fontSize: 10, color: '#ffff'}}>{item.status}</Text>
+          </View>
+        </DataTable.Cell>
+        <DataTable.Cell
+          style={{
+            flex: 2,
+            // backgroundColor: 'pink',
+            justifyContent: 'center'
+          }}
+          onPress={() => {
+            setInformation(item)
+            setToggleState(ToggleState.DETAIL)
+          }}>
+          <Ionicons
+            style={styles.rightIcon}
+            name={'search-circle'}
+            size={40}
+            color={'#777'}
+          />
+        </DataTable.Cell>
+      </>
     </DataTable.Row>
   )
 }

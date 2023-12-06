@@ -125,7 +125,8 @@ const ModalCamera = ({set, visible, setVisible}) => {
               style={{
                 color: '#fff',
                 fontWeight: 'bold',
-                textAlign: 'center'
+                textAlign: 'center',
+                fontSize: 20
               }}>
               {t('photo')}
             </Text>
@@ -148,7 +149,8 @@ const ModalCamera = ({set, visible, setVisible}) => {
               style={{
                 color: '#fff',
                 fontWeight: 'bold',
-                textAlign: 'center'
+                textAlign: 'center',
+                fontSize: 20
               }}>
               {t('camera')}
             </Text>
@@ -180,7 +182,8 @@ const ModalCamera = ({set, visible, setVisible}) => {
                 style={{
                   color: '#000',
                   fontWeight: 'bold',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  fontSize: 20
                 }}>
                 {t('close')}
               </Text>

@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {
   StyleSheet,
   View,
@@ -10,10 +10,11 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view'
 import {DataTable} from 'react-native-paper'
-import {Empty} from '../../components/SpinnerEmpty'
 import Clipboard from '@react-native-clipboard/clipboard'
+import {Empty} from '../../components/SpinnerEmpty'
 
 import {useTranslation} from 'react-i18next'
+import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
 const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
   const {t} = useTranslation()
@@ -65,11 +66,8 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
     }
   }
 
-  // ----------------------------------------------------------
-  // == MAIN
-  // ----------------------------------------------------------
   return (
-    <View style={{height: 300}}>
+    <View style={{height: 295}}>
       <TabView
         style={[styles.container]}
         renderTabBar={renderTabBar}
@@ -132,14 +130,7 @@ const DetailItem = ({item, selected, info}) => {
     <DataTable.Row
       style={{paddingRight: 0}}
       key={item.row_id}
-      onPress={() => item?.status === 'PICKED' && selected(item)}
-      // onPress={() => selected(item)}
-      // style={[
-      //     selected?.item_no === item.item_no
-      //         ? { backgroundColor: '#FFDADA' }
-      //         : '',
-      // ]}
-    >
+      onPress={() => item?.status === 'PICKED' && selected(item)}>
       <DataTable.Cell
         style={{
           flex: 0.5,
@@ -222,6 +213,11 @@ const TabViewRight = ({selected}) => {
       </Text>
 
       <Text style={{color: '#000'}}>
+        {t('date_arrival')}:{' '}
+        {selected?.date_departure === null ? '-' : selected?.date_departure}
+      </Text>
+
+      <Text style={{color: '#000'}}>
         {t('car_regis')}:{' '}
         {selected?.Chinese_car_registration === null
           ? '-'
@@ -300,9 +296,6 @@ const styles = StyleSheet.create({
   UNLOAD: {
     backgroundColor: '#FF003C',
     color: '#4A0011'
-  },
-  hide: {
-    display: 'none'
   }
 })
 

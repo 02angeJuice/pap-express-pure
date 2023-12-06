@@ -76,7 +76,9 @@ const ContainerAlert = ({
         <KeyboardAvoidingView style={{flex: 1}} behavior="padding">
           <View style={styles.container}>
             <View style={styles.nav}>
-              <Text style={styles.textNav}>{t('item_container')}</Text>
+              <Text style={[styles.textNav, {fontSize: 20}]}>
+                {t('item_container')}
+              </Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleClose}>
@@ -212,7 +214,7 @@ const styles = {
   },
   textButton: {
     color: '#000',
-    fontSize: 16
+    fontSize: 20
   }
 }
 

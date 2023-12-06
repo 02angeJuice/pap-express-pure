@@ -10,14 +10,13 @@ import {
   ScrollView,
   Alert,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {Empty} from '../../components/SpinnerEmpty'
 import FastImage from 'react-native-fast-image'
-
-import ModalScan from './ModalScan'
 
 // Global Modal
 // import ModalCamera from '../../components/ModalCamera'
@@ -38,6 +37,8 @@ import {
   sendOrderConfirm
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
+import Scan from './Scan'
+import TabViewList from './TabViewList'
 
 const ToggleState = {
   SCAN: 'SCAN',
@@ -77,6 +78,13 @@ const DistributeDetail = ({navigation, route}) => {
 
   const dispatch = useDispatch()
 
+  const checkScan = (item_no, num) => {
+    const res = detail?.findIndex(
+      (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
+    )
+    return res < 0 ? false : true
+  }
+
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
@@ -84,12 +92,10 @@ const DistributeDetail = ({navigation, route}) => {
     const detail = await fetchOrderDetail(distribution_id)
     setDetail(detail.data)
   }
-
   const fetchOrderItem_API = async ({order_id, item_id}) => {
     const item = await fetchOrderItem({order_id, item_id})
     setItem(item.data[0])
   }
-
   const fetchOrderSelect_API = async (distribution_id) => {
     const order = await fetchOrderSelect(distribution_id)
     setOrderSelected(order.data[0])
@@ -298,32 +304,6 @@ const DistributeDetail = ({navigation, route}) => {
         }
       }
     }
-
-    // else {
-    //     // TEST: cancel
-    //     // ==============================
-    //     sendConfirm(
-    //         {
-    //             distribution_id: orderSelected?.distribution_id,
-    //             status: 'DATA ENTRY',
-    //             last_update: `${moment().format(
-    //                 'YYYY-MM-DDTHH:mm:ss.SSS'
-    //             )}Z`,
-    //             update_by: 'b0_test',
-    //         },
-    //         refresh
-    //     )
-
-    //     toast.show('REVERSE Successfully', {
-    //         type: 'warning',
-    //         placement: 'bottom',
-    //         duration: 4000,
-    //         offset: 30,
-    //         // animationType: 'slide-in',
-    //     })
-
-    //     setToggleButton(true)
-    // }
   }
 
   const alertReUse = (msg, detail) => {
@@ -332,8 +312,15 @@ const DistributeDetail = ({navigation, route}) => {
       : alert(t(msg), t(detail))
   }
 
-  const _renderDetail = ({item}) => {
-    return <ItemDetail item={item} detailSelected={handleSetDetailSelected} />
+  const handleCallPress = async () => {
+    const phoneNumber = '0991713084'
+
+    const phoneNumberWithPrefix = `tel:${phoneNumber}`
+    try {
+      await Linking.openURL(phoneNumberWithPrefix)
+    } catch (error) {
+      console.error('Error opening phone app:', error)
+    }
   }
 
   // ----------------------------------------------------------
@@ -393,9 +380,15 @@ const DistributeDetail = ({navigation, route}) => {
             </Text>
           </View>
         </View>
+
+        <TouchableOpacity>
+          <Text style={{color: '#000'}} onPress={handleCallPress}>
+            CALL
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <View
+      {/* <View
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -462,13 +455,13 @@ const DistributeDetail = ({navigation, route}) => {
             </View>
           )}
         </TouchableOpacity>
-      </View>
+      </View> */}
 
-      {list && !done ? (
+      {/* {list && !done ? (
         <FlatList
           keyboardShouldPersistTaps="handled"
           keyExtractor={(el) => el.row_id}
-          data={detail?.filter((el) => el.status === 'DATA ENTRY')}
+          data={detail?.filter((el) => el.status === 'DATA ENTRY').reverse()}
           initialNumToRender={6}
           windowSize={5}
           renderItem={_renderDetail}
@@ -500,9 +493,9 @@ const DistributeDetail = ({navigation, route}) => {
           }
           scrollEnabled={false}
         />
-      )}
+      )} */}
 
-      {item && toggleState === ToggleState.SCAN && (
+      {/* {item && toggleState === ToggleState.SCAN && (
         <ModalScan
           data={item}
           visible={true}
@@ -515,6 +508,19 @@ const DistributeDetail = ({navigation, route}) => {
           forceConfirm={onPressForceConfirm}
           navigation={navigation}
         />
+      )} */}
+
+      {order_id && (
+        <TabViewList
+          detail={detail}
+          // headSelected={headerSelected}
+          detailSelected={handleSetDetailSelected}
+          detailInfo={orderSelected}
+        />
+      )}
+
+      {order_id && (
+        <Scan detail={detail} checkScan={checkScan} distribute_id={order_id} />
       )}
 
       {/* {detail?.every((el) => el.status !== 'DATA ENTRY') &&
@@ -560,105 +566,105 @@ const DistributeDetail = ({navigation, route}) => {
           </TouchableOpacity>
         )} */}
 
-      {detail?.every((el) => el.status !== 'DATA ENTRY') &&
-        orderSelected?.status === 'DATA ENTRY' && (
-          <TouchableOpacity
-            style={[
-              styles.signatureBox,
-              !currentSign && {
-                borderWidth: 1,
-                borderStyle: 'dashed',
-                borderColor: '#7A7A7A'
-              }
-            ]}
-            onPress={() => toggleSetState(ToggleState.SIGNATURE)}
-            disabled={orderSelected?.status !== 'DATA ENTRY'}>
-            {currentSign !== null || orderSelected?.signature_onship ? (
-              <View style={styles.preview}>
-                {currentSign ? (
-                  // <Image
-                  //   resizeMode="contain"
-                  //   style={{width: '100%', height: 180}}
-                  //   source={{
-                  //     uri: currentSign
-                  //   }}
-                  // />
+      {/* {detail?.every((el) => el.status !== 'DATA ENTRY') &&
+        orderSelected?.status === 'DATA ENTRY' && ( */}
 
-                  <FastImage
-                    resizeMode={FastImage.resizeMode.contain}
-                    source={{
-                      uri: currentSign,
-                      priority: FastImage.priority.normal
-                    }}
-                    style={{width: '100%', height: 180}}
-                  />
-                ) : (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: `${path.IMG}/${orderSelected?.signature_onship}`
-                    }}
-                  />
-                )}
-              </View>
-            ) : (
-              <View style={styles.imageUpload}>
-                <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
-              </View>
-            )}
-            {toggleState === ToggleState.SIGNATURE && (
-              <ModalSignature
-                set={setCurrentSign}
-                visible={true}
-                setVisible={() => toggleSetState(null)}
-              />
-            )}
-          </TouchableOpacity>
-        )}
+      {order_id && (
+        <TouchableOpacity
+          style={[
+            styles.signatureBox,
+            !currentSign && {
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              borderColor: '#7A7A7A'
+            }
+          ]}
+          onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+          disabled={orderSelected?.status !== 'DATA ENTRY'}>
+          {currentSign !== null || orderSelected?.signature_onship ? (
+            <View style={styles.preview}>
+              {currentSign ? (
+                // <Image
+                //   resizeMode="contain"
+                //   style={{width: '100%', height: 180}}
+                //   source={{
+                //     uri: currentSign
+                //   }}
+                // />
 
+                <FastImage
+                  resizeMode={FastImage.resizeMode.contain}
+                  source={{
+                    uri: currentSign,
+                    priority: FastImage.priority.normal
+                  }}
+                  style={{width: '100%', height: 180}}
+                />
+              ) : (
+                <Image
+                  resizeMode={'contain'}
+                  style={{width: '100%', height: 180}}
+                  source={{
+                    uri: `${path.IMG}/${orderSelected?.signature_onship}`
+                  }}
+                />
+              )}
+            </View>
+          ) : (
+            <View style={styles.imageUpload}>
+              <Ionicons name="pencil" size={40} color="#4d4d4d" />
+              <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
+            </View>
+          )}
+          {toggleState === ToggleState.SIGNATURE && (
+            <ModalSignature
+              set={setCurrentSign}
+              visible={true}
+              setVisible={() => toggleSetState(null)}
+            />
+          )}
+        </TouchableOpacity>
+      )}
+      {/* 
       {detail?.every((el) => el.status !== 'DATA ENTRY') &&
-        orderSelected?.status === 'DATA ENTRY' && (
-          <View style={styles.buttonGroup}>
-            {toggleButton && (
-              <TouchableOpacity
-                disabled={loading}
+        orderSelected?.status === 'DATA ENTRY' && ( */}
+
+      {order_id && (
+        <View style={styles.buttonGroup}>
+          {toggleButton && (
+            <TouchableOpacity
+              disabled={loading}
+              style={[
+                styles.button,
+                styles.shadow,
+                styles.row,
+                {justifyContent: 'center', gap: 10},
+                loading
+                  ? {backgroundColor: '#000'}
+                  : {backgroundColor: '#ABFC74'}
+              ]}
+              onPress={() => onPressConfirm(true)}>
+              {loading ? (
+                <ActivityIndicator size={25} color="#FFF" />
+              ) : (
+                <Ionicons name={'checkmark-outline'} size={25} color={'#000'} />
+              )}
+
+              <Text
                 style={[
-                  styles.button,
-                  styles.shadow,
-                  styles.row,
-                  {justifyContent: 'center', gap: 10},
-                  loading
-                    ? {backgroundColor: '#000'}
-                    : {backgroundColor: '#ABFC74'}
-                ]}
-                onPress={() => onPressConfirm(true)}>
-                {loading ? (
-                  <ActivityIndicator size={25} color="#FFF" />
-                ) : (
-                  <Ionicons
-                    name={'checkmark-outline'}
-                    size={25}
-                    color={'#000'}
-                  />
-                )}
-
-                <Text
-                  style={[
-                    {
-                      color: '#183B00',
-                      fontWeight: 'bold',
-                      textAlign: 'center'
-                    },
-                    loading && {color: '#fff'}
-                  ]}>
-                  {t('confirm')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+                  {
+                    color: '#183B00',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  },
+                  loading && {color: '#fff'}
+                ]}>
+                {t('confirm')}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </ScrollView>
   )
 }

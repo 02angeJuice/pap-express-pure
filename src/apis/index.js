@@ -32,6 +32,17 @@ export const hh_sel_box_by_receipt = async (receipt_no) => {
     })
 }
 
+export const hh_sel_box_by_od = async (od) => {
+  return await axios
+    .post(`${path.URL}/api/hh/receipt/allbox_od${od && `?od=${od}`}`)
+    .then((res) => {
+      return res.data
+    })
+    .catch((e) => {
+      throw new Error(e)
+    })
+}
+
 export const fetchHeader = async (status) =>
   await axios.post(`${path.URL}/api/hh/receipt/all`, {
     status: status

@@ -21,7 +21,8 @@ import {useScan} from '../../hooks'
 import {fetchBox, hh_sel_box_by_receipt} from '../../apis'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
-const ModalScan = ({
+const Scan = ({
+  detail,
   checkScan,
   data,
   visible,
@@ -31,15 +32,11 @@ const ModalScan = ({
   forceConfirm,
   navigation
 }) => {
-  const [loading, setLoading] = useState(false)
-  const [scan, setScan] = useState(false)
-  const [checkStatus, setCheckStatus] = useState(false)
   const [alert, setAlert] = useState(false)
   const [alertBarcode, setAlertBarcode] = useState(false)
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
   const [box, setBox] = useState(null)
-  const [reload, setReload] = useState(false)
 
   const {insertDetailsBox, setBoxAvail} = useScan()
   const {t} = useTranslation()
@@ -68,7 +65,6 @@ const ModalScan = ({
 
   useEffect(() => {
     const fetch_hh_sel_box_by_receipt = async () => {
-      // console.log(headerSelected?.receipt_no)
       try {
         const res = await hh_sel_box_by_receipt(data?.receipt_no)
         setBox(res)
@@ -86,8 +82,6 @@ const ModalScan = ({
     if (barcode.length != 0) {
       handleInputSubmit(barcode)
     }
-
-    console.log(barcode)
   }, [barcode])
 
   // useEffect(() => {
@@ -119,7 +113,6 @@ const ModalScan = ({
 
   const handleInputSubmit = async (text) => {
     const newValue = text.split('/')
-    // const isValid = box?.find((el) => el.box_id === text)
 
     const checked = checkScan(newValue[0], newValue[1])
 
@@ -129,7 +122,6 @@ const ModalScan = ({
       })
       setInput('')
     } else {
-      setReload(true)
       await insertDetailsBox(
         newValue[0],
         Number(newValue[1]),
@@ -137,9 +129,7 @@ const ModalScan = ({
         navigation
       )
       setredata((el) => !el)
-      setReload(false)
 
-      setScan(!scan)
       setInput('')
     }
   }
@@ -171,11 +161,19 @@ const ModalScan = ({
           ]}>
           <View
             style={{
+              flex: 0.5,
+              alignItems: 'center',
+              width: '100%'
+            }}>
+            <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
+          </View>
+          <View
+            style={{
               flex: 1,
               alignItems: 'center',
               width: '100%'
             }}>
-            <Text style={{color: '#000', fontSize: 20}}>{`#${t('box')}(${
+            <Text style={{color: '#000', fontSize: 20}}>{`${t('box')}(${
               box ? box?.length : ''
             })`}</Text>
           </View>
@@ -189,154 +187,70 @@ const ModalScan = ({
               value={input}
               onChangeText={handleInputChange}
               placeholder={t('enter_barcode')}
-              placeholderTextColor="#999"
+              placeholderTextColor="#009DFF"
               blurOnSubmit={false}
               onSubmitEditing={() => handleInputSubmit(input)}
+              autoFocus={true}
               selectTextOnFocus={true}
               onStartShouldSetResponder={() => {
                 Keyboard.dismiss()
                 return false
               }}
-              // showSoftInputOnFocus={false}
-              onPressOut={() => setAlertBarcode(!alertBarcode)}
+              showSoftInputOnFocus={false}
+              // onPressOut={() => setAlertBarcode(!alertBarcode)}
             />
           </View>
 
-          <View
+          <TouchableOpacity
             style={{
               flex: 1,
               alignItems: 'center'
-            }}>
-            {/* <Text style={{fontSize: 20, color: '#000'}}>{t('status')}</Text> */}
-          </View>
+            }}
+            onLongPress={() => setAlertBarcode(!alertBarcode)}>
+            <Ionicons
+              style={styles.rightIcon}
+              name={'hammer-outline'}
+              size={30}
+              color="#eee"
+            />
+          </TouchableOpacity>
         </View>
-
-        {/* <FlatList
-              keyboardShouldPersistTaps="handled"
-              // keyboardShouldPersistTaps="always"
-              style={{marginBottom: 5}}
-              keyExtractor={(item, index) => index.toString()}
-              data={box}
-              ItemSeparatorComponent={() => (
-                <View
-                  style={{
-                    borderBottomWidth: 0.5,
-                    borderStyle: 'dashed',
-                    borderColor: '#999999'
-                  }}
-                />
-              )}
-              initialNumToRender={1}
-              windowSize={10}
-              renderItem={renderItem}
-              ListEmptyComponent={<Empty text={box && t('empty')} />}
-            /> */}
 
         {box !== null ? (
           <ScrollView nestedScrollEnabled={true} style={styles.modalContainer}>
             {box?.map((el, idx) => (
-              <ScanItem key={idx} item={el} />
+              <ScanItem
+                key={idx}
+                item={el}
+                idx={
+                  detail?.find(
+                    (e) =>
+                      e.item_no === el.item_no &&
+                      el?.box_id?.split('/')[1] === '1'
+                  )?.row_id
+                }
+              />
             ))}
           </ScrollView>
         ) : (
           <Empty text={box && t('empty')} />
         )}
       </View>
-      {/* 
-          <View
-            style={[
-              styles.row,
-              {
-                justifyContent: 'space-between',
-                gap: 5
-              }
-            ]}>
-            {reload ? (
-              <TouchableOpacity
-                disabled={loading}
-                style={[
-                  styles.button,
-                  styles.row,
-                  {
-                    flex: 1,
-                    justifyContent: 'center',
-                    gap: 10,
-                    backgroundColor: '#FFF'
-                  }
-                ]}>
-                <ActivityIndicator size={20} color="#999" />
-                <Text
-                  style={[
-                    {
-                      color: '#999',
-                      fontWeight: 'bold',
-                      textAlign: 'center'
-                    }
-                  ]}>
-                  Loading...
-                </Text>
-              </TouchableOpacity>
-            ) : checkStatus || force ? (
-              <TouchableOpacity
-                style={[styles.button, {backgroundColor: '#ABFC74', flex: 1}]}
-                onPress={() => confirm()}>
-                <Text
-                  style={[
-                    {
-                      color: '#183B00',
-                      fontWeight: 'bold',
-                      textAlign: 'center'
-                    }
-                  ]}>
-                  {t('confirm')}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.button, {backgroundColor: '#FFE683', flex: 1}]}
-                onPress={() => setAlert(!alert)}>
-                <Text
-                  style={[
-                    {
-                      color: '#5E4600',
-                      fontWeight: 'bold',
-                      textAlign: 'center'
-                    }
-                  ]}>
-                  {t('force_confirm')}
-                </Text>
-              </TouchableOpacity>
-            )}
 
-            <TouchableOpacity
-              style={[styles.button, {backgroundColor: '#fff', flex: 1}]}
-              onPress={() => setVisible(!visible)}>
-              <Text
-                style={[
-                  {
-                    color: '#000',
-                    fontWeight: 'bold',
-                    textAlign: 'center'
-                  }
-                ]}>
-                {t('close')}
-              </Text>
-            </TouchableOpacity>
+      {/* <CustomTextInputAlert
+        visible={alert}
+        onClose={() => setAlert(!alert)}
+        forceConfirm={forceConfirm}
+        remark={data?.remark}
+      /> */}
 
-            <CustomTextInputAlert
-              visible={alert}
-              onClose={() => setAlert(!alert)}
-              forceConfirm={forceConfirm}
-              remark={data?.remark}
-            />
-
-            <BarcodeInputAlert
-              visible={alertBarcode}
-              onClose={() => setAlertBarcode(!alertBarcode)}
-              setBarcode={setBarcode}
-              item_no={data?.item_no}
-            />
-          </View> */}
+      {alertBarcode && (
+        <BarcodeInputAlert
+          visible={alertBarcode}
+          onClose={() => setAlertBarcode(!alertBarcode)}
+          setBarcode={setBarcode}
+        />
+      )}
     </View>
   )
 }
@@ -344,58 +258,73 @@ const ModalScan = ({
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item}) => (
-  <View key={item.box_id}>
-    <View
-      style={[
-        styles.row,
-        {
-          justifyContent: 'space-between',
-          marginVertical: 3
+const ScanItem = React.memo(({item, idx}) => (
+  <View
+    key={item.box_id}
+    style={[
+      styles.row,
+      {
+        justifyContent: 'space-between',
+        marginVertical: 3,
+        backgroundColor: item?.is_scan === 'IDLE' ? '#ABFC7430' : null
+      },
+      idx &&
+        idx !== 1 && {
+          borderTopWidth: 1,
+          borderColor: '#ccc',
+          borderStyle: 'dashed'
         }
-      ]}>
-      <View
+    ]}>
+    <View
+      style={{
+        flex: 0.5,
+        alignItems: 'center',
+        width: '100%'
+      }}>
+      <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
+        {idx}
+      </Text>
+    </View>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        width: '100%'
+      }}>
+      <Text style={{color: '#000', fontSize: 20}}>
+        {item.box_id.split('/')[1]}
+      </Text>
+    </View>
+    <View style={{flex: 2, alignItems: 'center'}}>
+      <Text
         style={{
-          flex: 1,
-          alignItems: 'center',
-          width: '100%'
+          fontSize: 20,
+          color: '#000'
         }}>
-        <Text style={{color: '#000', fontSize: 20}}>
-          {item.box_id.split('/')[1]}
-        </Text>
-      </View>
-      <View style={{flex: 2, alignItems: 'center'}}>
-        <TouchableOpacity
-          onLongPress={async () => {
-            Clipboard.setString(item.box_id)
-            console.log('copy ', item.box_id)
-            // await Clipboard.getString()
-          }}>
-          <Text style={{color: '#000', fontSize: 20}}>{item.box_id}</Text>
-        </TouchableOpacity>
-      </View>
+        {item.box_id}
+      </Text>
+    </View>
 
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center'
-        }}>
-        {item?.is_scan === 'SCANED' ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'ellipsis-horizontal-outline'}
-            size={10}
-            color={'#000'}
-          />
-        ) : (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'checkmark-circle-outline'}
-            size={20}
-            color={'green'}
-          />
-        )}
-      </View>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center'
+      }}>
+      {item?.is_scan === 'SCANED' ? (
+        <Ionicons
+          style={{alignSelf: 'center'}}
+          name={'ellipsis-horizontal-outline'}
+          size={20}
+          color={'#ccc'}
+        />
+      ) : (
+        <Ionicons
+          style={{alignSelf: 'center'}}
+          name={'checkmark-circle-outline'}
+          size={25}
+          color={'green'}
+        />
+      )}
     </View>
   </View>
 ))
@@ -414,10 +343,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     height: 300
-    // paddingTop: 25,
-    // paddingBottom: 10,
-    // paddingHorizontal: 10,
-    // backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
   row: {
     display: 'flex',
@@ -431,7 +356,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    // borderRadius: 5,
     overflow: 'hidden',
     borderRadius: 10,
     borderWidth: 1,
@@ -465,4 +389,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default React.memo(ModalScan)
+export default React.memo(Scan)

@@ -40,9 +40,12 @@ import {
 import {screenMap} from '../../constants/screenMap'
 import socket from '../../utils/socket'
 import Scan from './Scan'
+import TabViewList_2 from './TabViewList_2'
+import ModalHeaderInfo from '../../components/ModalHeaderInfo'
 
 const ToggleState = {
   HEADER: 'HEADER',
+  INFO: 'INFO',
   SCAN: 'SCAN',
   DETAIL: 'DETAIL',
   SIGNATURE: 'SIGNATURE',
@@ -72,16 +75,9 @@ const UnloadFromTruck = ({navigation}) => {
   const dispatch = useDispatch()
 
   const checkScan = (item_no, num) => {
-    console.log(item_no)
-    console.log(num)
-    console.log('-------------detail', detail)
-
     const res = detail?.findIndex(
       (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
     )
-
-    console.log(res)
-
     return res < 0 ? false : true
   }
 
@@ -314,10 +310,12 @@ const UnloadFromTruck = ({navigation}) => {
           {/* RECEIPT */}
           <View style={{display: 'flex', flexDirection: 'column', gap: 0}}>
             <View>
-              <Text style={{color: '#000'}}>{t('receipt_no')}</Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('receipt_no')}
+              </Text>
             </View>
             <View style={styles.groupForm}>
-              <View style={{flex: 1}}>
+              <View style={{flex: 0.7}}>
                 <TextInput
                   ref={inputRef}
                   style={[
@@ -325,7 +323,8 @@ const UnloadFromTruck = ({navigation}) => {
                     {
                       fontWeight: 'normal',
                       flex: 0.75,
-                      color: '#000'
+                      color: '#000',
+                      fontSize: 20
                     },
                     headerSelected?.status_hh === 'EDITING'
                       ? {
@@ -344,6 +343,24 @@ const UnloadFromTruck = ({navigation}) => {
                   onSubmitEditing={Keyboard.dismiss}
                 />
               </View>
+
+              <TouchableOpacity
+                disabled={!headerSelected}
+                style={[
+                  {
+                    flex: 0.15,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }
+                ]}
+                onPress={() => toggleSetState(ToggleState.INFO)}>
+                <Ionicons
+                  style={styles.rightIcon}
+                  name={'newspaper-outline'}
+                  size={30}
+                  color={headerSelected ? '#58C21075' : '#ccc'}
+                />
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
@@ -367,7 +384,7 @@ const UnloadFromTruck = ({navigation}) => {
                     style={[
                       {
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: 20,
                         textAlign: 'center'
                       }
                     ]}>
@@ -387,7 +404,9 @@ const UnloadFromTruck = ({navigation}) => {
             }}>
             <View style={{display: 'flex', flex: 0.3, flexDirection: 'column'}}>
               <View>
-                <Text style={{color: '#000'}}>{t('container_no')}</Text>
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('container_no')}
+                </Text>
               </View>
 
               <TextInput
@@ -396,7 +415,7 @@ const UnloadFromTruck = ({navigation}) => {
                   {
                     backgroundColor: '#D2D2D2',
                     fontWeight: 'bold',
-                    fontSize: 15,
+                    fontSize: 20,
 
                     color: '#000',
                     textAlign: 'center'
@@ -409,7 +428,9 @@ const UnloadFromTruck = ({navigation}) => {
 
             <View style={{display: 'flex', flex: 0.4, flexDirection: 'column'}}>
               <View>
-                <Text style={{color: '#000'}}>{t('customer')}</Text>
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('customer')}
+                </Text>
               </View>
               <TextInput
                 style={[
@@ -417,7 +438,8 @@ const UnloadFromTruck = ({navigation}) => {
                   {
                     backgroundColor: '#D2D2D2',
                     fontWeight: 'bold',
-                    color: '#000'
+                    color: '#000',
+                    fontSize: 20
                   }
                 ]}
                 defaultValue={headerSelected?.customer_id}
@@ -446,7 +468,7 @@ const UnloadFromTruck = ({navigation}) => {
                     style={[
                       {
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: 20,
                         textAlign: 'center'
                       }
                     ]}>
@@ -462,47 +484,30 @@ const UnloadFromTruck = ({navigation}) => {
           <ModalHeader
             headerSelected={headerSelected?.receipt_no}
             onPress={handleSetHeaderSelected}
-            visible={true}
+            visible={toggleState === ToggleState.HEADER}
             setVisible={() => toggleSetState(null)}
           />
         )}
 
-        {detail?.length > 0 && (
-          <TabViewList
-            data={headerSelected}
-            detail={detail}
-            headSelected={headerSelected}
-            detailSelected={handleSetDetailSelected}
-            detailInfo={handleSetDetailInfo}
-          />
+        {/* {headerSelected && detail?.length > 0 && (
+          <TabViewList detail={detail} />
+        )} */}
+
+        {headerSelected && detail?.length > 0 && (
+          <TabViewList_2 detail={detail} />
         )}
 
         {headerSelected && (
-          <Scan checkScan={checkScan} data={headerSelected} detail={detail} />
+          <Scan detail={detail} checkScan={checkScan} data={headerSelected} />
         )}
 
-        {detailInfo && toggleState === ToggleState.DETAIL && (
-          <ModalDetail
-            data={detailInfo}
-            visible={true}
+        {headerSelected && toggleState === ToggleState.INFO && (
+          <ModalHeaderInfo
+            data={headerSelected}
+            visible={toggleState === ToggleState.INFO}
             setVisible={() => toggleSetState(null)}
           />
         )}
-
-        {/* {detailSelected && toggleState === ToggleState.SCAN && (
-          <ModalScan
-            data={detailSelected}
-            visible={true}
-            setVisible={() => {
-              toggleSetState(null)
-              setDetailSelected(null)
-            }}
-            confirm={onPressScanConfirm}
-            force={force}
-            forceConfirm={onPressForceConfirm}
-            navigation={navigation}
-          />
-        )} */}
 
         <View>
           {headerSelected && (
@@ -533,9 +538,9 @@ const UnloadFromTruck = ({navigation}) => {
               ) : (
                 <View style={styles.imageUpload}>
                   <Ionicons name="image-outline" size={45} color="#4d4d4d" />
-                  <Text style={{color: '#000'}}>{`${t('photo')} / ${t(
-                    'camera'
-                  )}`}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>{`${t(
+                    'photo'
+                  )} / ${t('camera')}`}</Text>
                 </View>
               )}
 
@@ -584,7 +589,9 @@ const UnloadFromTruck = ({navigation}) => {
               ) : (
                 <View style={styles.imageUpload}>
                   <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                  <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>{`${t(
+                    'signature'
+                  )}`}</Text>
                 </View>
               )}
               {toggleState === ToggleState.SIGNATURE && (

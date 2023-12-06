@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {
   StyleSheet,
   View,
@@ -14,13 +14,9 @@ import Clipboard from '@react-native-clipboard/clipboard'
 import {Empty} from '../../components/SpinnerEmpty'
 
 import {useTranslation} from 'react-i18next'
-import ModalDetail from './ModalDetail'
+import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
-const ToggleState = {
-  DETAIL: 'DETAIL'
-}
-
-const TabViewList = ({detail}) => {
+const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
   const {t} = useTranslation()
 
   const layout = useWindowDimensions()
@@ -29,6 +25,7 @@ const TabViewList = ({detail}) => {
     {key: 'first', title: `${t('item_list')}`},
     {key: 'second', title: `${t('receipt')}`}
   ])
+
   const renderTabBar = (props) => {
     return (
       <TabBar
@@ -55,9 +52,15 @@ const TabViewList = ({detail}) => {
   const renderScene = ({route}) => {
     switch (route.key) {
       case 'first':
-        return <TabViewLeft data={detail} />
+        return (
+          <TabViewLeft
+            data={detail}
+            selected={detailSelected}
+            info={detailInfo}
+          />
+        )
       case 'second':
-        return <TabViewRight />
+        return <TabViewRight selected={headSelected} />
       default:
         return null
     }
@@ -77,16 +80,8 @@ const TabViewList = ({detail}) => {
   )
 }
 
-const TabViewLeft = ({data}) => {
+const TabViewLeft = ({data, selected, info}) => {
   const {t} = useTranslation()
-  const [toggleState, setToggleState] = useState(null)
-  const [information, setInformation] = useState(null)
-
-  const toggleSetState = (newToggleState) => {
-    toggleState === newToggleState
-      ? setToggleState(newToggleState)
-      : setToggleState(null)
-  }
 
   return (
     <ScrollView nestedScrollEnabled={true}>
@@ -117,39 +112,25 @@ const TabViewLeft = ({data}) => {
             <DetailItem
               key={el.row_id}
               item={el}
-              setInformation={setInformation}
-              setToggleState={setToggleState}
+              selected={selected}
+              // onPress={() => onPressDetail(el?.item_no)}
+              info={info}
             />
           ))
         ) : (
           <Empty />
         )}
       </DataTable>
-
-      {information && toggleState === ToggleState.DETAIL && (
-        <ModalDetail
-          data={information}
-          visible={toggleState === ToggleState.DETAIL}
-          setVisible={() => toggleSetState(null)}
-        />
-      )}
     </ScrollView>
   )
 }
 
-const DetailItem = ({item, setInformation, setToggleState}) => {
+const DetailItem = ({item, selected, info}) => {
   return (
     <DataTable.Row
       style={{paddingRight: 0}}
       key={item.row_id}
-      onPress={() => item?.status === 'PICKED' && selected(item)}
-      // onPress={() => selected(item)}
-      // style={[
-      //     selected?.item_no === item.item_no
-      //         ? { backgroundColor: '#FFDADA' }
-      //         : '',
-      // ]}
-    >
+      onPress={() => item?.status === 'PICKED' && selected(item)}>
       <DataTable.Cell
         style={{
           flex: 0.5,
@@ -193,10 +174,7 @@ const DetailItem = ({item, setInformation, setToggleState}) => {
           // backgroundColor: 'pink',
           justifyContent: 'center'
         }}
-        onPress={() => {
-          setInformation(item)
-          setToggleState(ToggleState.DETAIL)
-        }}>
+        onPress={() => info(item)}>
         <Ionicons
           style={styles.rightIcon}
           name={'search-circle'}

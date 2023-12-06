@@ -55,7 +55,9 @@ const ModalSignature = ({set, visible, setVisible}) => {
       <View style={styles.modalContainer}>
         <View style={styles.container}>
           <View style={styles.nav}>
-            <Text style={styles.textNav}>{t('signature')}</Text>
+            <Text style={[styles.textNav, {fontSize: 20}]}>
+              {t('signature')}
+            </Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setVisible(!visible)}>
@@ -91,7 +93,8 @@ const ModalSignature = ({set, visible, setVisible}) => {
                   {
                     color: '#183B00',
                     fontWeight: 'bold',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    fontSize: 20
                   }
                 ]}>
                 {t('confirm')}

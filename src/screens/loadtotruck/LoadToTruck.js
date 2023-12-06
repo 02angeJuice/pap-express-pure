@@ -18,7 +18,7 @@ import debounce from 'lodash.debounce'
 import moment from 'moment'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import SelectDropdown from 'react-native-select-dropdown'
-import TabViewList from './TabViewList_bak'
+import TabViewList from './TabViewList'
 import ModalHeader from './ModalHeader'
 import ModalDetail from './ModalDetail'
 import ModalScan from './ModalScan'
@@ -47,9 +47,12 @@ import {Empty} from '../../components/SpinnerEmpty'
 
 import PagerView from 'react-native-pager-view'
 import Scan from './Scan'
+import TabViewList_2 from './TabViewList_2'
+import ModalHeaderInfo from '../../components/ModalHeaderInfo'
 
 const ToggleState = {
   HEADER: 'HEADER',
+  INFO: 'INFO',
   DETAIL: 'DETAIL',
   SCAN: 'SCAN',
   SIGNATURE: 'SIGNATURE',
@@ -86,16 +89,9 @@ const LoadToTruck = ({navigation}) => {
   const dispatch = useDispatch()
 
   const checkScan = (item_no, num) => {
-    console.log(item_no)
-    console.log(num)
-    console.log('-------------detail', detail)
-
     const res = detail?.findIndex(
       (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
     )
-
-    console.log(res)
-
     return res < 0 ? false : true
   }
 
@@ -119,12 +115,10 @@ const LoadToTruck = ({navigation}) => {
 
   useEffect(() => {
     const fetch_hh_sel_box_by_receipt = async () => {
-      console.log(headerSelected?.receipt_no)
       try {
         const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
 
         setBox(res)
-        console.log(res)
       } catch (error) {}
     }
 
@@ -393,7 +387,9 @@ const LoadToTruck = ({navigation}) => {
               }
             ]}>
             <View flex={0.4}>
-              <Text style={{color: '#000'}}>{t('transport_type')}: </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('transport_type')}:{' '}
+              </Text>
             </View>
             <View style={{flex: 0.6}}>
               <SelectDropdown
@@ -430,10 +426,12 @@ const LoadToTruck = ({navigation}) => {
           {/* RECEIPT */}
           <View style={{display: 'flex', flexDirection: 'column', gap: 0}}>
             <View>
-              <Text style={{color: '#000'}}>{t('receipt_no')}</Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('receipt_no')}
+              </Text>
             </View>
             <View style={styles.groupForm}>
-              <View style={{flex: 1}}>
+              <View style={{flex: 0.7}}>
                 <TextInput
                   ref={inputRef}
                   style={[
@@ -441,7 +439,8 @@ const LoadToTruck = ({navigation}) => {
                     {
                       fontWeight: 'normal',
                       flex: 0.75,
-                      color: '#000'
+                      color: '#000',
+                      fontSize: 20
                     },
                     headerSelected?.status_hh === 'EDITING'
                       ? {
@@ -460,6 +459,24 @@ const LoadToTruck = ({navigation}) => {
                   onSubmitEditing={Keyboard.dismiss}
                 />
               </View>
+
+              <TouchableOpacity
+                disabled={!headerSelected}
+                style={[
+                  {
+                    flex: 0.15,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }
+                ]}
+                onPress={() => toggleSetState(ToggleState.INFO)}>
+                <Ionicons
+                  style={styles.rightIcon}
+                  name={'newspaper-outline'}
+                  size={30}
+                  color={headerSelected ? '#58C21075' : '#ccc'}
+                />
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
@@ -483,7 +500,7 @@ const LoadToTruck = ({navigation}) => {
                     style={[
                       {
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: 20,
                         textAlign: 'center'
                       }
                     ]}>
@@ -503,7 +520,9 @@ const LoadToTruck = ({navigation}) => {
             }}>
             <View style={{display: 'flex', flex: 0.3, flexDirection: 'column'}}>
               <View>
-                <Text style={{color: '#000'}}>{t('container_no')}</Text>
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('container_no')}
+                </Text>
               </View>
               <TouchableOpacity
                 disabled={!headerSelected && true}
@@ -516,7 +535,7 @@ const LoadToTruck = ({navigation}) => {
                     {
                       backgroundColor: '#D2D2D2',
                       fontWeight: 'bold',
-                      fontSize: 15,
+                      fontSize: 20,
                       color: '#000',
                       textAlign: 'center'
                     },
@@ -535,7 +554,9 @@ const LoadToTruck = ({navigation}) => {
 
             <View style={{display: 'flex', flex: 0.4, flexDirection: 'column'}}>
               <View>
-                <Text style={{color: '#000'}}>{t('customer')}</Text>
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('customer')}
+                </Text>
               </View>
               <TextInput
                 style={[
@@ -543,7 +564,8 @@ const LoadToTruck = ({navigation}) => {
                   {
                     backgroundColor: '#D2D2D2',
                     fontWeight: 'bold',
-                    color: '#000'
+                    color: '#000',
+                    fontSize: 20
                   }
                 ]}
                 defaultValue={headerSelected?.customer_id}
@@ -576,7 +598,7 @@ const LoadToTruck = ({navigation}) => {
                     style={[
                       {
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: 20,
                         textAlign: 'center'
                       }
                     ]}>
@@ -588,18 +610,44 @@ const LoadToTruck = ({navigation}) => {
           </View>
         </View>
 
-        {detail?.length > 0 && (
-          <TabViewList
-            data={headerSelected}
-            detail={detail}
-            headSelected={headerSelected}
-            detailSelected={handleSetDetailSelected}
-            detailInfo={handleSetDetailInfo}
+        {toggleState === ToggleState.HEADER && (
+          <ModalHeader
+            headerSelected={headerSelected?.receipt_no}
+            onPress={handleSetHeaderSelected}
+            visible={true}
+            setVisible={() => toggleSetState(null)}
           />
         )}
 
+        {/* {headerSelected && detail?.length > 0 && (
+          <TabViewList detail={detail} />
+        )} */}
+
+        {headerSelected && detail?.length > 0 && (
+          <TabViewList_2 detail={detail} />
+        )}
+
         {headerSelected && (
-          <Scan checkScan={checkScan} data={headerSelected} detail={detail} />
+          <Scan detail={detail} checkScan={checkScan} data={headerSelected} />
+        )}
+
+        {headerSelected && toggleState === ToggleState.INFO && (
+          <ModalHeaderInfo
+            data={headerSelected}
+            visible={toggleState === ToggleState.INFO}
+            setVisible={() => toggleSetState(null)}
+          />
+        )}
+
+        {headerSelected?.container_no && (
+          <ContainerAlert
+            visible={alert}
+            onClose={handleContainerClose}
+            // forceConfirm={forceConfirm}
+            container_no={headerSelected?.container_no}
+            setContainerOk={setContainerOk}
+            containerOk={containerOk}
+          />
         )}
 
         <View>
@@ -631,9 +679,9 @@ const LoadToTruck = ({navigation}) => {
               ) : (
                 <View style={styles.imageUpload}>
                   <Ionicons name="image-outline" size={45} color="#4d4d4d" />
-                  <Text style={{color: '#000'}}>{`${t('photo')} / ${t(
-                    'camera'
-                  )}`}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>{`${t(
+                    'photo'
+                  )} / ${t('camera')}`}</Text>
                 </View>
               )}
               {toggleState === ToggleState.CAMERA && (
@@ -681,7 +729,9 @@ const LoadToTruck = ({navigation}) => {
               ) : (
                 <View style={[styles.imageUpload]}>
                   <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                  <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>{`${t(
+                    'signature'
+                  )}`}</Text>
                 </View>
               )}
               {toggleState === ToggleState.SIGNATURE && (
@@ -750,34 +800,6 @@ const LoadToTruck = ({navigation}) => {
             </View>
           )}
         </View>
-
-        {toggleState === ToggleState.HEADER && (
-          <ModalHeader
-            headerSelected={headerSelected?.receipt_no}
-            onPress={handleSetHeaderSelected}
-            visible={true}
-            setVisible={() => toggleSetState(null)}
-          />
-        )}
-
-        {detailInfo && toggleState === ToggleState.DETAIL && (
-          <ModalDetail
-            data={detailInfo}
-            visible={true}
-            setVisible={() => toggleSetState(null)}
-          />
-        )}
-
-        {headerSelected?.container_no && (
-          <ContainerAlert
-            visible={alert}
-            onClose={handleContainerClose}
-            // forceConfirm={forceConfirm}
-            container_no={headerSelected?.container_no}
-            setContainerOk={setContainerOk}
-            containerOk={containerOk}
-          />
-        )}
       </ScrollView>
     </TouchableWithoutFeedback>
   )
