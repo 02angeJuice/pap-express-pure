@@ -20,6 +20,14 @@ import {useScan} from '../../hooks'
 import {fetchBox} from '../../apis'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
+const generateItems = (numInput, item_no) => {
+  const newItems = []
+  for (let i = 0; i < numInput; i++) {
+    newItems.push({box_id: `${item_no}/${i + 1}`, is_scan: null})
+  }
+  return newItems
+}
+
 const ModalScan = ({
   data,
   visible,
@@ -50,23 +58,23 @@ const ModalScan = ({
   // ----------------------------------------------------------
   const fetchBox_API = async (item_no) => {
     setLoading(true)
-    const box = await fetchBox(item_no)
-    setBox(box?.data)
-    console.log(box?.data)
-    setLoading(false)
-  }
-
-  const generateItems = (numInput) => {
-    const newItems = []
-    for (let i = 0; i < numInput; i++) {
-      newItems.push({box_id: `${data?.item_no}/${i + 1}`, is_scan: null})
+    try {
+      const box = await fetchBox(item_no)
+      setBox(box?.data)
+      console.log('fetchBox')
+    } catch (error) {
+      Alert.alert('Something went wrong!', error.message)
     }
-    return newItems
+    setLoading(false)
   }
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
+  useEffect(() => {
+    data?.qty_box && setItems(generateItems(numInputs, data?.item_no))
+  }, [])
+
   useEffect(() => {
     if (barcode.length != 0) {
       handleInputSubmit(barcode)
@@ -76,22 +84,22 @@ const ModalScan = ({
   }, [barcode])
 
   useEffect(() => {
-    data?.qty_box && setItems(generateItems(numInputs))
-  }, [])
-
-  useEffect(() => {
     scanRef.current && scanRef.current?.focus()
     fetchBox_API(data?.item_no)
-    setBoxAvail(box?.filter((el) => el.is_scan === 'SCANED').length)
 
     const interval = setInterval(() => {
       fetchBox_API(data?.item_no)
-      setBoxAvail(box?.filter((el) => el.is_scan === 'SCANED').length)
     }, 10000)
-    return () => clearInterval(interval)
+
+    return () => {
+      console.log('clear')
+      clearInterval(interval)
+    }
   }, [scan])
 
   useEffect(() => {
+    setBoxAvail(box?.filter((el) => el.is_scan === 'SCANED').length)
+
     box?.length != 0 && items?.every((el) => el.is_scan === 'SCANED')
       ? setCheckStatus(true)
       : setCheckStatus(false)
@@ -144,10 +152,12 @@ const ModalScan = ({
       )
       setReload(false)
 
-      const updatedItems = items.map((item) =>
-        item.box_id === `${newValue[0]}/${newValue[1]}`
-          ? {...item, is_scan: 'SCANED'}
-          : item
+      const updatedItems = await Promise.all(
+        items.map((item) =>
+          item.box_id === `${newValue[0]}/${newValue[1]}`
+            ? {...item, is_scan: 'SCANED'}
+            : item
+        )
       )
       setItems(updatedItems)
       setScan(!scan)
@@ -264,9 +274,10 @@ const ModalScan = ({
                 gap: 5
               }
             ]}>
-            {(loading && !box) || reload ? (
+            {reload ? (
+              // {(loading && !box) || reload ? (
               <TouchableOpacity
-                disabled={loading}
+                disabled={reload}
                 style={[
                   styles.button,
                   styles.row,

@@ -11,6 +11,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view'
 import {DataTable} from 'react-native-paper'
 import {Empty} from '../../components/SpinnerEmpty'
+import Clipboard from '@react-native-clipboard/clipboard'
 
 import {useTranslation} from 'react-i18next'
 
@@ -23,6 +24,7 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
     {key: 'first', title: `${t('item_list')}`},
     {key: 'second', title: `${t('receipt')}`}
   ])
+
   const renderTabBar = (props) => {
     return (
       <TabBar
@@ -63,8 +65,11 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
     }
   }
 
+  // ----------------------------------------------------------
+  // == MAIN
+  // ----------------------------------------------------------
   return (
-    <View style={{height: 295}}>
+    <View style={{height: 300}}>
       <TabView
         style={[styles.container]}
         renderTabBar={renderTabBar}
@@ -217,11 +222,6 @@ const TabViewRight = ({selected}) => {
       </Text>
 
       <Text style={{color: '#000'}}>
-        {t('date_arrival')}:{' '}
-        {selected?.date_departure === null ? '-' : selected?.date_departure}
-      </Text>
-
-      <Text style={{color: '#000'}}>
         {t('car_regis')}:{' '}
         {selected?.Chinese_car_registration === null
           ? '-'
@@ -300,6 +300,9 @@ const styles = StyleSheet.create({
   UNLOAD: {
     backgroundColor: '#FF003C',
     color: '#4A0011'
+  },
+  hide: {
+    display: 'none'
   }
 })
 

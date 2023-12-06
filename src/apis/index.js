@@ -6,10 +6,31 @@ export const checkVersion = async () => await axios.post(`${path.APK_VERSION}`)
 // ----------------------------------------------------------
 // == GET
 // ----------------------------------------------------------
-export const fetchBox = async (item_no) =>
-  await axios.post(
-    `${path.URL}/api/hh/receipt/box${item_no && `?item_no=${item_no}`}`
-  )
+export const fetchBox = async (item_no) => {
+  return await axios
+    .post(`${path.URL}/api/hh/receipt/box${item_no && `?item_no=${item_no}`}`)
+    .then((res) => {
+      return res
+    })
+    .catch((e) => {
+      throw new Error(e)
+    })
+}
+
+export const hh_sel_box_by_receipt = async (receipt_no) => {
+  return await axios
+    .post(
+      `${path.URL}/api/hh/receipt/allbox${
+        receipt_no && `?receipt_no=${receipt_no}`
+      }`
+    )
+    .then((res) => {
+      return res.data
+    })
+    .catch((e) => {
+      throw new Error(e)
+    })
+}
 
 export const fetchHeader = async (status) =>
   await axios.post(`${path.URL}/api/hh/receipt/all`, {

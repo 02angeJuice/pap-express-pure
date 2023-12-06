@@ -13,7 +13,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import VersionCheck from 'react-native-version-check'
 
 import {useEffect} from 'react'
-import {CheckOnlineWeb, fetchUserProfile, sendLogout} from '../../apis/loginApi'
+import {fetchUserProfile, sendLogout} from '../../apis/loginApi'
 import {path} from '../../constants/url'
 
 import {useTranslation} from 'react-i18next'
@@ -23,7 +23,8 @@ import {useDispatch} from 'react-redux'
 import {screenMap} from '../../constants/screenMap'
 
 const Info = ({navigation}) => {
-  const [loading, setLoading] = useState(false)
+  const [outing, setOuting] = useState(false)
+  const [fething, setFetching] = useState(false)
 
   const [profile, setProfile] = useState(null)
   const {t, i18n} = useTranslation()
@@ -36,30 +37,18 @@ const Info = ({navigation}) => {
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
-  const checkRefreshToken = async () => {
-    const res = await CheckOnlineWeb(refresh)
-      .then(() => {
-        return true
-      })
-      .catch(() => {
-        dispatch(resetToken())
-        navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-
-        Platform.OS === 'android'
-          ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-          : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-
-        return false
-      })
-
-    return res
-  }
 
   const fetchUserProfile_API = async (user_id) => {
-    const res = await fetchUserProfile(user_id)
+    setFetching(true)
+    try {
+      const res = await fetchUserProfile(user_id)
+      setProfile(res[0])
+    } catch (err) {
+      const {error, message, statusCode} = err?.response?.data
 
-    console.log(res)
-    setProfile(res.data[0])
+      Alert.alert(`${statusCode} ${error}`, message)
+    }
+    setFetching(false)
   }
 
   // ----------------------------------------------------------
@@ -75,20 +64,20 @@ const Info = ({navigation}) => {
   // == HANDLE
   // ----------------------------------------------------------
   const handleLogout = async () => {
-    setLoading(!loading)
-    console.log('logout')
+    setOuting(true)
 
-    // if (await checkRefreshToken()) {
-    //   await sendLogout(refresh)
-    //     .then(() => {
-    //       setLoading(false)
-    //     })
-    //     .catch()
-    //   dispatch(resetToken())
-    // }
-    dispatch(resetToken())
+    try {
+      dispatch(resetToken())
+      const result = await sendLogout(refresh)
+      if (result) {
+        navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+      }
+    } catch (err) {
+      const {error, message, statusCode} = err?.response?.data
 
-    navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+      Alert.alert(`${statusCode} ${error}`, message)
+    }
+    setOuting(false)
   }
 
   // ----------------------------------------------------------
@@ -99,7 +88,7 @@ const Info = ({navigation}) => {
       <View style={[styles.infoMenu, styles.shadow]}>
         <View style={[styles.infoMenuItem, {backgroundColor: '#AE100F'}]}>
           <View style={styles.groupStart}>
-            {profile && (
+            {!fething && (
               <Image
                 resizeMode={'contain'}
                 style={styles.avatar}
@@ -109,7 +98,7 @@ const Info = ({navigation}) => {
               />
             )}
 
-            {profile && (
+            {!fething && (
               <View>
                 <Text
                   style={{
@@ -130,17 +119,16 @@ const Info = ({navigation}) => {
       </View>
 
       <TouchableOpacity
-        // disabled={loading}
+        // disabled={outing}
         style={[
           styles.signout,
           styles.shadow,
           styles.row,
-
           {justifyContent: 'center', gap: 10},
-          loading && {backgroundColor: '#000'}
+          outing && {backgroundColor: '#000'}
         ]}
         onPress={handleLogout}>
-        {loading ? (
+        {outing ? (
           <ActivityIndicator size={25} color="#FFF" />
         ) : (
           <Ionicons name={'log-out-outline'} size={25} color={'#fff'} />

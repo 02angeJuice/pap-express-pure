@@ -29,7 +29,6 @@ import {checkVersion} from '../apis'
 import {path} from '../constants/url'
 import {useDispatch} from 'react-redux'
 import {resetToken} from '../store/slices/tokenSlice'
-import {CheckOnlineWeb} from '../apis/loginApi'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -45,22 +44,6 @@ const Screen = ({navigation}) => {
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
-  const checkRefreshToken = async () => {
-    const res = await CheckOnlineWeb(refresh)
-      .then(() => {
-        return true
-      })
-      .catch(() => {
-        dispatch(resetToken())
-
-        navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-        Platform.OS === 'android'
-          ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-          : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-
-        return false
-      })
-  }
 
   const checkVersion_API = async () => {
     try {
@@ -104,8 +87,6 @@ const Screen = ({navigation}) => {
   useEffect(() => {
     language && i18n.changeLanguage(language)
     checkVersion_API()
-    // checkRefreshToken()
-    // navigation.navigate('Login')
   }, [])
 
   // ----------------------------------------------------------

@@ -37,22 +37,25 @@ const Home = ({navigation}) => {
   // == API
   // ----------------------------------------------------------
   const checkRefreshToken = async () => {
-    const res = await CheckOnlineWeb(refresh)
-      .then(() => {
-        return true
-      })
-      .catch(() => {
+    try {
+      const res = await CheckOnlineWeb(refresh)
+
+      return true
+    } catch (err) {
+      const {error, message, statusCode} = err?.response?.data
+      console.log('CheckOnlineWeb', err.response?.data)
+
+      if (statusCode == 403) {
         dispatch(resetToken())
-
         navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-        Platform.OS === 'android'
-          ? Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
-          : alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+        Alert.alert(t('auth_access_denied'), t('auth_access_denied_detail'))
+      } else {
+        dispatch(resetToken())
+        Alert.alert(`${statusCode} ${error}`, message)
+      }
 
-        return false
-      })
-
-    return res
+      return false
+    }
   }
 
   // ----------------------------------------------------------
@@ -64,9 +67,9 @@ const Home = ({navigation}) => {
   }, [])
 
   const navigate = async (route) => {
-    if (await checkRefreshToken()) {
-      navigation.navigate(route)
-    }
+    const result = await checkRefreshToken()
+
+    result && navigation.navigate(route)
   }
 
   // ----------------------------------------------------------

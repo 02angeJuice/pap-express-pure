@@ -124,9 +124,9 @@ const i18n = createInstance({
         car_regis: 'ทะเบียนรถ',
         tracking_no: 'เลขแท็กจากจีน',
         tracking_four: 'เลขที่สินค้า （4 ตัว）',
-        width: 'ขนาดกว้าง',
-        length: 'ขนาดยาว',
-        height: 'ขนาดสูง',
+        width: 'กว้าง',
+        length: 'ยาว',
+        height: 'สูง',
 
         od_waiting: 'รอยืนยัน',
         od_confirm: 'ยืนยันแล้ว',

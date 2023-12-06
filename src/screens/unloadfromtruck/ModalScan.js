@@ -48,9 +48,13 @@ const ModalScan = ({
   // ----------------------------------------------------------
   const fetchBox_API = async (item_no) => {
     setLoading(true)
-    const box = await fetchBox(item_no)
-    setBox(box?.data)
-    console.log(box?.data)
+    try {
+      const box = await fetchBox(item_no)
+      setBox(box?.data)
+      console.log('fetchBox')
+    } catch (error) {
+      Alert.alert('Something went wrong!', error.message)
+    }
     setLoading(false)
   }
 
@@ -68,16 +72,17 @@ const ModalScan = ({
   useEffect(() => {
     scanRef.current && scanRef.current?.focus()
     fetchBox_API(data?.item_no)
-    setBoxAvail(box?.filter((el) => el.is_scan === 'IDLE').length)
 
     const interval = setInterval(() => {
       fetchBox_API(data?.item_no)
-      setBoxAvail(box?.filter((el) => el.is_scan === 'IDLE').length)
     }, 10000)
+
     return () => clearInterval(interval)
   }, [scan])
 
   useEffect(() => {
+    setBoxAvail(box?.filter((el) => el.is_scan === 'IDLE').length)
+
     box?.length != 0 && box?.every((el) => el.is_scan === 'IDLE')
       ? setCheckStatus(true)
       : setCheckStatus(false)
@@ -114,6 +119,7 @@ const ModalScan = ({
         navigation
       )
       setReload(false)
+
       setScan(!scan)
       setInput('')
     }
@@ -228,7 +234,7 @@ const ModalScan = ({
                 gap: 5
               }
             ]}>
-            {(loading && !box) || reload ? (
+            {reload ? (
               <TouchableOpacity
                 disabled={loading}
                 style={[

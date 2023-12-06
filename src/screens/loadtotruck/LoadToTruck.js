@@ -11,13 +11,14 @@ import {
   ActivityIndicator,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  FlatList
 } from 'react-native'
 import debounce from 'lodash.debounce'
 import moment from 'moment'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import SelectDropdown from 'react-native-select-dropdown'
-import TabViewList from './TabViewList'
+import TabViewList from './TabViewList_bak'
 import ModalHeader from './ModalHeader'
 import ModalDetail from './ModalDetail'
 import ModalScan from './ModalScan'
@@ -34,6 +35,7 @@ import {
   fetchDetail,
   fetchDetailSelect,
   fetchHeaderSelect,
+  hh_sel_box_by_receipt,
   sendConfirm,
   sendDetailConfirm,
   sendShipmentConfirm,
@@ -41,6 +43,10 @@ import {
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
 import ContainerAlert from '../../components/ContainerAlert'
+import {Empty} from '../../components/SpinnerEmpty'
+
+import PagerView from 'react-native-pager-view'
+import Scan from './Scan'
 
 const ToggleState = {
   HEADER: 'HEADER',
@@ -67,16 +73,36 @@ const LoadToTruck = ({navigation}) => {
   const [containerOk, setContainerOk] = useState(null)
   const [input, setInput] = useState('')
 
+  const [box, setBox] = useState(null)
+
   const inputRef = useRef(null)
   const toast = useToast()
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
   const {boxAvail, setBoxAvail} = useScan()
+
+  // const scanRef = useRef(null)
+
   const dispatch = useDispatch()
+
+  const checkScan = (item_no, num) => {
+    console.log(item_no)
+    console.log(num)
+    console.log('-------------detail', detail)
+
+    const res = detail?.findIndex(
+      (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
+    )
+
+    console.log(res)
+
+    return res < 0 ? false : true
+  }
 
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
+
   const fetchHeaderSelect_API = async (receipt_no) => {
     const select = await fetchHeaderSelect(receipt_no)
     setHeaderSelected(select.data[0])
@@ -90,6 +116,22 @@ const LoadToTruck = ({navigation}) => {
     const select = await fetchDetailSelect({header_id, detail_id})
     setDetailSelected(select.data[0])
   }
+
+  useEffect(() => {
+    const fetch_hh_sel_box_by_receipt = async () => {
+      console.log(headerSelected?.receipt_no)
+      try {
+        const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
+
+        setBox(res)
+        console.log(res)
+      } catch (error) {}
+    }
+
+    if (headerSelected?.receipt_no) {
+      fetch_hh_sel_box_by_receipt()
+    }
+  }, [headerSelected?.receipt_no])
 
   // ----------------------------------------------------------
   // == EFFECT
@@ -186,7 +228,7 @@ const LoadToTruck = ({navigation}) => {
         })
       })
       .catch((err) => {
-        console.log(err.message)
+        // console.log(err.message)
 
         if (err.message == 401) {
           dispatch(resetToken())
@@ -217,7 +259,8 @@ const LoadToTruck = ({navigation}) => {
 
     if (status) {
       // CHECK Item Detail Status !
-      if (detail?.filter((el) => el.status === 'PICKED').length > 0) {
+      // if (detail?.filter((el) => el.status === 'PICKED').length > 0) {
+      if (false) {
         alertReUse('load_invalid', 'load_invalid_detail')
       } else if (shipment === null) {
         alertReUse('load_shipment', 'load_shipment_detail')
@@ -249,7 +292,7 @@ const LoadToTruck = ({navigation}) => {
             obj.append('status', 'ONSHIP')
 
             await sendSignature(obj, refresh).catch((err) => {
-              console.log(err.message)
+              // console.log(err.message)
             })
             await sendShipmentConfirm(
               {
@@ -324,6 +367,10 @@ const LoadToTruck = ({navigation}) => {
     Keyboard.dismiss()
   }
 
+  // const renderItem = useCallback(({item}) => {
+  //   return <ScanItem item={item} />
+  // }, [])
+
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
@@ -331,6 +378,7 @@ const LoadToTruck = ({navigation}) => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <ScrollView
         // onLayout={() => inputRef.current?.focus()}
+
         style={styles.container}
         scrollEnabled={true}
         keyboardDismissMode="on-drag"
@@ -504,7 +552,11 @@ const LoadToTruck = ({navigation}) => {
             </View>
 
             <View
-              style={{display: 'flex', flex: 0.3, justifyContent: 'flex-end'}}>
+              style={{
+                display: 'flex',
+                flex: 0.3,
+                justifyContent: 'flex-end'
+              }}>
               <TouchableOpacity
                 style={[
                   styles.clearButton,
@@ -536,6 +588,169 @@ const LoadToTruck = ({navigation}) => {
           </View>
         </View>
 
+        {detail?.length > 0 && (
+          <TabViewList
+            data={headerSelected}
+            detail={detail}
+            headSelected={headerSelected}
+            detailSelected={handleSetDetailSelected}
+            detailInfo={handleSetDetailInfo}
+          />
+        )}
+
+        {headerSelected && (
+          <Scan checkScan={checkScan} data={headerSelected} detail={detail} />
+        )}
+
+        <View>
+          {headerSelected && (
+            <TouchableOpacity
+              style={[styles.signatureBox]}
+              onPress={() => toggleSetState(ToggleState.CAMERA)}
+              disabled={headerSelected?.status === 'ONSHIP'}>
+              {currentImage !== null || headerSelected?.img_item_onship ? (
+                <View style={styles.preview}>
+                  {currentImage ? (
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri: currentImage
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri: `${path.IMG}/${headerSelected?.img_item_onship}`
+                      }}
+                    />
+                  )}
+                </View>
+              ) : (
+                <View style={styles.imageUpload}>
+                  <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                  <Text style={{color: '#000'}}>{`${t('photo')} / ${t(
+                    'camera'
+                  )}`}</Text>
+                </View>
+              )}
+              {toggleState === ToggleState.CAMERA && (
+                <ModalCamera
+                  set={setCurrentImage}
+                  visible={true}
+                  setVisible={() => toggleSetState(null)}
+                />
+              )}
+            </TouchableOpacity>
+          )}
+
+          {headerSelected && (
+            <TouchableOpacity
+              style={[
+                styles.signatureBox,
+                !currentSign && {
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                  borderColor: '#7A7A7A'
+                }
+              ]}
+              onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+              disabled={headerSelected?.status === 'ONSHIP'}>
+              {currentSign !== null || headerSelected?.signature_onship ? (
+                <View style={styles.preview}>
+                  {currentSign ? (
+                    <Image
+                      resizeMode="contain"
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri: currentSign
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri: `${path.IMG}/${headerSelected?.signature_onship}`
+                      }}
+                    />
+                  )}
+                </View>
+              ) : (
+                <View style={[styles.imageUpload]}>
+                  <Ionicons name="pencil" size={40} color="#4d4d4d" />
+                  <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
+                </View>
+              )}
+              {toggleState === ToggleState.SIGNATURE && (
+                <ModalSignature
+                  set={setCurrentSign}
+                  visible={true}
+                  setVisible={() => toggleSetState(null)}
+                />
+              )}
+            </TouchableOpacity>
+          )}
+
+          {headerSelected && (
+            <View style={styles.buttonGroup}>
+              {headerSelected?.status !== 'ARRIVED' &&
+              detail?.every((el) => el.status !== 'UNLOADED') ? (
+                toggleButton ? (
+                  <TouchableOpacity
+                    disabled={loading}
+                    style={[
+                      styles.button,
+                      styles.shadow,
+                      styles.row,
+                      {justifyContent: 'center', gap: 10},
+                      loading
+                        ? {backgroundColor: '#000'}
+                        : {backgroundColor: '#ABFC74'}
+                    ]}
+                    onPress={() => onPressConfirm(true)}>
+                    {loading ? (
+                      <ActivityIndicator size={25} color="#FFF" />
+                    ) : (
+                      <Ionicons
+                        name={'checkmark-outline'}
+                        size={25}
+                        color={'#000'}
+                      />
+                    )}
+
+                    <Text
+                      style={[
+                        {
+                          color: '#183B00',
+                          fontWeight: 'bold',
+                          textAlign: 'center'
+                        },
+                        loading && {color: '#fff'}
+                      ]}>
+                      {t('confirm')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <ButtonConfirmComponent
+                    text={`${t('success')}`}
+                    color="#000"
+                    backgroundColor="#fff"
+                  />
+                )
+              ) : (
+                <ButtonConfirmComponent
+                  text={`${t('success')}`}
+                  color="#000"
+                  backgroundColor="#fff"
+                />
+              )}
+            </View>
+          )}
+        </View>
+
         {toggleState === ToggleState.HEADER && (
           <ModalHeader
             headerSelected={headerSelected?.receipt_no}
@@ -545,183 +760,12 @@ const LoadToTruck = ({navigation}) => {
           />
         )}
 
-        {detail?.length > 0 && (
-          <TabViewList
-            detail={detail}
-            headSelected={headerSelected}
-            detailSelected={handleSetDetailSelected}
-            detailInfo={handleSetDetailInfo}
-          />
-        )}
-
         {detailInfo && toggleState === ToggleState.DETAIL && (
           <ModalDetail
             data={detailInfo}
             visible={true}
             setVisible={() => toggleSetState(null)}
           />
-        )}
-
-        {detailSelected && toggleState === ToggleState.SCAN && (
-          <ModalScan
-            data={detailSelected}
-            visible={true}
-            setVisible={() => {
-              toggleSetState(null)
-              setDetailSelected(null)
-            }}
-            confirm={onPressScanConfirm}
-            force={force}
-            forceConfirm={onPressForceConfirm}
-            navigation={navigation}
-          />
-        )}
-
-        {headerSelected && (
-          <TouchableOpacity
-            style={[styles.signatureBox]}
-            onPress={() => toggleSetState(ToggleState.CAMERA)}
-            disabled={headerSelected?.status === 'ONSHIP'}>
-            {currentImage !== null || headerSelected?.img_item_onship ? (
-              <View style={styles.preview}>
-                {currentImage ? (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: currentImage
-                    }}
-                  />
-                ) : (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: `${path.IMG}/${headerSelected?.img_item_onship}`
-                    }}
-                  />
-                )}
-              </View>
-            ) : (
-              <View style={styles.imageUpload}>
-                <Ionicons name="image-outline" size={45} color="#4d4d4d" />
-                <Text style={{color: '#000'}}>{`${t('photo')} / ${t(
-                  'camera'
-                )}`}</Text>
-              </View>
-            )}
-            {toggleState === ToggleState.CAMERA && (
-              <ModalCamera
-                set={setCurrentImage}
-                visible={true}
-                setVisible={() => toggleSetState(null)}
-              />
-            )}
-          </TouchableOpacity>
-        )}
-
-        {headerSelected && (
-          <TouchableOpacity
-            style={[
-              styles.signatureBox,
-              !currentSign && {
-                borderWidth: 1,
-                borderStyle: 'dashed',
-                borderColor: '#7A7A7A'
-              }
-            ]}
-            onPress={() => toggleSetState(ToggleState.SIGNATURE)}
-            disabled={headerSelected?.status === 'ONSHIP'}>
-            {currentSign !== null || headerSelected?.signature_onship ? (
-              <View style={styles.preview}>
-                {currentSign ? (
-                  <Image
-                    resizeMode="contain"
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: currentSign
-                    }}
-                  />
-                ) : (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: `${path.IMG}/${headerSelected?.signature_onship}`
-                    }}
-                  />
-                )}
-              </View>
-            ) : (
-              <View style={[styles.imageUpload]}>
-                <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
-              </View>
-            )}
-            {toggleState === ToggleState.SIGNATURE && (
-              <ModalSignature
-                set={setCurrentSign}
-                visible={true}
-                setVisible={() => toggleSetState(null)}
-              />
-            )}
-          </TouchableOpacity>
-        )}
-
-        {headerSelected && (
-          <View style={styles.buttonGroup}>
-            {headerSelected?.status !== 'ARRIVED' &&
-            detail?.every((el) => el.status !== 'UNLOADED') ? (
-              toggleButton ? (
-                <TouchableOpacity
-                  disabled={loading}
-                  style={[
-                    styles.button,
-                    styles.shadow,
-                    styles.row,
-                    {justifyContent: 'center', gap: 10},
-                    loading
-                      ? {backgroundColor: '#000'}
-                      : {backgroundColor: '#ABFC74'}
-                  ]}
-                  onPress={() => onPressConfirm(true)}>
-                  {loading ? (
-                    <ActivityIndicator size={25} color="#FFF" />
-                  ) : (
-                    <Ionicons
-                      name={'checkmark-outline'}
-                      size={25}
-                      color={'#000'}
-                    />
-                  )}
-
-                  <Text
-                    style={[
-                      {
-                        color: '#183B00',
-                        fontWeight: 'bold',
-                        textAlign: 'center'
-                      },
-                      loading && {color: '#fff'}
-                    ]}>
-                    {t('confirm')}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <ButtonConfirmComponent
-                  text={`${t('success')}`}
-                  color="#000"
-                  backgroundColor="#fff"
-                />
-              )
-            ) : (
-              <ButtonConfirmComponent
-                text={`${t('success')}`}
-                color="#000"
-                backgroundColor="#fff"
-              />
-            )}
-          </View>
         )}
 
         {headerSelected?.container_no && (
@@ -742,6 +786,62 @@ const LoadToTruck = ({navigation}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
+const ScanItem = React.memo(({item}) => (
+  <View key={item.box_id}>
+    <View
+      style={[
+        styles.row,
+        {
+          justifyContent: 'space-between',
+          marginVertical: 3
+        }
+      ]}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          width: '100%'
+        }}>
+        <Text style={{color: '#000', fontSize: 20}}>
+          {item.box_id?.split('/')[1]}
+        </Text>
+      </View>
+      <View style={{flex: 2, alignItems: 'center'}}>
+        <TouchableOpacity
+          onLongPress={async () => {
+            Clipboard.setString(item.box_id)
+            console.log('copy ', item.box_id)
+            // await Clipboard.getString()
+          }}>
+          <Text style={{color: '#000', fontSize: 20}}>{item.box_id}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center'
+        }}>
+        {item?.is_scan === 'SCANED' ? (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'checkmark-circle-outline'}
+            size={20}
+            color={'green'}
+          />
+        ) : (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'ellipsis-horizontal-outline'}
+            size={10}
+            color={'#000'}
+          />
+        )}
+      </View>
+    </View>
+  </View>
+))
+
 const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   return (
     <TouchableOpacity
@@ -776,6 +876,7 @@ const styles = StyleSheet.create({
   },
   form: {
     display: 'flex',
+
     flexDirection: 'column',
     justifyContent: 'center',
     gap: 8

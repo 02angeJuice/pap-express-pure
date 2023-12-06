@@ -13,8 +13,15 @@ import {DataTable} from 'react-native-paper'
 import {Empty} from '../../components/SpinnerEmpty'
 
 import {useTranslation} from 'react-i18next'
+import Scan from './Scan'
 
-const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
+const TabViewList = ({
+  data,
+  detail,
+  headSelected,
+  detailSelected,
+  detailInfo
+}) => {
   const {t} = useTranslation()
 
   const layout = useWindowDimensions()
@@ -31,7 +38,7 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
         indicatorStyle={{backgroundColor: '#AE100F'}}
         style={{
           backgroundColor: '#fff0f0',
-          height: 40
+          height: 50
         }}
         renderLabel={({route, focused, color}) => (
           <Text
@@ -50,15 +57,9 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
   const renderScene = ({route}) => {
     switch (route.key) {
       case 'first':
-        return (
-          <TabViewLeft
-            data={detail}
-            selected={detailSelected}
-            info={detailInfo}
-          />
-        )
+        return <TabViewLeft data={data} />
       case 'second':
-        return <TabViewRight selected={headSelected} />
+        return <TabViewRight selected={data} />
       default:
         return null
     }
@@ -79,49 +80,12 @@ const TabViewList = ({detail, headSelected, detailSelected, detailInfo}) => {
   )
 }
 
-const TabViewLeft = ({data, selected, info}) => {
+const TabViewLeft = ({data}) => {
   const {t} = useTranslation()
 
-  return (
-    <ScrollView nestedScrollEnabled={true}>
-      <DataTable>
-        <DataTable.Header style={{height: 50}}>
-          <DataTable.Title style={{flex: 0.5}}>
-            <Text style={styles.tableText}>#</Text>
-          </DataTable.Title>
-          <DataTable.Title style={{flex: 3}}>
-            <Text style={styles.tableText}>{t('tracking_four')}</Text>
-          </DataTable.Title>
-          <DataTable.Title style={{flex: 2}}>
-            <Text style={styles.tableText}>{t('item_name')}</Text>
-          </DataTable.Title>
-          <DataTable.Title
-            style={{flex: 1, justifyContent: 'flex-end', paddingRight: '10%'}}>
-            <Text style={styles.tableText}>{t('box')}</Text>
-          </DataTable.Title>
-          <DataTable.Title style={{flex: 2, justifyContent: 'flex-start'}}>
-            <Text style={styles.tableText}>{t('status')}</Text>
-          </DataTable.Title>
+  // return "dsds"
 
-          <DataTable.Title style={{flex: 1}}></DataTable.Title>
-        </DataTable.Header>
-
-        {data !== null ? (
-          data?.map((el) => (
-            <DetailItem
-              key={el.row_id}
-              item={el}
-              selected={selected}
-              // onPress={() => onPressDetail(el?.item_no)}
-              info={info}
-            />
-          ))
-        ) : (
-          <Empty />
-        )}
-      </DataTable>
-    </ScrollView>
-  )
+  return <Scan data={data} />
 }
 
 const DetailItem = ({item, selected, info}) => {
@@ -247,7 +211,8 @@ const TabViewRight = ({selected}) => {
 const styles = StyleSheet.create({
   container: {
     marginTop: 15,
-    height: 300,
+    maxHeight: 100,
+
     flex: 1,
     borderRadius: 5,
     borderWidth: 1,

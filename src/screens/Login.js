@@ -29,7 +29,7 @@ import {
 } from '../store/slices/tokenSlice'
 
 import {sendCheckLoginHH, sendLoginHH} from '../apis/loginApi'
-import {screenMap} from '../constants/screenMap'
+// import {screenMap} from '../constants/screenMap'
 
 const Login = ({navigation}) => {
   const [loading, setLoading] = useState(false)
@@ -48,104 +48,98 @@ const Login = ({navigation}) => {
   // == API
   // ----------------------------------------------------------
   const sendCheckLoginHH_API = async ({user_id, password}) => {
+    setLoading(true)
+
     try {
       const res = await sendCheckLoginHH({user_id, password})
-      // console.log('CheckLoginHH:', res)
+      console.log('sendCheckLoginHH_API:', res?.data)
 
-      if (res?.status === 200) {
+      if (res?.data.statusCode == 200) {
         await sendLoginHH_API({
           user_id: user_id,
           password: password
         })
-      } else {
-        if (res?.response.data.message === 'alertOnline') {
-          console.log('มีคนล็อคอินอยู่')
+      }
+    } catch (err) {
+      const {error, message, statusCode} = err?.response?.data
+      console.log('sendCheckLoginHH_API', err.response?.data)
 
-          Platform.OS === 'android'
-            ? Alert.alert(
-                t('auth_login_online'),
-                t('auth_login_online_detail'),
-                [
-                  {
-                    text: t('cancel'),
-                    onPress: () => setLoading(false),
-                    style: 'cancel'
-                  },
-                  {
-                    text: t('confirm'),
-                    onPress: async () =>
-                      await sendLoginHH_API({
-                        user_id: user_id,
-                        password: password
-                      })
-                  }
-                ]
-              )
-            : confirm(
-                `${t('auth_login_online')} ${t('auth_login_online_detail')}`
-              ) &&
-              (await sendLoginHH_API({
+      if (message === 'alertOnline') {
+        console.log('มีคน Login อยู่')
+        Alert.alert(t('auth_login_online'), t('auth_login_online_detail'), [
+          {
+            text: t('cancel'),
+            onPress: () => setLoading(false),
+            style: 'cancel'
+          },
+          {
+            text: t('confirm'),
+            onPress: async () =>
+              await sendLoginHH_API({
                 user_id: user_id,
                 password: password
-              }))
-        } else {
-          if (res?.response.data.message[0].includes('password')) {
-            alertReUse('auth_login_invalid', 'auth_login_invalid_password')
-          } else if (res?.response.data.message[0].includes('user_id')) {
-            alertReUse('auth_login_invalid', 'auth_login_invalid_username')
-          } else {
-            alertReUse('auth_login_invalid', 'auth_login_invalid_detail')
-
-            reset({username: user_id, password: ''})
+              })
           }
-        }
+        ])
+      } else if (message === 'loginInvalid') {
+        alertReUse('auth_login_invalid', 'auth_login_invalid_detail')
+        reset({username: user_id, password: ''})
+      } else if (message[0] === 'password should not be empty') {
+        alertReUse('auth_login_invalid', 'auth_login_invalid_password')
+      } else if (message[0] === 'user_id should not be empty') {
+        alertReUse('auth_login_invalid', 'auth_login_invalid_username')
+      } else {
+        alertReUse(`${statusCode} ${error}`, message)
       }
-    } catch (error) {
-      setLoading(false)
-      console.log('sendCheckLoginHH_API: ', error)
     }
+
+    setLoading(false)
   }
 
   const sendLoginHH_API = async ({user_id, password}) => {
+    setLoading(true)
+
     try {
       const res = await sendLoginHH({user_id, password})
-      // console.log('LoginHH', res)
+      console.log('sendLoginHH_API', res?.data)
 
       if (res?.status == 200) {
-        dispatch(setAccessToken(res.data?.access_token))
-        dispatch(setRefreshToken(res.data?.refresh_token))
+        dispatch(setAccessToken(res?.data?.access_token))
+        dispatch(setRefreshToken(res?.data?.refresh_token))
         dispatch(setUserName(user_id))
-
-        console.log('access', res.data?.access_token)
-        console.log('refresh', res.data?.refresh_token)
 
         alertReUse('auth_login_success', 'auth_login_success_detail')
         // navigation.navigate(screenMap.HomePage)
-
-        navigation.reset({index: 0, routes: [{name: screenMap.HomePage}]})
-      } else {
-        if (res?.response.data.message === 'alertLoginLimit') {
-          console.log('จำนวนล็อคอินเต็ม')
-          alertReUse('auth_login_limit', 'auth_login_limit_detail')
-        }
+        // navigation.reset({index: 0, routes: [{name: screenMap.HomePage}]})
       }
-    } catch (error) {
-      setLoading(false)
-      console.log('sendLoginHH_API: ', error)
+    } catch (err) {
+      const {error, message, statusCode} = err?.response?.data
+
+      console.log('sendLoginHH_API', err.response?.data)
+
+      if (message === 'alertLoginLimit') {
+        alertReUse('auth_login_limit', 'auth_login_limit_detail')
+      } else {
+        alertReUse(`${statusCode} ${error}`, message)
+      }
     }
+
+    setLoading(false)
   }
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
   const onSubmit = async (data) => {
-    setLoading(!loading)
+    try {
+      const res = await sendCheckLoginHH_API({
+        user_id: data.username,
+        password: data.password
+        // password: data.password ? data.password : 'Warehousedbo!1'
+      })
 
-    await sendCheckLoginHH_API({
-      user_id: data.username,
-      // password: data.password ? data.password : 'Warehousedbo!1'
-      password: data.password
-    })
+      console.log(res)
+    } catch (error) {}
   }
 
   const alertReUse = (msg, detail) => {

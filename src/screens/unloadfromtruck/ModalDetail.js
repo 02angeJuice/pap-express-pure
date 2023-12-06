@@ -80,11 +80,18 @@ const ModalDetail = ({data, visible, setVisible}) => {
                 {data?.qty_piece}
               </Text>
               <Text style={{color: '#000'}}>
-                {t('total_weight')}: {data?.weight_total} KG
+                {t('box_amount_actual')} （{t('box')}）:{' '}
+                {data?.qty_box_avail === null ? ' -' : data?.qty_box_avail}
               </Text>
               <Text style={{color: '#000'}}>
-                {t('width')}* {t('length')}* {t('height')}: {data?.width}x
-                {data?.long}x{data?.height} CM
+                {t('total_weight')}:{' '}
+                {data?.weight_total == 0 ? ' -' : `${data?.weight_total} KG`}
+              </Text>
+              <Text style={{color: '#000'}}>
+                {t('width')}* {t('length')}* {t('height')}:
+                {data?.width === null
+                  ? ' -'
+                  : ` ${data?.width}x${data?.long}x${data?.height} CM`}
               </Text>
               <View
                 style={{

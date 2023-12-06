@@ -197,7 +197,7 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
           </Text>
 
           <Text style={{color: '#000'}}>
-            {item.customer_id === null ? '-' : item.customer_id}
+            {item.customer_id === null ? 'SST' : item.customer_id}
           </Text>
         </View>
         <Text style={{color: '#000'}}>
