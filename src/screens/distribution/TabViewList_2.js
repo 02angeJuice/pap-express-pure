@@ -108,7 +108,7 @@ const TabViewList_2 = ({detail}) => {
           </View>
           <View
             style={{
-              flex: 2,
+              flex: 2.5,
               alignItems: 'center',
               width: '100%'
             }}>
@@ -232,15 +232,15 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
 
       <View
         style={{
-          flex: 1,
+          flex: 1.5,
           alignItems: 'center'
         }}>
         <View
           style={[
             styles.status,
-            item.status === 'PICKED'
+            item.status === 'DATA ENTRY'
               ? styles.PICKED
-              : item.status === 'LOADED'
+              : item.status === 'ONSHIP'
               ? styles.LOADED
               : styles.UNLOAD
           ]}>
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    maxHeight: 300
+    maxHeight: 200
   },
   row: {
     display: 'flex',

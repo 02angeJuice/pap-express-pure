@@ -17,7 +17,10 @@ import {useTranslation} from 'react-i18next'
 import {useDispatch} from 'react-redux'
 import {resetFilter, setFilterDi} from '../../store/slices/settingSlice'
 import {useSettings} from '../../hooks'
-import {fetchOrder, fetchOrderSelect} from '../../apis'
+import {
+  hh_sel_distributes_by_id,
+  hh_sel_distributes_by_status
+} from '../../apis'
 
 const Distribution = ({navigation}) => {
   const [order, setOrder] = useState(null)
@@ -35,7 +38,7 @@ const Distribution = ({navigation}) => {
   // == API
   // ----------------------------------------------------------
   const fetchOrder_API = async () => {
-    const orders = await fetchOrder(filter_di)
+    const orders = await hh_sel_distributes_by_status(filter_di)
     if (filter_di === 'CLOSED') {
       setOrder(orders?.data.filter((el) => el.distributeType === 'PDT001'))
     } else if (filter_di === 'PDT002' || filter_di === 'PDT003') {
@@ -50,7 +53,7 @@ const Distribution = ({navigation}) => {
   }
 
   const fetcOrderSelect_API = async (distribution_id) => {
-    const orders = await fetchOrderSelect(distribution_id)
+    const orders = await hh_sel_distributes_by_id(distribution_id)
     setOrder(
       orders?.data.filter((el) =>
         el.status === 'CLOSED' ? el.distributeType === 'PDT001' : el
@@ -166,7 +169,8 @@ const Distribution = ({navigation}) => {
               {justifyContent: 'center', alignItems: 'center'},
               type === 'PDT001' && {backgroundColor: '#CFFFAE'},
               type === 'PDT002' && {backgroundColor: '#B5E3FF'},
-              type === 'PDT003' && {backgroundColor: '#FFC4D2'}
+              type === 'PDT003' && {backgroundColor: '#FFC4D2'},
+              type === 'PDT004' && {backgroundColor: '#E0C9FF'}
             ]}
             onPress={() => setToggleType(!toggleType)}>
             <Text style={{padding: 3, color: '#000'}}>
@@ -180,6 +184,8 @@ const Distribution = ({navigation}) => {
                   name={'bag-handle-outline'}
                   size={25}
                 />
+              ) : type === 'PDT003' ? (
+                <Ionicons color={'#000'} name={'cube-outline'} size={25} />
               ) : (
                 <Ionicons color={'#000'} name={'business-outline'} size={25} />
               )}
@@ -211,7 +217,9 @@ const Distribution = ({navigation}) => {
                 onPress={() => handleChangeType('PDT001')}>
                 <View style={[styles.row, {gap: 5}]}>
                   <Ionicons color={'#000'} name={'home-outline'} size={15} />
-                  <Text style={{color: '#000'}}>{t('od_type_warehouse')}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>
+                    {t('od_type_warehouse')}
+                  </Text>
                 </View>
               </TouchableOpacity>
 
@@ -230,7 +238,9 @@ const Distribution = ({navigation}) => {
                     name={'bag-handle-outline'}
                     size={15}
                   />
-                  <Text style={{color: '#000'}}>{t('od_type_express')}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>
+                    {t('od_type_express')}
+                  </Text>
                 </View>
               </TouchableOpacity>
 
@@ -244,12 +254,31 @@ const Distribution = ({navigation}) => {
                 ]}
                 onPress={() => handleChangeType('PDT003')}>
                 <View style={[styles.row, {gap: 5}]}>
+                  <Ionicons color={'#000'} name={'cube-outline'} size={15} />
+                  <Text style={{color: '#000', fontSize: 20}}>
+                    {t('od_type_self')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.row,
+                  {gap: 8, borderRadius: 3, padding: 12},
+                  type === 'PDT004' && {
+                    backgroundColor: '#E0C9FF'
+                  }
+                ]}
+                onPress={() => handleChangeType('PDT004')}>
+                <View style={[styles.row, {gap: 5}]}>
                   <Ionicons
                     color={'#000'}
                     name={'business-outline'}
                     size={15}
                   />
-                  <Text style={{color: '#000'}}>{t('od_type_self')}</Text>
+                  <Text style={{color: '#000', fontSize: 20}}>
+                    {t('od_type_office')}
+                  </Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -264,6 +293,7 @@ const Distribution = ({navigation}) => {
               styles.groupInput,
               {
                 color: '#000',
+                fontSize: 20,
                 backgroundColor: '#D2D2D2',
                 fontWeight: 'normal',
                 paddingHorizontal: 10,
@@ -416,7 +446,9 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
                 ? styles.PICKED
                 : item.distributeType === 'PDT002'
                 ? styles.ONSHIP
-                : styles.ARRIVED,
+                : item.distributeType === 'PDT003'
+                ? styles.ARRIVED
+                : styles.OFFICE,
               {
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -432,6 +464,8 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
                   ? 'home'
                   : item?.distributeType === 'PDT002'
                   ? 'bag-handle'
+                  : item?.distributeType === 'PDT003'
+                  ? 'cube'
                   : 'business'
               }
               size={15}
@@ -441,7 +475,9 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
                 ? `${t('od_type_warehouse')}`
                 : item?.distributeType === 'PDT002'
                 ? `${t('od_type_express')}`
-                : `${t('od_type_self')}`}
+                : item?.distributeType === 'PDT003'
+                ? `${t('od_type_self')}`
+                : `${t('od_type_office')}`}
             </Text>
           </View>
         </View>
@@ -555,6 +591,10 @@ const styles = StyleSheet.create({
   ARRIVED: {
     backgroundColor: '#FFC4D2',
     color: '#4A0011'
+  },
+  OFFICE: {
+    backgroundColor: '#E0C9FF',
+    color: '#5719AA'
   },
   shadow: {
     shadowOffset: {width: 0, height: 2},

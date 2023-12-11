@@ -35,6 +35,7 @@ import {
   fetchDetail,
   fetchDetailSelect,
   fetchHeaderSelect,
+  hh_check_ro_qty_box,
   hh_sel_box_by_receipt,
   sendConfirm,
   sendDetailConfirm,
@@ -76,7 +77,7 @@ const LoadToTruck = ({navigation}) => {
   const [containerOk, setContainerOk] = useState(null)
   const [input, setInput] = useState('')
 
-  const [box, setBox] = useState(null)
+  const [redata, setredata] = useState(false)
 
   const inputRef = useRef(null)
   const toast = useToast()
@@ -87,13 +88,6 @@ const LoadToTruck = ({navigation}) => {
   // const scanRef = useRef(null)
 
   const dispatch = useDispatch()
-
-  const checkScan = (item_no, num) => {
-    const res = detail?.findIndex(
-      (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
-    )
-    return res < 0 ? false : true
-  }
 
   // ----------------------------------------------------------
   // == API
@@ -113,29 +107,16 @@ const LoadToTruck = ({navigation}) => {
     setDetailSelected(select.data[0])
   }
 
-  useEffect(() => {
-    const fetch_hh_sel_box_by_receipt = async () => {
-      try {
-        const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
-
-        setBox(res)
-      } catch (error) {}
-    }
-
-    if (headerSelected?.receipt_no) {
-      fetch_hh_sel_box_by_receipt()
-    }
-  }, [headerSelected?.receipt_no])
-
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
     inputRef.current && inputRef.current?.focus()
   }, [])
+
   useEffect(() => {
     headerSelected?.receipt_no && fetchDetail_API(headerSelected?.receipt_no)
-  }, [headerSelected?.receipt_no])
+  }, [redata, headerSelected?.receipt_no])
   useEffect(() => {
     headerSelected?.receipt_no &&
       fetchHeaderSelect_API(headerSelected?.receipt_no)
@@ -195,161 +176,141 @@ const LoadToTruck = ({navigation}) => {
     setContainerOk(null)
     inputRef.current?.focus()
   }
-  const onPressForceConfirm = async (message, status = null) => {
-    setRemark(message)
-    setForce(status)
-  }
-  const onPressScanConfirm = async () => {
-    await sendDetailConfirm(
-      {
-        receipt_no: headerSelected?.receipt_no,
-        item_no: detailSelected?.item_no,
-        status: 'LOADED',
-        force_confirm: force,
-        remark: remark,
-        qty_box_avail: boxAvail,
-        update_by: userName
-      },
-      refresh
-    )
-      .then(() => {
-        toast.show(t('confirmed'), {
-          type: 'success',
-          placement: 'bottom',
-          duration: 4000,
-          offset: 30
-          // animationType: 'slide-in'
-        })
-      })
-      .catch((err) => {
-        // console.log(err.message)
 
-        if (err.message == 401) {
-          dispatch(resetToken())
-          navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-
-          alertReUse('auth_access_denied', 'auth_access_denied_detail')
-        }
-        alertReUse('auth_access_denied', 'auth_access_denied_detail')
-      })
-
-    await fetchDetailSelect_API({
-      header_id: headerSelected?.receipt_no,
-      detail_id: detailSelected?.item_no
+  const onPressConfirm = async () => {
+    const res = await hh_check_ro_qty_box({
+      receipt_no: headerSelected?.receipt_no
     })
 
-    setBoxAvail(null)
-    setRemark('')
-    setForce('')
-    setToggleState(null)
+    const checkStatus = res === undefined ? true : false
+
+    console.log(checkStatus, checkStatus ? 'completed' : 'incomplete')
+
+    if (!checkStatus) {
+      Alert.alert(t('load_invalid'), t('load_invalid_detail_confirm'), [
+        {
+          text: t('cancel'),
+          onPress: () => {
+            setLoading(false)
+          },
+          style: 'cancel'
+        },
+        {
+          text: t('confirm'),
+          onPress: () => onSave()
+        }
+      ])
+    } else {
+      onSave()
+    }
   }
-  const onPressConfirm = async (status) => {
-    setLoading(!loading)
+
+  const onSave = async () => {
+    setLoading(true)
 
     const imgName = currentImage?.split('/').pop()
     const imgType = imgName?.split('.').pop()
     const signName = currentSign?.split('/').pop()
     const signType = signName?.split('.').pop()
 
-    if (status) {
-      // CHECK Item Detail Status !
-      // if (detail?.filter((el) => el.status === 'PICKED').length > 0) {
-      if (false) {
-        alertReUse('load_invalid', 'load_invalid_detail')
-      } else if (shipment === null) {
-        alertReUse('load_shipment', 'load_shipment_detail')
+    if (shipment === null) {
+      alertReUse('load_shipment', 'load_shipment_detail')
+    } else {
+      // CHECK Signature required !
+      if (currentSign === null) {
+        alertReUse('signature_required', 'signature_required_detail')
       } else {
-        // CHECK Signature required !
-        if (currentSign === null) {
-          alertReUse('signature_required', 'signature_required_detail')
-        } else {
-          if (containerOk !== null) {
-            // SENT ITEM PICKED --> ONSHIP
-            // ==============================
-            const obj = new FormData()
+        if (containerOk !== null) {
+          // SENT ITEM PICKED --> ONSHIP
+          // ==============================
+          const obj = new FormData()
 
-            obj.append('files', {
-              uri: currentSign,
-              name: `SIGNATURE-1.${signType}`,
-              type: `image/${signType}`
+          obj.append('files', {
+            uri: currentSign,
+            name: `SIGNATURE-1.${signType}`,
+            type: `image/${signType}`
+          })
+
+          currentImage !== null
+            ? obj.append('files', {
+                uri: currentImage,
+                name: `ITEM-02.${imgType}`,
+                type: `image/${imgType}`
+              })
+            : obj.append('files', null)
+
+          obj.append('receipt_no', headerSelected?.receipt_no)
+          obj.append('status', 'ONSHIP')
+
+          await sendSignature(obj, refresh).catch((err) => {
+            // console.log(err.message)
+          })
+          await sendShipmentConfirm(
+            {
+              receipt_no: headerSelected?.receipt_no,
+              shipment_confirm:
+                headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
+                  ? null
+                  : 1
+            },
+            refresh
+          ).catch((err) => {
+            console.log(err.message)
+          })
+
+          await sendConfirm(
+            {
+              receipt_no: headerSelected?.receipt_no,
+              statusHeader: 'ONSHIP',
+              statusDetail: 'LOADED',
+              date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+              maker: userName,
+              container_no: containerOk
+            },
+            refresh
+          )
+            .then(() => {
+              toast.show(t('confirmed'), {
+                type: 'success',
+                placement: 'bottom',
+                duration: 4000,
+                offset: 30
+                // animationType: 'slide-in'
+              })
             })
-
-            currentImage !== null
-              ? obj.append('files', {
-                  uri: currentImage,
-                  name: `ITEM-02.${imgType}`,
-                  type: `image/${imgType}`
-                })
-              : obj.append('files', null)
-
-            obj.append('receipt_no', headerSelected?.receipt_no)
-            obj.append('status', 'ONSHIP')
-
-            await sendSignature(obj, refresh).catch((err) => {
-              // console.log(err.message)
-            })
-            await sendShipmentConfirm(
-              {
-                receipt_no: headerSelected?.receipt_no,
-                shipment_confirm:
-                  headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
-                    ? null
-                    : 1
-              },
-              refresh
-            ).catch((err) => {
+            .catch((err) => {
               console.log(err.message)
+
+              if (err.message == 401) {
+                dispatch(resetToken())
+                navigation.reset({
+                  index: 0,
+                  routes: [{name: screenMap.Login}]
+                })
+                alertReUse('auth_access_denied', 'auth_access_denied_detail')
+              }
+              alertReUse('auth_access_denied', 'auth_access_denied_detail')
             })
 
-            await sendConfirm(
-              {
-                receipt_no: headerSelected?.receipt_no,
-                statusHeader: 'ONSHIP',
-                statusDetail: 'LOADED',
-                date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
-                maker: userName,
-                container_no: containerOk
-              },
-              refresh
-            )
-              .then(() => {
-                toast.show(t('confirmed'), {
-                  type: 'success',
-                  placement: 'bottom',
-                  duration: 4000,
-                  offset: 30
-                  // animationType: 'slide-in'
-                })
-              })
-              .catch((err) => {
-                console.log(err.message)
+          headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
+            alertReUse('load_alert', 'load_alert_detail')
 
-                if (err.message == 401) {
-                  dispatch(resetToken())
-                  navigation.reset({
-                    index: 0,
-                    routes: [{name: screenMap.Login}]
-                  })
-                  alertReUse('auth_access_denied', 'auth_access_denied_detail')
-                }
-                alertReUse('auth_access_denied', 'auth_access_denied_detail')
-              })
+          setredata((el) => !el)
 
-            headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
-              alertReUse('load_alert', 'load_alert_detail')
-
-            setCurrentImage(null)
-            setCurrentSign(null)
-            setContainerOk(null)
-            setToggleButton(false)
-            setLoading(false)
-          } else {
-            setAlert(!alert)
-          }
+          setCurrentImage(null)
+          setCurrentSign(null)
+          setContainerOk(null)
+          setToggleButton(false)
+          setLoading(false)
+        } else {
+          setAlert(!alert)
         }
       }
     }
+
+    setLoading(false)
   }
+
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
       ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
@@ -457,6 +418,7 @@ const LoadToTruck = ({navigation}) => {
                   editable={true}
                   blurOnSubmit={false}
                   onSubmitEditing={Keyboard.dismiss}
+                  showSoftInputOnFocus={!headerSelected}
                 />
               </View>
 
@@ -623,13 +585,8 @@ const LoadToTruck = ({navigation}) => {
           <TabViewList detail={detail} />
         )} */}
 
-        {headerSelected && detail?.length > 0 && (
-          <TabViewList_2 detail={detail} />
-        )}
-
-        {headerSelected && (
-          <Scan detail={detail} checkScan={checkScan} data={headerSelected} />
-        )}
+        {headerSelected && <TabViewList_2 detail={detail} />}
+        {headerSelected && <Scan detail={detail} data={headerSelected} />}
 
         {headerSelected && toggleState === ToggleState.INFO && (
           <ModalHeaderInfo
@@ -760,7 +717,7 @@ const LoadToTruck = ({navigation}) => {
                         ? {backgroundColor: '#000'}
                         : {backgroundColor: '#ABFC74'}
                     ]}
-                    onPress={() => onPressConfirm(true)}>
+                    onPress={onPressConfirm}>
                     {loading ? (
                       <ActivityIndicator size={25} color="#FFF" />
                     ) : (
@@ -776,7 +733,8 @@ const LoadToTruck = ({navigation}) => {
                         {
                           color: '#183B00',
                           fontWeight: 'bold',
-                          textAlign: 'center'
+                          textAlign: 'center',
+                          fontSize: 20
                         },
                         loading && {color: '#fff'}
                       ]}>
@@ -873,7 +831,8 @@ const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
         style={{
           color: color,
           fontWeight: 'bold',
-          textAlign: 'center'
+          textAlign: 'center',
+          fontSize: 20
         }}>
         {text}
       </Text>

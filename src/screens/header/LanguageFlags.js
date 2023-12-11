@@ -103,7 +103,7 @@ const FlagItem = ({lang, text, handle, flag}) => {
       onPress={handle}>
       <View style={[styles.row, {gap: 5}]}>
         <CountryFlag isoCode={flag} size={20} style={{borderRadius: 2}} />
-        <Text style={{color: '#000'}}>{text}</Text>
+        <Text style={{color: '#000', fontSize: 20}}>{text}</Text>
       </View>
     </TouchableOpacity>
   )

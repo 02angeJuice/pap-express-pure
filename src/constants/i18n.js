@@ -32,6 +32,7 @@ const i18n = createInstance({
 
         load_invalid: 'โหลดสินค้าไม่ถูกต้อง!',
         load_invalid_detail: 'กรุณาตรวจสอบสถานะของรายการสินค้า',
+        load_invalid_detail_confirm: 'ยืนยันการโหลดสินค้าหรือไม่ ?',
         load_shipment: 'เลือกการขนส่ง...!',
         load_shipment_detail: 'กรุณาเลือกประเภทการขนส่ง',
         load_alert: 'แจ้งเตือนการขนส่ง...!',
@@ -121,6 +122,7 @@ const i18n = createInstance({
         customer: 'ลูกค้า',
         recipient: 'ผู้รับ',
         phone: 'เบอร์โทรศัพท์',
+        phone2: 'เบอร์โทรศัพท์สำรอง',
         driver: 'คนขับรถ',
         car_regis: 'ทะเบียนรถ',
         tracking_no: 'เลขแท็กจากจีน',
@@ -135,7 +137,8 @@ const i18n = createInstance({
         od_item_confirmed: 'รายการสินค้าทำการยืนยันครบหมดแล้ว',
         od_type_warehouse: 'รับสินค้าที่คลัง',
         od_type_express: 'บริการขนส่งเอกชน',
-        od_type_self: 'บริษัทจัดส่งเอง'
+        od_type_self: 'บริษัทจัดส่งเอง',
+        od_type_office: 'จัดส่งที่ออฟฟิส'
       }
     },
     gb: {
@@ -160,6 +163,7 @@ const i18n = createInstance({
 
         load_invalid: 'Truck Load incorrectly!',
         load_invalid_detail: `Please check the item's status.`,
+        load_invalid_detail_confirm: 'Do you want to confirm the product load?',
         load_shipment: 'Load shipment required...!',
         load_shipment_detail: 'Please select the shipment type.',
         load_alert: 'Shipment Alert...!',
@@ -250,6 +254,7 @@ const i18n = createInstance({
         customer: 'Customer',
         recipient: 'Recipient',
         phone: 'Phone number',
+        phone2: 'Other Phone number',
         driver: 'Driver',
         car_regis: 'Vehicle Registration',
         tracking_no: 'Tracking No',
@@ -264,7 +269,8 @@ const i18n = createInstance({
         od_item_confirmed: 'The product list has been completely verified.',
         od_type_warehouse: 'Receive Warehouse',
         od_type_express: 'Delivery Service',
-        od_type_self: 'By Company'
+        od_type_self: 'By Company',
+        od_type_office: 'To Office'
       }
     },
     cn: {
@@ -287,6 +293,7 @@ const i18n = createInstance({
 
         load_invalid: '卡车装载不正确！',
         load_invalid_detail: '请检查货物的状态。',
+        load_invalid_detail_confirm: '您确定要确认商品的加载吗？',
         load_shipment: '需要装载货物...！',
         load_shipment_detail: '请选择装载的货物类型。',
         load_alert: '运输警报...!',
@@ -377,6 +384,7 @@ const i18n = createInstance({
         customer: '客户ID',
         recipient: '接受者',
         phone: '电话号码',
+        phone2: '备用电话',
         driver: '司机',
         car_regis: '车辆登记',
         tracking_no: '运单号',
@@ -391,7 +399,8 @@ const i18n = createInstance({
         od_item_confirmed: '产品清单已完全核实。',
         od_type_warehouse: '收货仓库',
         od_type_express: '快递服务',
-        od_type_self: '按公司分类'
+        od_type_self: '按公司分类',
+        od_type_office: '送至办公室'
       }
     }
   }

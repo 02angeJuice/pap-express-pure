@@ -24,11 +24,18 @@ const ModalScanContextProvider = ({children}) => {
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
-  const insertDetailsBox = async (item_no, box_id, from, navigation) => {
+  const insertDetailsBox = async (
+    item_no,
+    box_id,
+    num_box,
+    from,
+    navigation
+  ) => {
     await sendDetailsBox(
       {
         item_no: item_no,
         box_id: `${item_no}/${box_id}`,
+        num_box: num_box,
         maker: userName,
         is_scan:
           from === 'load' ? 'SCANED' : from === 'unload' ? 'IDLE' : 'IDLE',

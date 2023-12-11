@@ -18,8 +18,9 @@ import CustomTextInputAlert from '../../components/CustomTextInputAlert'
 import {Empty} from '../../components/SpinnerEmpty'
 import {useTranslation} from 'react-i18next'
 import {useScan} from '../../hooks'
-import {fetchBox, hh_sel_box_by_receipt} from '../../apis'
+import {fetchBox, hh_check_ro_qty_box, hh_sel_box_by_receipt} from '../../apis'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
+import axios from 'axios'
 
 const generateItems = (numInput, item_no) => {
   const newItems = []
@@ -69,6 +70,33 @@ const Scan = ({
   //   setLoading(false)
   // }
 
+  // useEffect(() => {
+  //   const check_hh_sel_check_qty_box = async () => {
+  //     try {
+  //       const res = await hh_check_ro_qty_box({receipt_no: data?.receipt_no})
+
+  //       const newDetail = detail?.map((el) => el.item_no)
+
+  //       const success = newDetail?.filter((el) => !res.includes(el))
+
+  //       console.log(success)
+  //     } catch (error) {
+  //       console.log(error)
+  //     }
+  //   }
+  //   if (data?.receipt_no) {
+  //     check_hh_sel_check_qty_box()
+  //   }
+  // }, [data?.receipt_no, redata])
+
+  // ----------------------------------------------------------
+  // == EFFECT
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    scanRef.current && scanRef.current?.focus()
+  }, [])
+
   useEffect(() => {
     const fetch_hh_sel_box_by_receipt = async () => {
       try {
@@ -79,14 +107,23 @@ const Scan = ({
       }
     }
 
+    // const check_hh_sel_check_qty_box = async () => {
+    //   try {
+    //     const res = await hh_check_ro_qty_box({receipt_no: data?.receipt_no})
+    //     console.log('---', res)
+    //     console.log(res === undefined)
+
+    //     setCompleted(res === undefined)
+    //   } catch (error) {
+    //     console.log(error)
+    //   }
+    // }
+    // check_hh_sel_check_qty_box()
+
     if (data?.receipt_no) {
       fetch_hh_sel_box_by_receipt()
     }
   }, [redata, data?.receipt_no])
-
-  // ----------------------------------------------------------
-  // == EFFECT
-  // ----------------------------------------------------------
 
   useEffect(() => {
     if (barcode.length != 0) {
@@ -114,28 +151,48 @@ const Scan = ({
   //   }
   // }, [box])
 
+  const check = (item_no, num) => {
+    const res = detail?.findIndex(
+      (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
+    )
+    return res < 0 ? false : true
+  }
+
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
   const handleInputChange = async (value) => {
-    value.includes(data?.item_no) && setScan(!scan)
     setInput(value.toUpperCase())
   }
 
   const handleInputSubmit = async (text) => {
     const newValue = text.split('/')
 
-    const checked = checkScan(newValue[0], newValue[1])
+    const checked = check(newValue[0], newValue[1])
 
     if (!checked) {
-      Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
-        cancelable: true
-      })
+      // Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
+      //   cancelable: true
+      // })
+
       setInput('')
     } else {
+      let numBox = null
+
+      for (const res of detail) {
+        if (res.item_no === newValue[0]) {
+          numBox += Number(newValue[1])
+          break
+        } else {
+          numBox += Number(res.qty_box)
+        }
+      }
+      console.log('numBox', numBox)
+      console.log('success')
       await insertDetailsBox(
         newValue[0],
         Number(newValue[1]),
+        numBox,
         'load',
         navigation
       )
@@ -150,7 +207,6 @@ const Scan = ({
       // )
 
       // setItems(updatedItems)
-
       setInput('')
     }
   }
@@ -191,8 +247,16 @@ const Scan = ({
               alignItems: 'center',
               width: '100%'
             }}>
-            <Text style={{color: '#000', fontSize: 20}}>{`${t('box')}(${
-              box ? box?.length : ''
+            <Text
+              style={{
+                color:
+                  box?.length ==
+                  detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0)
+                    ? 'magenta'
+                    : '#000',
+                fontSize: 20
+              }}>{`${t('box')}(${box?.length || 0}/${
+              detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0) || 0
             })`}</Text>
           </View>
           <View style={{flex: 2, alignItems: 'center'}}>
@@ -203,11 +267,12 @@ const Scan = ({
                 color: '#000'
               }}
               value={input}
-              onChangeText={handleInputChange}
+              onChangeText={(value) => handleInputSubmit(value)}
               placeholder={t('enter_barcode')}
               placeholderTextColor="#009DFF"
               blurOnSubmit={false}
-              onSubmitEditing={() => handleInputSubmit(input)}
+              // onSubmitEditing={() => handleInputSubmit(input)}
+              autoFocus={true}
               selectTextOnFocus={true}
               onStartShouldSetResponder={() => {
                 Keyboard.dismiss()
@@ -223,7 +288,7 @@ const Scan = ({
               flex: 1,
               alignItems: 'center'
             }}
-            onLongPress={() => setAlertBarcode(!alertBarcode)}>
+            onPress={() => setAlertBarcode(!alertBarcode)}>
             <Ionicons
               style={styles.rightIcon}
               name={'hammer-outline'}
@@ -239,13 +304,8 @@ const Scan = ({
               <ScanItem
                 key={idx}
                 item={el}
-                idx={
-                  detail?.find(
-                    (e) =>
-                      e.item_no === el.item_no &&
-                      el?.box_id?.split('/')[1] === '1'
-                  )?.row_id
-                }
+                idx={detail?.find((e) => e.item_no === el.item_no)?.row_id}
+                count={el.num_box}
               />
             ))}
           </ScrollView>
@@ -282,7 +342,7 @@ const Scan = ({
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, idx}) => (
+const ScanItem = React.memo(({item, idx, count}) => (
   <View
     key={item.box_id}
     style={[
@@ -292,12 +352,11 @@ const ScanItem = React.memo(({item, idx}) => (
         marginVertical: 3,
         backgroundColor: item?.is_scan === 'SCANED' ? '#ABFC7430' : null
       },
-      idx &&
-        idx !== 1 && {
-          borderTopWidth: 1,
-          borderColor: '#ccc',
-          borderStyle: 'dashed'
-        }
+      idx && {
+        borderTopWidth: 1,
+        borderColor: '#ccc',
+        borderStyle: 'dashed'
+      }
     ]}>
     <View
       style={{
@@ -306,7 +365,7 @@ const ScanItem = React.memo(({item, idx}) => (
         width: '100%'
       }}>
       <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
-        {idx}
+        {count}
       </Text>
     </View>
     <View
@@ -366,7 +425,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    height: 300
+    maxHeight: 300
   },
   row: {
     display: 'flex',

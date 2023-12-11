@@ -20,7 +20,7 @@ import {useTranslation} from 'react-i18next'
 import {useScan} from '../../hooks'
 import {fetchBox, hh_sel_box_by_receipt} from '../../apis'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
-import ModalDetail from './ModalDetail'
+import ModalDetail from '../../components/ModalDetail'
 
 const ToggleState = {
   DETAIL: 'DETAIL'
@@ -32,6 +32,7 @@ const TabViewList_2 = ({detail}) => {
   const {t} = useTranslation()
   const [toggleState, setToggleState] = useState(null)
   const [information, setInformation] = useState(null)
+  const [expanded, setExpanded] = useState(false)
 
   const toggleSetState = (newToggleState) => {
     toggleState === newToggleState
@@ -121,28 +122,41 @@ const TabViewList_2 = ({detail}) => {
             }}></View>
         </View>
 
-        {detail !== null ? (
-          <ScrollView nestedScrollEnabled={true} style={styles.modalContainer}>
-            {detail?.map((el, idx) => (
-              <ScanItem
-                key={idx}
-                item={el}
-                idx={idx}
-                setInformation={setInformation}
-                setToggleState={setToggleState}
-              />
-            ))}
-          </ScrollView>
-        ) : (
-          <Empty text={box && t('empty')} />
+        {expanded && (
+          <>
+            {detail !== null ? (
+              <ScrollView
+                nestedScrollEnabled={true}
+                style={styles.modalContainer}>
+                {detail?.map((el, idx) => (
+                  <ScanItem
+                    key={idx}
+                    item={el}
+                    idx={idx}
+                    setInformation={setInformation}
+                    setToggleState={setToggleState}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <Empty text={detail && t('empty')} />
+            )}
+          </>
         )}
 
-        {/* <FlatList
-          data={data}
-          keyExtractor={(item) => item.row_id.toString()}
-          renderItem={renderItem}
-          ListEmptyComponent={<Empty />}
-        /> */}
+        <TouchableOpacity
+          onPress={() => setExpanded(!expanded)}
+          style={{
+            width: '100%',
+            alignItems: 'center'
+          }}>
+          <Ionicons
+            style={styles.rightIcon}
+            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+            size={20}
+            color={'#777'}
+          />
+        </TouchableOpacity>
       </View>
 
       {information && toggleState === ToggleState.DETAIL && (
@@ -181,12 +195,12 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
           alignItems: 'center',
           width: '100%'
         }}>
-        <Text style={{color: '#000', fontSize: 14}}>{item.row_id}</Text>
+        <Text style={{color: '#000', fontSize: 16}}>{item.row_id}</Text>
       </View>
       <View style={{flex: 2, alignItems: 'center'}}>
         <Text
           style={{
-            fontSize: 14,
+            fontSize: 16,
             color: '#000'
           }}>
           {item.item_serial}
@@ -194,13 +208,13 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
       </View>
       <TouchableOpacity
         style={{flex: 2, alignItems: 'center'}}
-        onLongPress={() => {
+        onPress={() => {
           Clipboard.setString(item.item_no)
           console.log('copy ', item.item_no)
         }}>
         <Text
           style={{
-            fontSize: 14,
+            fontSize: 16,
             color: '#000'
           }}>
           {item.item_no}
@@ -209,7 +223,7 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
       <View style={{flex: 1, alignItems: 'center'}}>
         <Text
           style={{
-            fontSize: 14,
+            fontSize: 16,
             color: '#000'
           }}>
           {item.qty_box}
@@ -268,7 +282,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    height: 300
+    maxHeight: 300
   },
   row: {
     display: 'flex',

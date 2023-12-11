@@ -43,6 +43,18 @@ export const hh_sel_box_by_od = async (od) => {
     })
 }
 
+export const hh_check_ro_qty_box = async (data) => {
+  console.log(data)
+  return await axios
+    .post(`${path.URL}/admin/checkRoQtyBox`, data)
+    .then((res) => {
+      return res.data.msg
+    })
+    .catch((e) => {
+      throw new Error(e)
+    })
+}
+
 export const fetchHeader = async (status) =>
   await axios.post(`${path.URL}/api/hh/receipt/all`, {
     status: status
@@ -70,12 +82,12 @@ export const fetchDetailSelect = async (obj) =>
 // export const fetchOrderSelect = async (distribution_id) =>
 //   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}`)
 
-export const fetchOrder = async (status) =>
+export const hh_sel_distributes_by_status = async (status) =>
   await axios.post(`${path.URL}/api/hh/distribute/all`, {
     status: status
   })
 
-export const fetchOrderSelect = async (distribution_id) =>
+export const hh_sel_distributes_by_id = async (distribution_id) =>
   await axios.post(`${path.URL}/api/hh/distribute/all`, {
     distribution_id: distribution_id
   })

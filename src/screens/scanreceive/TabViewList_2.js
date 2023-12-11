@@ -108,7 +108,7 @@ const TabViewList_2 = ({detail}) => {
           </View>
           <View
             style={{
-              flex: 2,
+              flex: 2.5,
               alignItems: 'center',
               width: '100%'
             }}>
@@ -153,7 +153,7 @@ const TabViewList_2 = ({detail}) => {
           <Ionicons
             style={styles.rightIcon}
             name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-            size={20}
+            size={25}
             color={'#777'}
           />
         </TouchableOpacity>
@@ -232,15 +232,15 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
 
       <View
         style={{
-          flex: 1,
+          flex: 1.5,
           alignItems: 'center'
         }}>
         <View
           style={[
             styles.status,
-            item.status === 'PICKED'
+            item.status === 'DATA ENTRY'
               ? styles.PICKED
-              : item.status === 'LOADED'
+              : item.status === 'ONSHIP'
               ? styles.LOADED
               : styles.UNLOAD
           ]}>

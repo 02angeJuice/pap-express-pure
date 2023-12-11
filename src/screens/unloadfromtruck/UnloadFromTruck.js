@@ -33,6 +33,7 @@ import {
   fetchDetail,
   fetchDetailSelect,
   fetchHeaderSelect,
+  hh_sel_box_by_receipt,
   sendConfirm,
   sendDetailConfirm,
   sendSignature
@@ -65,21 +66,16 @@ const UnloadFromTruck = ({navigation}) => {
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
   const [input, setInput] = useState('')
-  const inputRef = useRef(null)
+  const inputRef2 = useRef(null)
   const toast = useToast()
+
+  const [redata, setredata] = useState(false)
 
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
   const {boxAvail, setBoxAvail} = useScan()
 
   const dispatch = useDispatch()
-
-  const checkScan = (item_no, num) => {
-    const res = detail?.findIndex(
-      (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
-    )
-    return res < 0 ? false : true
-  }
 
   // ----------------------------------------------------------
   // == API
@@ -102,12 +98,13 @@ const UnloadFromTruck = ({navigation}) => {
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    inputRef.current && inputRef.current?.focus()
+    inputRef2.current && inputRef2.current?.focus()
   }, [])
+
   useEffect(() => {
     headerSelected?.receipt_no.length > 0 &&
       fetchDetail_API(headerSelected?.receipt_no)
-  }, [headerSelected?.receipt_no])
+  }, [redata, headerSelected?.receipt_no])
   useEffect(() => {
     headerSelected?.receipt_no &&
       fetchHeaderSelect_API(headerSelected?.receipt_no)
@@ -160,136 +157,114 @@ const UnloadFromTruck = ({navigation}) => {
     setCurrentImage(null)
     setCurrentSign(null)
     setInput('')
-    inputRef.current.focus()
-  }
-  const onPressForceConfirm = async (message, status = null) => {
-    setRemark(message)
-    setForce(status)
+    inputRef2.current.focus()
   }
 
-  const onPressScanConfirm = async () => {
-    await sendDetailConfirm(
-      {
-        receipt_no: headerSelected?.receipt_no,
-        item_no: detailSelected?.item_no,
-        status: 'UNLOADED',
-        force_confirm: force,
-        remark: remark,
-        qty_box_avail: boxAvail,
-        update_by: userName
-      },
-      refresh
-    )
-      .then(() => {
-        toast.show(t('confirmed'), {
-          type: 'success',
-          placement: 'bottom',
-          duration: 4000,
-          offset: 30
-          // animationType: 'slide-in'
-        })
-      })
-      .catch((err) => {
-        console.log(err.message)
+  const onPressConfirm = async () => {
+    const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
 
-        if (err.message == 401) {
-          dispatch(resetToken())
+    const checkStatus = res?.every((el) => el.is_scan === 'IDLE')
+    console.log(checkStatus, checkStatus ? 'completed' : 'incomplete')
 
-          navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+    if (!checkStatus) {
+      Alert.alert(t('load_invalid'), t('load_invalid_detail_confirm'), [
+        {
+          text: t('cancel'),
+          onPress: () => {
+            setLoading(false)
+          },
+          style: 'cancel'
+        },
+        {
+          text: t('confirm'),
+          onPress: () => onSave()
         }
-        alertReUse('auth_access_denied', 'auth_access_denied_detail')
-      })
-
-    await fetchDetailSelect_API({
-      header_id: headerSelected?.receipt_no,
-      detail_id: detailSelected?.item_no
-    })
-
-    setBoxAvail(null)
-    setRemark('')
-    setForce('')
-    setToggleState(null)
+      ])
+    } else {
+      onSave()
+    }
   }
 
-  const onPressConfirm = async (status) => {
-    setLoading(!loading)
+  const onSave = async () => {
+    setLoading(true)
 
     const imgName = currentImage?.split('/').pop()
     const imgType = imgName?.split('.').pop()
     const signName = currentSign?.split('/').pop()
     const signType = signName?.split('.').pop()
 
-    if (status) {
-      // CHECK Item Detail Status !
-      if (detail?.filter((el) => el.status === 'LOADED').length > 0) {
-        alertReUse('load_invalid', 'load_invalid_detail')
-      } else {
-        // CHECK Signature required !
+    // CHECK Item Detail Status !
+    // if (detail?.filter((el) => el.status === 'LOADED').length > 0) {
+    //   alertReUse('load_invalid', 'load_invalid_detail')
 
-        if (currentSign === null) {
-          alertReUse('signature_required', 'signature_required_detail')
-        } else {
-          // SENT ITEM PICKED --> ONSHIP
-          // ==============================
-          const obj = new FormData()
+    // alertReUse('load_invalid', 'load_invalid_detail')
+    // CHECK Signature required !
+    if (currentSign === null) {
+      alertReUse('signature_required', 'signature_required_detail')
+    } else {
+      // SENT ITEM PICKED --> ONSHIP
+      // ==============================
+      const obj = new FormData()
 
-          obj.append('files', {
-            uri: currentSign,
-            name: `SIGNATURE-1.${signType}`,
-            type: `image/${signType}`
+      obj.append('files', {
+        uri: currentSign,
+        name: `SIGNATURE-1.${signType}`,
+        type: `image/${signType}`
+      })
+
+      currentImage !== null
+        ? obj.append('files', {
+            uri: currentImage,
+            name: `ITEM-02.${imgType}`,
+            type: `image/${imgType}`
           })
+        : obj.append('files', null)
 
-          currentImage !== null
-            ? obj.append('files', {
-                uri: currentImage,
-                name: `ITEM-02.${imgType}`,
-                type: `image/${imgType}`
-              })
-            : obj.append('files', null)
+      obj.append('receipt_no', headerSelected?.receipt_no)
+      obj.append('status', 'ARRIVED')
 
-          obj.append('receipt_no', headerSelected?.receipt_no)
-          obj.append('status', 'ARRIVED')
-
-          await sendSignature(obj, refresh).catch((err) => {
-            console.log(err.message)
+      await sendSignature(obj, refresh).catch((err) => {
+        console.log(err.message)
+      })
+      await sendConfirm(
+        {
+          receipt_no: headerSelected?.receipt_no,
+          statusHeader: 'ARRIVED',
+          statusDetail: 'UNLOADED',
+          date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+          maker: userName
+        },
+        refresh
+      )
+        .then(() => {
+          toast.show(t('confirmed'), {
+            type: 'success',
+            placement: 'bottom',
+            duration: 4000,
+            offset: 30
+            // animationType: 'slide-in'
           })
-          await sendConfirm(
-            {
-              receipt_no: headerSelected?.receipt_no,
-              statusHeader: 'ARRIVED',
-              statusDetail: 'UNLOADED',
-              date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
-              maker: userName
-            },
-            refresh
-          )
-            .then(() => {
-              toast.show(t('confirmed'), {
-                type: 'success',
-                placement: 'bottom',
-                duration: 4000,
-                offset: 30
-                // animationType: 'slide-in'
-              })
-            })
-            .catch((err) => {
-              console.log(err.message)
+        })
+        .catch((err) => {
+          console.log(err.message)
 
-              if (err.message == 401) {
-                dispatch(resetToken())
-                navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-                alertReUse('auth_access_denied', 'auth_access_denied_detail')
-              }
-              alertReUse('auth_access_denied', 'auth_access_denied_detail')
-            })
+          if (err.message == 401) {
+            dispatch(resetToken())
+            navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+            alertReUse('auth_access_denied', 'auth_access_denied_detail')
+          }
+          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+        })
 
-          setToggleButton(false)
-          setLoading(false)
-        }
-      }
+      setredata((el) => !el)
+
+      setToggleButton(false)
+      setLoading(false)
     }
+
+    setLoading(false)
   }
+
   const alertReUse = (msg, detail) => {
     Platform.OS === 'android'
       ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
@@ -317,7 +292,7 @@ const UnloadFromTruck = ({navigation}) => {
             <View style={styles.groupForm}>
               <View style={{flex: 0.7}}>
                 <TextInput
-                  ref={inputRef}
+                  ref={inputRef2}
                   style={[
                     styles.groupInput,
                     {
@@ -489,17 +464,8 @@ const UnloadFromTruck = ({navigation}) => {
           />
         )}
 
-        {/* {headerSelected && detail?.length > 0 && (
-          <TabViewList detail={detail} />
-        )} */}
-
-        {headerSelected && detail?.length > 0 && (
-          <TabViewList_2 detail={detail} />
-        )}
-
-        {headerSelected && (
-          <Scan detail={detail} checkScan={checkScan} data={headerSelected} />
-        )}
+        {headerSelected && <TabViewList_2 detail={detail} />}
+        {headerSelected && <Scan detail={detail} data={headerSelected} />}
 
         {headerSelected && toggleState === ToggleState.INFO && (
           <ModalHeaderInfo
@@ -620,7 +586,7 @@ const UnloadFromTruck = ({navigation}) => {
                         ? {backgroundColor: '#000'}
                         : {backgroundColor: '#ABFC74'}
                     ]}
-                    onPress={() => onPressConfirm(true)}>
+                    onPress={onPressConfirm}>
                     {loading ? (
                       <ActivityIndicator size={25} color="#FFF" />
                     ) : (
@@ -637,7 +603,7 @@ const UnloadFromTruck = ({navigation}) => {
                           color: '#183B00',
                           fontWeight: 'bold',
                           textAlign: 'center',
-                          fontSize: 18
+                          fontSize: 20
                         },
                         loading && {color: '#fff'}
                       ]}>
@@ -679,7 +645,8 @@ const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
         style={{
           color: color,
           fontWeight: 'bold',
-          textAlign: 'center'
+          textAlign: 'center',
+          fontSize: 20
         }}>
         {text}
       </Text>

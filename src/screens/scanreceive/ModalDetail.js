@@ -13,8 +13,6 @@ import {useTranslation} from 'react-i18next'
 const ModalDetail = ({data, visible, setVisible}) => {
   const {t} = useTranslation()
 
-  console.log('from loadtotruck', data)
-
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
@@ -29,14 +27,15 @@ const ModalDetail = ({data, visible, setVisible}) => {
       <View style={styles.modalContainer}>
         <View style={styles.container}>
           <View style={styles.nav}>
-            <Text style={styles.textNav}>{t('item_detail')}</Text>
+            <Text style={[styles.textNav, {fontSize: 20}]}>
+              {t('item_detail')}
+            </Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setVisible(!visible)}>
               <Ionicons name="close" size={25} color="#fff" />
             </TouchableOpacity>
           </View>
-
           <View
             style={{
               marginVertical: 5,
@@ -46,18 +45,18 @@ const ModalDetail = ({data, visible, setVisible}) => {
               borderRadius: 5
             }}>
             <View>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('customer')}: {data?.customer_id}
                 {data?.collection && `-${data.collection}`}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('item_no')}: {data?.item_no}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('tracking_four')}:{' '}
                 {data?.item_serial === null ? '-' : data?.item_serial}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('tracking_no')}:{' '}
                 {data?.tracking_no === null ? '-' : data?.tracking_no}{' '}
               </Text>
@@ -69,28 +68,28 @@ const ModalDetail = ({data, visible, setVisible}) => {
                   margin: 2
                 }}
               />
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('item_name')}: {data?.item_name}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('item_detail')}: {data?.item_description}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('box_amount')} （{t('box')}）: {data?.qty_box}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('box_amount')} （{t('box_piece')} / {t('box')}）:{' '}
                 {data?.qty_piece}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('box_amount_actual')} （{t('box')}）:{' '}
                 {data?.qty_box_avail === null ? ' -' : data?.qty_box_avail}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('total_weight')}:{' '}
                 {data?.weight_total == 0 ? ' -' : `${data?.weight_total} KG`}
               </Text>
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('width')}* {t('length')}* {t('height')}:
                 {data?.width === null
                   ? ' -'
@@ -104,7 +103,7 @@ const ModalDetail = ({data, visible, setVisible}) => {
                   margin: 2
                 }}
               />
-              <Text style={{color: '#000'}}>
+              <Text style={{color: '#000', fontSize: 20}}>
                 {t('status')}: {data?.status}
               </Text>
             </View>
@@ -118,7 +117,8 @@ const ModalDetail = ({data, visible, setVisible}) => {
                 style={{
                   color: '#000',
                   fontWeight: 'bold',
-                  alignSelf: 'center'
+                  alignSelf: 'center',
+                  fontSize: 20
                 }}>
                 {t('close')}
               </Text>

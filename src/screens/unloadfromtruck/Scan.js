@@ -18,7 +18,7 @@ import CustomTextInputAlert from '../../components/CustomTextInputAlert'
 import {Empty} from '../../components/SpinnerEmpty'
 import {useTranslation} from 'react-i18next'
 import {useScan} from '../../hooks'
-import {fetchBox, hh_sel_box_by_receipt} from '../../apis'
+import {fetchBox, hh_check_ro_qty_box, hh_sel_box_by_receipt} from '../../apis'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
 const Scan = ({
@@ -37,6 +37,7 @@ const Scan = ({
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
   const [box, setBox] = useState(null)
+  const [boxcheck, setboxcheck] = useState(null)
 
   const {insertDetailsBox, setBoxAvail} = useScan()
   const {t} = useTranslation()
@@ -68,10 +69,23 @@ const Scan = ({
       try {
         const res = await hh_sel_box_by_receipt(data?.receipt_no)
         setBox(res)
+        setboxcheck(res.filter((el) => el.is_scan === 'SCANED'))
       } catch (error) {
         console.log(error)
       }
     }
+
+    // const check_hh_sel_check_qty_box = async () => {
+    //   try {
+    //     const res = await hh_check_ro_qty_box({receipt_no: data?.receipt_no})
+    //     console.log('---', res)
+    //     console.log(res === undefined)
+    //     // setCompleted(res === undefined)
+    //   } catch (error) {
+    //     console.log(error)
+    //   }
+    // }
+    // check_hh_sel_check_qty_box()
 
     if (data?.receipt_no) {
       fetch_hh_sel_box_by_receipt()
@@ -103,28 +117,34 @@ const Scan = ({
   //     : setCheckStatus(false)
   // }, [box])
 
+  // รอแก้ไปเช็คในเบส
+  const check = (box_id) => {
+    const res = boxcheck?.findIndex((el) => el.box_id == box_id)
+    return res < 0 ? false : true
+  }
+
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
   const handleInputChange = async (value) => {
-    value.includes(data?.item_no) && setScan(!scan)
     setInput(value.toUpperCase())
   }
 
   const handleInputSubmit = async (text) => {
     const newValue = text.split('/')
 
-    const checked = checkScan(newValue[0], newValue[1])
+    const checked = check(text)
 
     if (!checked) {
-      Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
-        cancelable: true
-      })
+      // Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
+      //   cancelable: true
+      // })
       setInput('')
     } else {
       await insertDetailsBox(
         newValue[0],
         Number(newValue[1]),
+        null,
         'unload',
         navigation
       )
@@ -173,9 +193,15 @@ const Scan = ({
               alignItems: 'center',
               width: '100%'
             }}>
-            <Text style={{color: '#000', fontSize: 20}}>{`${t('box')}(${
-              box ? box?.length : ''
-            })`}</Text>
+            <Text
+              style={{
+                color: box?.every((el) => el.is_scan === 'IDLE')
+                  ? 'magenta'
+                  : '#000',
+                fontSize: 20
+              }}>{`${t('box')}(${
+              box?.filter((el) => el.is_scan === 'IDLE')?.length || 0
+            }/${box?.length || 0})`}</Text>
           </View>
           <View style={{flex: 2, alignItems: 'center'}}>
             <TextInput
@@ -185,11 +211,11 @@ const Scan = ({
                 color: '#000'
               }}
               value={input}
-              onChangeText={handleInputChange}
+              onChangeText={(value) => handleInputSubmit(value)}
               placeholder={t('enter_barcode')}
               placeholderTextColor="#009DFF"
               blurOnSubmit={false}
-              onSubmitEditing={() => handleInputSubmit(input)}
+              // onSubmitEditing={() => handleInputSubmit(input)}
               autoFocus={true}
               selectTextOnFocus={true}
               onStartShouldSetResponder={() => {
@@ -206,7 +232,7 @@ const Scan = ({
               flex: 1,
               alignItems: 'center'
             }}
-            onLongPress={() => setAlertBarcode(!alertBarcode)}>
+            onPress={() => setAlertBarcode(!alertBarcode)}>
             <Ionicons
               style={styles.rightIcon}
               name={'hammer-outline'}
@@ -222,13 +248,8 @@ const Scan = ({
               <ScanItem
                 key={idx}
                 item={el}
-                idx={
-                  detail?.find(
-                    (e) =>
-                      e.item_no === el.item_no &&
-                      el?.box_id?.split('/')[1] === '1'
-                  )?.row_id
-                }
+                idx={detail?.find((e) => e.item_no === el.item_no)?.row_id}
+                count={el.num_box}
               />
             ))}
           </ScrollView>
@@ -258,7 +279,7 @@ const Scan = ({
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, idx}) => (
+const ScanItem = React.memo(({item, idx, count}) => (
   <View
     key={item.box_id}
     style={[
@@ -266,7 +287,12 @@ const ScanItem = React.memo(({item, idx}) => (
       {
         justifyContent: 'space-between',
         marginVertical: 3,
-        backgroundColor: item?.is_scan === 'IDLE' ? '#ABFC7430' : null
+        backgroundColor:
+          item?.is_scan === 'IDLE'
+            ? '#ABFC7430'
+            : item?.is_scan !== 'SCANED'
+            ? '#ccc'
+            : null
       },
       idx &&
         idx !== 1 && {
@@ -282,7 +308,7 @@ const ScanItem = React.memo(({item, idx}) => (
         width: '100%'
       }}>
       <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
-        {idx}
+        {count}
       </Text>
     </View>
     <View
@@ -305,7 +331,7 @@ const ScanItem = React.memo(({item, idx}) => (
       </Text>
     </View>
 
-    <View
+    {/* <View
       style={{
         flex: 1,
         alignItems: 'center'
@@ -325,6 +351,35 @@ const ScanItem = React.memo(({item, idx}) => (
           color={'green'}
         />
       )}
+    </View> */}
+
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center'
+      }}>
+      {item?.is_scan === 'IDLE' ? (
+        <Ionicons
+          style={{alignSelf: 'center'}}
+          name={'checkmark-circle-outline'}
+          size={25}
+          color={'green'}
+        />
+      ) : item?.is_scan !== 'SCANED' ? (
+        <Ionicons
+          style={{alignSelf: 'center'}}
+          name={'close-circle-outline'}
+          size={20}
+          color={'red'}
+        />
+      ) : (
+        <Ionicons
+          style={{alignSelf: 'center'}}
+          name={'ellipsis-horizontal-outline'}
+          size={20}
+          color={'#000'}
+        />
+      )}
     </View>
   </View>
 ))
@@ -342,7 +397,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    height: 300
+    maxHeight: 300
   },
   row: {
     display: 'flex',

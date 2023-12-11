@@ -7,7 +7,8 @@ import {
   Image,
   Platform,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import VersionCheck from 'react-native-version-check'
@@ -21,6 +22,7 @@ import {useAuthToken} from '../../hooks'
 import {resetToken} from '../../store/slices/tokenSlice'
 import {useDispatch} from 'react-redux'
 import {screenMap} from '../../constants/screenMap'
+import {checkVersion} from '../../apis'
 
 const Info = ({navigation}) => {
   const [outing, setOuting] = useState(false)
@@ -37,6 +39,46 @@ const Info = ({navigation}) => {
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
+
+  const checkVersion_API = async () => {
+    try {
+      const res = await checkVersion()
+      const {version} = res?.data[0]
+
+      console.log(
+        path.APK_DOWNLOAD + `app-release.apk?time=${new Date().getTime()}`
+      )
+
+      if (VersionCheck.getCurrentVersion() !== version) {
+        Platform.OS === 'android'
+          ? Alert.alert(t('version'), t('version_detail'), [
+              {
+                text: t('cancel'),
+                style: 'cancel'
+              },
+              {
+                text: t('confirm'),
+                onPress: () =>
+                  Linking.openURL(
+                    path.APK_DOWNLOAD +
+                      `app-release.apk?time=${new Date().getTime()}`
+                  )
+              }
+            ])
+          : console.log(
+              path.APK_DOWNLOAD + `app-release.apk?time=${new Date().getTime()}`
+            )
+
+        // Linking.openURL(path.APK_DOWNLOAD + '/app-release.apk')
+      } else {
+        Alert.alert('Version', 'lastest version.', [], {
+          cancelable: true
+        })
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const fetchUserProfile_API = async (user_id) => {
     setFetching(true)
@@ -116,6 +158,20 @@ const Info = ({navigation}) => {
         <InfoItem icon="person" text={t('personal_info')} />
         <InfoItem icon="help-circle" text={t('help')} />
         <InfoItem icon="settings" text={t('setting')} />
+        <TouchableOpacity
+          style={styles.infoMenuItem}
+          onPress={checkVersion_API}>
+          <View style={styles.groupStart}>
+            <Ionicons name={`refresh-outline`} size={25} color={'#AE100F'} />
+            <Text style={styles.infoText}>{'Check for Update'}</Text>
+          </View>
+          <Ionicons
+            style={styles.rightIcon}
+            name={'chevron-forward-outline'}
+            size={25}
+            color={'#777'}
+          />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity

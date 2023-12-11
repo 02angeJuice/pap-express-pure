@@ -45,7 +45,7 @@ const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
     setBarcode(`${clip}/${inputValue}`)
     setClip('')
     setInputValue('')
-    Clipboard.setString('')
+    // Clipboard.setString('')
     onClose()
   }
 

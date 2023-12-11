@@ -184,7 +184,7 @@ const Login = ({navigation}) => {
 
               <Text
                 style={[
-                  {color: '#183B00', fontSize: 18, fontWeight: 'bold'},
+                  {color: '#183B00', fontSize: 20, fontWeight: 'bold'},
                   loading && {color: '#fff'}
                 ]}>
                 {t('login')}

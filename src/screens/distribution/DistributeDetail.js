@@ -17,6 +17,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {Empty} from '../../components/SpinnerEmpty'
 import FastImage from 'react-native-fast-image'
+import PagerView from 'react-native-pager-view'
 
 // Global Modal
 // import ModalCamera from '../../components/ModalCamera'
@@ -32,13 +33,16 @@ import {setFilterDi} from '../../store/slices/settingSlice'
 import {
   fetchOrderDetail,
   fetchOrderItem,
-  fetchOrderSelect,
+  hh_sel_box_by_od,
+  hh_sel_distributes_by_id,
   sendItemConfirm,
   sendOrderConfirm
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
+
+import TabViewList_2 from './TabViewList_2'
 import Scan from './Scan'
-import TabViewList from './TabViewList'
+import {path} from '../../constants/url'
 
 const ToggleState = {
   SCAN: 'SCAN',
@@ -48,80 +52,54 @@ const ToggleState = {
 
 const DistributeDetail = ({navigation, route}) => {
   const {order_id} = route?.params
+  const [redata, setredata] = useState(false)
 
   const [loading, setLoading] = useState(false)
-
-  const [list, setList] = useState(false)
-  const [done, setDone] = useState(false)
-
   const [toggleState, setToggleState] = useState(null)
-  const [toggleButton, setToggleButton] = useState(false)
-
   const [orderSelected, setOrderSelected] = useState(null)
-
   const [detail, setDetail] = useState(null)
   const [detailSelected, setDetailSelected] = useState(null)
-
   const [currentSign, setCurrentSign] = useState(null)
   const [currentImage, setCurrentImage] = useState(null)
-
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
-
   const [item, setItem] = useState(null)
 
   const toast = useToast()
   const {t} = useTranslation()
   const {userName, token, refresh} = useAuthToken()
-
   const {boxAvail, updateAvailBox, setBoxAvail} = useScan()
 
   const dispatch = useDispatch()
-
-  const checkScan = (item_no, num) => {
-    const res = detail?.findIndex(
-      (el) => el.item_no == item_no && num > 0 && num <= Number(el.qty_box)
-    )
-    return res < 0 ? false : true
-  }
 
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
   const fetchOrderDetail_API = async (distribution_id) => {
-    const detail = await fetchOrderDetail(distribution_id)
-    setDetail(detail.data)
+    const res = await fetchOrderDetail(distribution_id)
+    setDetail(res.data)
   }
   const fetchOrderItem_API = async ({order_id, item_id}) => {
     const item = await fetchOrderItem({order_id, item_id})
-    setItem(item.data[0])
+    setItem(item?.data[0])
   }
   const fetchOrderSelect_API = async (distribution_id) => {
-    const order = await fetchOrderSelect(distribution_id)
-    setOrderSelected(order.data[0])
+    const order = await hh_sel_distributes_by_id(distribution_id)
+    setOrderSelected(order?.data[0])
   }
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    fetchOrderSelect_API(order_id)
-  }, [])
+    if (order_id) {
+      fetchOrderSelect_API(order_id)
+    }
+  }, [redata, order_id])
 
   useEffect(() => {
     orderSelected && fetchOrderDetail_API(orderSelected?.distribution_id)
   }, [orderSelected])
-
-  useEffect(() => {
-    if (orderSelected) {
-      setTab()
-      setToggleButton(orderSelected?.status !== 'CLOSED' ? true : false)
-    }
-  }, [detail])
-
-  useEffect(() => {
-    orderSelected && fetchOrderSelect_API(orderSelected?.distribution_id)
-  }, [toggleButton])
 
   useEffect(() => {
     orderSelected && fetchOrderDetail_API(orderSelected?.distribution_id)
@@ -144,29 +122,6 @@ const DistributeDetail = ({navigation, route}) => {
     } else {
       setToggleState(newToggleState)
     }
-  }
-
-  const toggleButtonTab = (msg) => {
-    if (msg === 'done') {
-      setDone(true)
-      setList(false)
-    } else {
-      setList(true)
-      setDone(false)
-    }
-  }
-
-  const setTab = () => {
-    if (detail?.filter((el) => el.status === 'DATA ENTRY').length > 0) {
-      toggleButtonTab('list')
-    } else {
-      toggleButtonTab('done')
-    }
-  }
-
-  const handleSetDetailSelected = (target) => {
-    setDetailSelected(target)
-    target?.status === 'DATA ENTRY' && setToggleState(ToggleState.SCAN)
   }
 
   const onPressForceConfirm = async (message, status = null) => {
@@ -223,87 +178,106 @@ const DistributeDetail = ({navigation, route}) => {
     setToggleState(null)
   }
 
-  const onPressConfirm = async (status) => {
-    setLoading(!loading)
+  const onPressConfirm = async () => {
+    const res = await hh_sel_box_by_od(order_id)
+
+    const checkStatus = res
+      ?.filter((el) => el.is_scan === 'IDLE')
+      .every((el) => el.is_scan_d === 'SCANED')
+    console.log(checkStatus, checkStatus ? 'completed' : 'incomplete')
+
+    if (!checkStatus) {
+      Alert.alert(t('load_invalid'), t('load_invalid_detail_confirm'), [
+        {
+          text: t('cancel'),
+          onPress: () => {
+            setLoading(false)
+          },
+          style: 'cancel'
+        },
+        {
+          text: t('confirm'),
+          onPress: () => onSave()
+        }
+      ])
+    } else {
+      onSave()
+    }
+  }
+
+  const onSave = async () => {
+    setLoading(true)
 
     const imgName = currentImage?.split('/').pop()
     const imgType = imgName?.split('.').pop()
     const signName = currentSign?.split('/').pop()
     const signType = signName?.split('.').pop()
 
-    if (status) {
-      // CHECK Item Detail Status !
-      if (detail?.filter((el) => el.status === 'DATA ENTRY').length > 0) {
-        alertReUse('load_invalid', 'load_invalid_detail')
-      } else {
-        // CHECK Signature required !
-        if (currentSign === null) {
-          alertReUse('signature_required', 'signature_required_detail')
-        } else {
-          // STATUS: DATA ENTRY --> CLOSED/WAITING
-          // ==============================
-          const obj = new FormData()
+    if (currentSign === null) {
+      alertReUse('signature_required', 'signature_required_detail')
+    } else {
+      // STATUS: DATA ENTRY --> CLOSED/WAITING
+      // ==============================
+      const obj = new FormData()
 
-          currentSign !== null
-            ? obj.append('files', {
-                uri: currentSign,
-                name: `SIGNATURE-OD.${signType}`,
-                type: `image/${signType}`
-              })
-            : obj.append('files', null)
+      currentSign !== null
+        ? obj.append('files', {
+            uri: currentSign,
+            name: `SIGNATURE-OD.${signType}`,
+            type: `image/${signType}`
+          })
+        : obj.append('files', null)
 
-          // currentImage !== null
-          //   ? obj.append('files', {
-          //       uri: currentImage,
-          //       name: `ITEM-OD.${imgType}`,
-          //       type: `image/${imgType}`
-          //     })
-          //   : obj.append('files', null)
+      // currentImage !== null
+      //   ? obj.append('files', {
+      //       uri: currentImage,
+      //       name: `ITEM-OD.${imgType}`,
+      //       type: `image/${imgType}`
+      //     })
+      //   : obj.append('files', null)
 
-          obj.append('files', null)
+      obj.append('files', null)
 
-          obj.append('id', orderSelected?.distribution_id)
-          // obj.append('status', 'CLOSED')
-          obj.append(
-            'status',
-            orderSelected?.distributeType === 'PDT001' ? 'CLOSED' : 'ONSHIP'
-          )
-          obj.append('maker', userName)
-          obj.append('distributeType', orderSelected?.distributeType)
+      obj.append('id', orderSelected?.distribution_id)
+      // obj.append('status', 'CLOSED')
+      obj.append(
+        'status',
+        orderSelected?.distributeType === 'PDT001' ? 'CLOSED' : 'ONSHIP'
+      )
+      obj.append('maker', userName)
+      obj.append('distributeType', orderSelected?.distributeType)
 
-          await sendOrderConfirm(obj, refresh)
-            .then(() => {
-              toast.show(t('confirmed'), {
-                type: 'success',
-                placement: 'bottom',
-                duration: 4000,
-                offset: 30
-                // animationType: 'slide-in'
-              })
-            })
-            .catch((err) => {
-              console.log(err.message)
+      await sendOrderConfirm(obj, refresh)
+        .then(() => {
+          toast.show(t('confirmed'), {
+            type: 'success',
+            placement: 'bottom',
+            duration: 4000,
+            offset: 30
+          })
+        })
+        .catch((err) => {
+          console.log(err.message)
 
-              if (err.message == 401) {
-                dispatch(resetToken())
-                navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
+          if (err.message == 401) {
+            dispatch(resetToken())
+            navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
 
-                alertReUse('auth_access_denied', 'auth_access_denied_detail')
-              }
+            alertReUse('auth_access_denied', 'auth_access_denied_detail')
+          }
 
-              alertReUse('auth_access_denied', err.message)
-            })
+          alertReUse('auth_access_denied', err.message)
+        })
 
-          orderSelected?.distributeType === 'PDT001'
-            ? dispatch(setFilterDi('CLOSED'))
-            : dispatch(setFilterDi('ONSHIP'))
+      setredata((el) => !el)
 
-          setToggleButton(false)
+      orderSelected?.distributeType === 'PDT001'
+        ? dispatch(setFilterDi('CLOSED'))
+        : dispatch(setFilterDi('ONSHIP'))
 
-          setLoading(false)
-        }
-      }
+      setLoading(false)
     }
+    setLoading(false)
   }
 
   const alertReUse = (msg, detail) => {
@@ -312,12 +286,9 @@ const DistributeDetail = ({navigation, route}) => {
       : alert(t(msg), t(detail))
   }
 
-  const handleCallPress = async () => {
-    const phoneNumber = '0991713084'
-
-    const phoneNumberWithPrefix = `tel:${phoneNumber}`
+  const handleCallPress = async (phone) => {
     try {
-      await Linking.openURL(phoneNumberWithPrefix)
+      await Linking.openURL(`tel:${phone}`)
     } catch (error) {
       console.error('Error opening phone app:', error)
     }
@@ -330,19 +301,134 @@ const DistributeDetail = ({navigation, route}) => {
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View
         style={[
-          styles.itemContent,
-          styles.shadow,
+          styles.column,
           {
+            marginTop: 10,
             backgroundColor: '#FFF',
             borderRadius: 5,
-            marginVertical: 10
+            gap: 3
+          },
+          styles.itemContent,
+          orderSelected?.status === 'DATA ENTRY' && {
+            borderLeftColor: '#FF003C',
+            borderLeftWidth: 10,
+            backgroundColor: '#FFEBF1'
+          },
+          orderSelected?.status === 'ONSHIP' && {
+            borderLeftColor: '#539ffc',
+            borderLeftWidth: 10,
+            backgroundColor: '#EBF4FF'
+          },
+          orderSelected?.status === 'CLOSED' && {
+            borderLeftColor: '#95ed66',
+            borderLeftWidth: 10,
+            backgroundColor: '#E3FFD4'
           }
         ]}>
-        <Text style={{color: '#000'}}>
-          {t('receipt')}: {orderSelected?.distribution_id}
-        </Text>
+        <View style={[styles.row, {justifyContent: 'space-end'}]}>
+          <View style={[styles.row, {gap: 3}]}>
+            <Text style={{color: '#000', fontSize: 20}}>
+              {t('receipt_no')}:
+            </Text>
+            <Text style={{color: '#000', fontSize: 20, fontWeight: '700'}}>
+              {orderSelected?.distribution_id}
+            </Text>
+          </View>
+        </View>
+
+        {orderSelected?.distributeType !== 'PDT001' && (
+          <Text style={{color: '#000', fontSize: 20}}>
+            {t('driver')}: {orderSelected?.driver}
+          </Text>
+        )}
+
+        <View style={[styles.row, {justifyContent: 'space-between'}]}>
+          <View style={[styles.row, {gap: 3}]}>
+            <Text style={{color: '#000', fontSize: 20}}>{t('recipient')}:</Text>
+            <Text style={{color: '#000', fontSize: 20, fontWeight: 'bold'}}>
+              {orderSelected?.customer_id}
+            </Text>
+          </View>
+          <Text style={{color: '#000', fontSize: 20, fontStyle: 'italic'}}>
+            ({orderSelected?.first_name} {orderSelected?.last_name})
+          </Text>
+        </View>
+
+        <View
+          style={[
+            styles.column,
+            {justifyContent: 'flex-start', marginTop: 10}
+          ]}>
+          <View style={[styles.row, {gap: 3}]}>
+            <Text style={{color: '#000', fontSize: 20}}>{t('phone')}:</Text>
+
+            <TouchableOpacity
+              disabled={!orderSelected?.phone}
+              onPress={() => handleCallPress(orderSelected?.phone)}>
+              <Text
+                style={{
+                  color: orderSelected?.phone ? '#007ECC' : '#000',
+                  fontSize: 20,
+                  fontWeight: 'bold'
+                }}>
+                {orderSelected?.phone || '--'}
+              </Text>
+            </TouchableOpacity>
+
+            {orderSelected?.phone && (
+              <Ionicons name={'call'} size={20} color="#007ECC" />
+            )}
+          </View>
+
+          <View style={[styles.row, {gap: 3}]}>
+            <Text style={{color: '#000', fontSize: 20}}>{t('phone2')}:</Text>
+
+            <TouchableOpacity
+              disabled={!orderSelected?.phonespare}
+              onPress={() => handleCallPress(orderSelected?.phonespare)}>
+              <Text
+                style={{
+                  color: orderSelected?.phonespare ? '#007ECC' : '#000',
+                  fontSize: 20,
+                  fontWeight: 'bold'
+                }}>
+                {orderSelected?.phonespare || '--'}
+              </Text>
+            </TouchableOpacity>
+
+            {orderSelected?.phonespare && (
+              <Ionicons name={'call'} size={20} color="#007ECC" />
+            )}
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.row,
+            {
+              justifyContent: 'center',
+              gap: 3,
+              backgroundColor: '#fff',
+              borderRadius: 5,
+              borderColor: '#eee',
+              borderWidth: 1,
+              padding: 3,
+              marginVertical: 4
+            }
+          ]}>
+          <Ionicons color="#FF0000" name="location-outline" size={20} />
+          <Text
+            style={{flex: 1, flexWrap: 'wrap', color: '#000', fontSize: 20}}>
+            {orderSelected?.address} - {orderSelected?.subdistrict}{' '}
+            {orderSelected?.district} {orderSelected?.province}{' '}
+            {orderSelected?.zip_code}
+          </Text>
+        </View>
+
         <View style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
-          <Text style={{color: '#000'}}>{t('transport_type')}: </Text>
+          <Text style={{color: '#000', fontSize: 20}}>
+            {t('transport_type')}:{' '}
+          </Text>
           <View
             style={[
               styles.status,
@@ -351,7 +437,9 @@ const DistributeDetail = ({navigation, route}) => {
                 ? styles.PICKED
                 : orderSelected?.distributeType === 'PDT002'
                 ? styles.ONSHIP
-                : styles.ARRIVED,
+                : orderSelected?.distributeType === 'PDT003'
+                ? styles.ARRIVED
+                : styles.OFFICE,
               {
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -367,207 +455,60 @@ const DistributeDetail = ({navigation, route}) => {
                   ? 'home'
                   : orderSelected?.distributeType === 'PDT002'
                   ? 'bag-handle'
+                  : orderSelected?.distributeType === 'PDT003'
+                  ? 'cube'
                   : 'business'
               }
               size={15}
             />
-            <Text style={{padding: 2, color: '#000'}}>
+            <Text style={{padding: 2, color: '#000', fontSize: 20}}>
               {orderSelected?.distributeType === 'PDT001'
                 ? `${t('od_type_warehouse')}`
                 : orderSelected?.distributeType === 'PDT002'
                 ? `${t('od_type_express')}`
-                : `${t('od_type_self')}`}
+                : orderSelected?.distributeType === 'PDT003'
+                ? `${t('od_type_self')}`
+                : `${t('od_type_office')}`}
             </Text>
           </View>
         </View>
 
-        <TouchableOpacity>
-          <Text style={{color: '#000'}} onPress={handleCallPress}>
-            CALL
-          </Text>
-        </TouchableOpacity>
+        <View style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
+          <Text style={{color: '#000', fontSize: 20}}>{t('status')}:</Text>
+          <View
+            style={[
+              styles.status,
+
+              orderSelected?.status === 'CLOSED'
+                ? {backgroundColor: '#2FC58B'}
+                : orderSelected?.status === 'ONSHIP'
+                ? {backgroundColor: '#009DFF'}
+                : {backgroundColor: '#FF2F61'}
+            ]}>
+            <Text style={{padding: 2, color: '#FFF', fontSize: 18}}>
+              {orderSelected?.status}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      {/* <View
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          borderRadius: 2.5,
-          borderWidth: 0.2,
-          height: 40,
-          marginBottom: 5
-        }}>
-        <TouchableOpacity
-          style={[
-            {
-              flex: 1,
-              alignItems: 'center',
-              height: '100%',
-              justifyContent: 'center',
-              borderRadius: 8
-            },
-            list
-              ? {backgroundColor: '#AE100F'}
-              : {backgroundColor: 'transparent'}
-          ]}
-          onPress={() => toggleButtonTab('list')}>
-          <Text style={list ? {color: '#fff'} : {color: '#000'}}>
-            {t('od_waiting')}
-          </Text>
-        </TouchableOpacity>
+      {order_id && <TabViewList_2 detail={detail} />}
+      {order_id && <Scan detail={detail} distribute_id={order_id} />}
 
-        <TouchableOpacity
-          style={[
-            {
-              flex: 1,
-              alignItems: 'center',
-              height: '100%',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              borderRadius: 8,
-              gap: 5
-            },
-            done
-              ? {backgroundColor: '#AE100F'}
-              : {backgroundColor: 'transparent'}
-          ]}
-          onPress={() => toggleButtonTab('done')}>
-          <Text style={done ? {color: '#fff'} : {color: '#000'}}>
-            {t('od_confirm')}
-          </Text>
-          {!done && (
-            <View
-              style={{
-                backgroundColor: '#2FC58B',
-                borderRadius: 50,
-                width: 15,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontSize: 10
-                }}>
-                {!done &&
-                  detail?.filter((el) => el.status !== 'DATA ENTRY').length}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View> */}
-
-      {/* {list && !done ? (
-        <FlatList
-          keyboardShouldPersistTaps="handled"
-          keyExtractor={(el) => el.row_id}
-          data={detail?.filter((el) => el.status === 'DATA ENTRY').reverse()}
-          initialNumToRender={6}
-          windowSize={5}
-          renderItem={_renderDetail}
-          ListEmptyComponent={
-            <Empty
-              text={
-                detail?.filter((el) => el.status === 'DATA ENTRY') &&
-                t('od_item_confirmed')
-              }
-            />
-          }
-          scrollEnabled={false}
-        />
-      ) : (
-        <FlatList
-          keyboardShouldPersistTaps="handled"
-          keyExtractor={(el) => el.row_id}
-          data={detail?.filter((el) => el.status !== 'DATA ENTRY')}
-          initialNumToRender={6}
-          windowSize={5}
-          renderItem={_renderDetail}
-          ListEmptyComponent={
-            <Empty
-              text={
-                detail?.filter((el) => el.status !== 'DATA ENTRY') &&
-                t('od_item_empty')
-              }
-            />
-          }
-          scrollEnabled={false}
-        />
-      )} */}
-
-      {/* {item && toggleState === ToggleState.SCAN && (
-        <ModalScan
-          data={item}
-          visible={true}
-          setVisible={() => {
-            toggleSetState(null)
-            setItem(null)
-          }}
-          confirm={onPressScanConfirm}
-          force={force}
-          forceConfirm={onPressForceConfirm}
-          navigation={navigation}
-        />
-      )} */}
-
-      {order_id && (
-        <TabViewList
-          detail={detail}
-          // headSelected={headerSelected}
-          detailSelected={handleSetDetailSelected}
-          detailInfo={orderSelected}
-        />
-      )}
-
-      {order_id && (
-        <Scan detail={detail} checkScan={checkScan} distribute_id={order_id} />
-      )}
-
-      {/* {detail?.every((el) => el.status !== 'DATA ENTRY') &&
-        orderSelected?.status === 'DATA ENTRY' && (
-          <TouchableOpacity
-            style={[styles.signatureBox]}
-            onPress={() => toggleSetState(ToggleState.CAMERA)}
-            disabled={orderSelected?.status !== 'DATA ENTRY'}>
-            {currentImage !== null || orderSelected?.img_item_onship ? (
-              <View style={styles.preview}>
-                {currentImage ? (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: currentImage
-                    }}
-                  />
-                ) : (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: `${path.IMG}/${orderSelected?.img_item_onship}`
-                    }}
-                  />
-                )}
-              </View>
-            ) : (
-              <View style={styles.imageUpload}>
-                <Ionicons name="image-outline" size={45} color="#4d4d4d" />
-                <Text>{`${t('photo')} / ${t('camera')}`}</Text>
-              </View>
-            )}
-
-            {toggleState === ToggleState.CAMERA && (
-              <ModalCamera
-                set={setCurrentImage}
-                visible={true}
-                setVisible={() => toggleSetState(null)}
-              />
-            )}
-          </TouchableOpacity>
-        )} */}
-
-      {/* {detail?.every((el) => el.status !== 'DATA ENTRY') &&
-        orderSelected?.status === 'DATA ENTRY' && ( */}
+      {/* <PagerView
+        style={{width: '100%', height: 375}}
+        initialPage={1}
+        pageMargin={10}>
+        {order_id && <TabViewList_2 key="2" detail={detail} />}
+        {order_id && (
+          <Scan
+            key="1"
+            detail={detail}
+            checkScan={checkScan}
+            distribute_id={order_id}
+          />
+        )}
+      </PagerView> */}
 
       {order_id && (
         <TouchableOpacity
@@ -581,17 +522,9 @@ const DistributeDetail = ({navigation, route}) => {
           ]}
           onPress={() => toggleSetState(ToggleState.SIGNATURE)}
           disabled={orderSelected?.status !== 'DATA ENTRY'}>
-          {currentSign !== null || orderSelected?.signature_onship ? (
+          {currentSign !== null || orderSelected?.signature_img ? (
             <View style={styles.preview}>
               {currentSign ? (
-                // <Image
-                //   resizeMode="contain"
-                //   style={{width: '100%', height: 180}}
-                //   source={{
-                //     uri: currentSign
-                //   }}
-                // />
-
                 <FastImage
                   resizeMode={FastImage.resizeMode.contain}
                   source={{
@@ -605,7 +538,7 @@ const DistributeDetail = ({navigation, route}) => {
                   resizeMode={'contain'}
                   style={{width: '100%', height: 180}}
                   source={{
-                    uri: `${path.IMG}/${orderSelected?.signature_onship}`
+                    uri: `${path.IMG}/${orderSelected?.signature_img}`
                   }}
                 />
               )}
@@ -613,9 +546,12 @@ const DistributeDetail = ({navigation, route}) => {
           ) : (
             <View style={styles.imageUpload}>
               <Ionicons name="pencil" size={40} color="#4d4d4d" />
-              <Text style={{color: '#000'}}>{`${t('signature')}`}</Text>
+              <Text style={{color: '#000', fontSize: 20}}>{`${t(
+                'signature'
+              )}`}</Text>
             </View>
           )}
+
           {toggleState === ToggleState.SIGNATURE && (
             <ModalSignature
               set={setCurrentSign}
@@ -625,44 +561,45 @@ const DistributeDetail = ({navigation, route}) => {
           )}
         </TouchableOpacity>
       )}
+
       {/* 
       {detail?.every((el) => el.status !== 'DATA ENTRY') &&
         orderSelected?.status === 'DATA ENTRY' && ( */}
 
       {order_id && (
         <View style={styles.buttonGroup}>
-          {toggleButton && (
-            <TouchableOpacity
-              disabled={loading}
-              style={[
-                styles.button,
-                styles.shadow,
-                styles.row,
-                {justifyContent: 'center', gap: 10},
-                loading
-                  ? {backgroundColor: '#000'}
-                  : {backgroundColor: '#ABFC74'}
-              ]}
-              onPress={() => onPressConfirm(true)}>
-              {loading ? (
-                <ActivityIndicator size={25} color="#FFF" />
-              ) : (
-                <Ionicons name={'checkmark-outline'} size={25} color={'#000'} />
-              )}
+          <TouchableOpacity
+            disabled={orderSelected?.status !== 'DATA ENTRY'}
+            style={[
+              styles.button,
+              styles.shadow,
+              styles.row,
+              {justifyContent: 'center', gap: 10},
 
-              <Text
-                style={[
-                  {
-                    color: '#183B00',
-                    fontWeight: 'bold',
-                    textAlign: 'center'
-                  },
-                  loading && {color: '#fff'}
-                ]}>
-                {t('confirm')}
-              </Text>
-            </TouchableOpacity>
-          )}
+              {
+                backgroundColor:
+                  orderSelected?.status === 'DATA ENTRY' ? '#ABFC74' : '#ccc'
+              }
+            ]}
+            onPress={onPressConfirm}>
+            {loading ? (
+              <ActivityIndicator size={25} />
+            ) : (
+              <Ionicons name={'checkmark-outline'} size={25} color={'#000'} />
+            )}
+
+            <Text
+              style={[
+                {
+                  color: '#183B00',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  fontSize: 20
+                }
+              ]}>
+              {t('confirm')}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
     </ScrollView>
@@ -672,82 +609,6 @@ const DistributeDetail = ({navigation, route}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ItemDetail = React.memo(({item, detailSelected}) => {
-  const {t} = useTranslation()
-
-  return (
-    <TouchableOpacity
-      style={[styles.item, styles.shadow]}
-      onPress={
-        item?.status === 'DATA ENTRY' ? () => detailSelected(item) : null
-      }>
-      <View
-        style={[
-          styles.itemHeader,
-          item.status === 'CLOSED'
-            ? {backgroundColor: '#2FC58B'}
-            : item.status === 'ONSHIP'
-            ? {backgroundColor: '#009DFF'}
-            : {backgroundColor: '#AE100F'}
-        ]}>
-        <Text style={styles.textHeader}>
-          {t('receipt_no')}: {item.receipt_no}
-        </Text>
-      </View>
-      <View style={styles.itemContent}>
-        <Text style={{color: '#000'}}>
-          {t('customer')}: {item.customer_id}
-          {item?.collection && `-${item.collection}`}
-        </Text>
-        <Text style={{color: '#000'}}>
-          {t('item_no')}: {item.item_no}
-        </Text>
-        <Text style={{color: '#000'}}>
-          {t('tracking_four')}:{' '}
-          {item.item_serial === null ? ' -' : item.item_serial}
-        </Text>
-        <Text style={{color: '#000'}}>
-          {t('tracking_no')}: {item.tracking_no ? item.tracking_no : ' -'}
-        </Text>
-        <View
-          style={{
-            borderStyle: 'dashed',
-            borderColor: '#999',
-            borderBottomWidth: 0.5,
-            margin: 2
-          }}
-        />
-        <Text style={{color: '#000'}}>
-          {t('item_name')}: {item.item_name}
-        </Text>
-        <Text style={{color: '#000'}}>
-          {t('box_amount')} （{t('box')}）: {item.qty_box}
-        </Text>
-        <Text style={{color: '#000'}}>
-          {t('box_amount_actual')} （{t('box')}）: {item.qty_box_avail}
-        </Text>
-        <Text style={{flex: 1, flexWrap: 'wrap', color: '#000'}}>
-          {t('annotations')}: {item.remark ? item.remark : ` -`}
-        </Text>
-        <Text style={{flex: 1, flexWrap: 'wrap', color: '#000'}}>
-          {t('instructions')}:{' '}
-          {item.shipping_Instructions ? item.shipping_Instructions : ` -`}
-        </Text>
-        <View
-          style={{
-            borderStyle: 'dashed',
-            borderColor: '#999',
-            borderBottomWidth: 0.5,
-            margin: 2
-          }}
-        />
-        <Text style={{color: '#000'}}>
-          {t('status')}: {item.status}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  )
-})
 
 // ----------------------------------------------------------
 // == STYLE
@@ -762,6 +623,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  column: {
+    display: 'flex',
+    flexDirection: 'column'
   },
   itemHeader: {
     backgroundColor: '#AE100F',
@@ -802,6 +667,10 @@ const styles = StyleSheet.create({
   ARRIVED: {
     backgroundColor: '#FFC4D2',
     color: '#4A0011'
+  },
+  OFFICE: {
+    backgroundColor: '#E0C9FF',
+    color: '#5719AA'
   },
   buttonGroup: {
     display: 'flex',
