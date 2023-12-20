@@ -228,7 +228,7 @@ const ScanReceiveDetail = ({navigation, route}) => {
               {
                 marginTop: 10,
                 backgroundColor: '#FFF',
-                borderRadius: 5,
+                borderRadius: 10,
                 gap: 3
               },
               styles.itemContent,

@@ -33,8 +33,8 @@ const TabViewList_2 = forwardRef(({detail}, ref) => {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
         <View
           style={[
             styles.row,
@@ -63,51 +63,50 @@ const TabViewList_2 = forwardRef(({detail}, ref) => {
           </View>
           <View style={{flex: 0, alignItems: 'center'}}></View>
         </View>
+      </TouchableWithoutFeedback>
 
-        {expanded && (
-          <>
-            {detail !== null ? (
-              <TouchableWithoutFeedback
-                onPress={() => dispatch(setfetchfocus())}>
-                <ScrollView
-                  keyboardShouldPersistTaps="handled"
-                  nestedScrollEnabled={true}
-                  style={styles.modalContainer}>
-                  {detail?.map((item, idx) => (
-                    <ScanItem
-                      key={idx}
-                      item={item}
-                      setInformation={setInformation}
-                      setToggleState={setToggleState}
-                    />
-                  ))}
-                </ScrollView>
-              </TouchableWithoutFeedback>
-            ) : (
-              <Empty text={detail && t('empty')} />
-            )}
-          </>
-        )}
+      {expanded && (
+        <>
+          {detail !== null ? (
+            <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
+                style={styles.modalContainer}>
+                {detail?.map((item, idx) => (
+                  <ScanItem
+                    key={idx}
+                    item={item}
+                    setInformation={setInformation}
+                    setToggleState={setToggleState}
+                  />
+                ))}
+              </ScrollView>
+            </TouchableWithoutFeedback>
+          ) : (
+            <Empty text={detail && t('empty')} />
+          )}
+        </>
+      )}
 
-        <TouchableOpacity
-          onPress={() => setExpanded(!expanded)}
-          style={{width: '100%', alignItems: 'center'}}>
-          <Ionicons
-            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-            size={25}
-            color={'#777'}
-          />
-        </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setExpanded(!expanded)}
+        style={{width: '100%', alignItems: 'center'}}>
+        <Ionicons
+          name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+          size={25}
+          color={'#777'}
+        />
+      </TouchableOpacity>
 
-        {information && toggleState === ToggleState.DETAIL && (
-          <ModalDetail
-            data={information}
-            visible={toggleState === ToggleState.DETAIL}
-            setVisible={() => toggleSetState(null)}
-          />
-        )}
-      </View>
-    </TouchableWithoutFeedback>
+      {information && toggleState === ToggleState.DETAIL && (
+        <ModalDetail
+          data={information}
+          visible={toggleState === ToggleState.DETAIL}
+          setVisible={() => toggleSetState(null)}
+        />
+      )}
+    </View>
   )
 })
 

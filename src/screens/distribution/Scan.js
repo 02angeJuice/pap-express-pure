@@ -96,8 +96,8 @@ const Scan = forwardRef(({detail, distribute_id, navigation}, ref) => {
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
         <View
           style={[
             styles.row,
@@ -149,50 +149,49 @@ const Scan = forwardRef(({detail, distribute_id, navigation}, ref) => {
             />
           </TouchableOpacity>
         </View>
-        {expanded && (
-          <>
-            {box !== null ? (
-              <TouchableWithoutFeedback
-                onPress={() => dispatch(setfetchfocus())}>
-                <ScrollView
-                  keyboardShouldPersistTaps="handled"
-                  nestedScrollEnabled={true}
-                  style={styles.modalContainer}>
-                  {box?.map((item, idx) => (
-                    <ScanItem
-                      key={idx}
-                      item={item}
-                      box_id={item.box_id?.split('/')[1]}
-                    />
-                  ))}
-                </ScrollView>
-              </TouchableWithoutFeedback>
-            ) : (
-              <Empty text={box && t('empty')} />
-            )}
-          </>
-        )}
+      </TouchableWithoutFeedback>
+      {expanded && (
+        <>
+          {box !== null ? (
+            <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
+                style={styles.modalContainer}>
+                {box?.map((item, idx) => (
+                  <ScanItem
+                    key={idx}
+                    item={item}
+                    box_id={item.box_id?.split('/')[1]}
+                  />
+                ))}
+              </ScrollView>
+            </TouchableWithoutFeedback>
+          ) : (
+            <Empty text={box && t('empty')} />
+          )}
+        </>
+      )}
 
-        <TouchableOpacity
-          onPress={() => setExpanded(!expanded)}
-          style={{width: '100%', alignItems: 'center'}}>
-          <Ionicons
-            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-            size={25}
-            color={'#777'}
-          />
-        </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setExpanded(!expanded)}
+        style={{width: '100%', alignItems: 'center'}}>
+        <Ionicons
+          name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+          size={25}
+          color={'#777'}
+        />
+      </TouchableOpacity>
 
-        {alertBarcode && (
-          <BarcodeInputAlert
-            visible={alertBarcode}
-            onClose={() => setAlertBarcode(!alertBarcode)}
-            setBarcode={setBarcode}
-            // item_no={item?.item_no}
-          />
-        )}
-      </View>
-    </TouchableWithoutFeedback>
+      {alertBarcode && (
+        <BarcodeInputAlert
+          visible={alertBarcode}
+          onClose={() => setAlertBarcode(!alertBarcode)}
+          setBarcode={setBarcode}
+          // item_no={item?.item_no}
+        />
+      )}
+    </View>
   )
 })
 
