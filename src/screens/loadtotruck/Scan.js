@@ -9,49 +9,51 @@ import {
   TouchableWithoutFeedback
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import {Empty} from '../../components/SpinnerEmpty'
 import {useTranslation} from 'react-i18next'
 import {useFocus, useScan} from '../../hooks'
 import {hh_sel_box_by_receipt} from '../../apis'
-import BarcodeInputAlert from '../../components/BarcodeInputAlert'
-
 import {setfetchfocus} from '../../store/slices/focusSlice'
 import {useDispatch} from 'react-redux'
 
-const Scan = forwardRef(({detail, data, box, setredata, navigation}, ref) => {
+import {Empty} from '../../components/SpinnerEmpty'
+import BarcodeInputAlert from '../../components/BarcodeInputAlert'
+
+const Scan = forwardRef(({detail, data, navigation}, ref) => {
   const [alertBarcode, setAlertBarcode] = useState(false)
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
-  // const [box, setBox] = useState(null)
-  // const [redata, setredata] = useState(false)
+  const [box, setBox] = useState(null)
+  const [redata, setredata] = useState(false)
+  const [expanded, setExpanded] = useState(true)
 
   const {t} = useTranslation()
-  const {insertDetailsBox} = useScan()
   const dispatch = useDispatch()
+  const {insertDetailsBox} = useScan()
   const {fetchfocus} = useFocus()
 
+  // ----------------------------------------------------------
+  // == EFFECT
+  // ----------------------------------------------------------
   useEffect(() => {
-    console.log('fetchfocus')
     ref.current?.focus()
   }, [fetchfocus])
 
-  // useEffect(() => {
-  //   const fetch_hh_sel_box_by_receipt = async () => {
-  //     try {
-  //       const res = await hh_sel_box_by_receipt(data)
-  //       setBox(res)
-  //     } catch (error) {
-  //       console.log(error)
-  //     }
-  //   }
-  //   if (data) {
-  //     fetch_hh_sel_box_by_receipt()
-  //   }
-  // }, [redata, data])
+  useEffect(() => {
+    const fetch_hh_sel_box_by_receipt = async () => {
+      try {
+        const res = await hh_sel_box_by_receipt(data)
+        setBox(res)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    if (data) {
+      fetch_hh_sel_box_by_receipt()
+    }
+  }, [redata, data])
 
   useEffect(() => {
     if (barcode.length != 0) {
-      console.log('barcode')
       handleInputSubmit(barcode)
     }
   }, [barcode])
@@ -113,84 +115,56 @@ const Scan = forwardRef(({detail, data, box, setredata, navigation}, ref) => {
     <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
       <View style={styles.container}>
         <View
-          style={{
-            marginVertical: 5,
-            backgroundColor: '#fff',
-            borderRadius: 5,
-            flex: 1
-          }}>
-          <View
-            style={[
-              styles.row,
-              {
-                justifyContent: 'space-between',
-                borderBottomWidth: 0.5,
-                borderStyle: 'dashed'
-              }
-            ]}>
-            <View
+          style={[
+            styles.row,
+            {
+              justifyContent: 'space-between',
+              borderBottomWidth: 0.5,
+              borderStyle: 'dashed'
+            }
+          ]}>
+          <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
+            <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
+          </View>
+          <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
+            <Text
               style={{
-                flex: 0.5,
-                alignItems: 'center',
-                width: '100%'
-              }}>
-              <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                width: '100%'
-              }}>
-              <Text
-                style={{
-                  color:
-                    box?.length ==
-                    detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0)
-                      ? 'magenta'
-                      : '#000',
-                  fontSize: 16
-                }}>{`${t('box')}(${box?.length || 0}/${
-                detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0) || 0
-              })`}</Text>
-            </View>
-            <View style={{flex: 2, alignItems: 'center'}}>
-              <TextInput
-                ref={ref}
-                style={{
-                  fontSize: 20,
-                  color: '#000'
-                }}
-                value={input}
-                onChangeText={(value) => handleInputSubmit(value)}
-                placeholder={t('enter_barcode')}
-                placeholderTextColor="#009DFF"
-                blurOnSubmit={false}
-                // onSubmitEditing={() => handleInputSubmit(input)}
-                // autoFocus={true}
-                // onStartShouldSetResponder={() => {
-                //   Keyboard.dismiss()
-                //   return false
-                // }}
-                showSoftInputOnFocus={false}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                alignItems: 'center'
-              }}
-              onPress={() => setAlertBarcode(!alertBarcode)}>
-              <Ionicons
-                style={styles.rightIcon}
-                name={'hammer-outline'}
-                size={30}
-                color="#eee"
-              />
-            </TouchableOpacity>
+                color:
+                  box?.length ==
+                  detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0)
+                    ? 'magenta'
+                    : '#000',
+                fontSize: 16
+              }}>{`${t('box')}(${box?.length || 0}/${
+              detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0) || 0
+            })`}</Text>
+          </View>
+          <View style={{flex: 2, alignItems: 'center'}}>
+            <TextInput
+              ref={ref}
+              style={{fontSize: 20, color: '#000'}}
+              value={input}
+              onChangeText={(value) => handleInputSubmit(value)}
+              placeholder={t('enter_barcode')}
+              placeholderTextColor="#009DFF"
+              blurOnSubmit={false}
+              showSoftInputOnFocus={false}
+            />
           </View>
 
+          <TouchableOpacity
+            style={{flex: 1, alignItems: 'center'}}
+            onPress={() => setAlertBarcode(!alertBarcode)}>
+            <Ionicons
+              style={styles.rightIcon}
+              name={'hammer-outline'}
+              size={30}
+              color="#eee"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {expanded && (
           <>
             {box !== null ? (
               <TouchableWithoutFeedback
@@ -201,10 +175,9 @@ const Scan = forwardRef(({detail, data, box, setredata, navigation}, ref) => {
                   style={styles.modalContainer}>
                   {box?.map((item, idx) => (
                     <ScanItem
-                      idx={idx}
                       key={idx}
                       item={item}
-                      // box_id={item.box_id?.split('/')[1]}
+                      box_id={item.box_id?.split('/')[1]}
                     />
                   ))}
                 </ScrollView>
@@ -213,7 +186,17 @@ const Scan = forwardRef(({detail, data, box, setredata, navigation}, ref) => {
               <Empty text={box && t('empty')} />
             )}
           </>
-        </View>
+        )}
+
+        <TouchableOpacity
+          onPress={() => setExpanded(!expanded)}
+          style={{width: '100%', alignItems: 'center'}}>
+          <Ionicons
+            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+            size={25}
+            color={'#777'}
+          />
+        </TouchableOpacity>
 
         {alertBarcode && (
           <BarcodeInputAlert
@@ -230,123 +213,42 @@ const Scan = forwardRef(({detail, data, box, setredata, navigation}, ref) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-// const ScanItem = React.memo(({item, box_id, count}) => {
-//   return (
-//     <View
-//       key={item.box_id}
-//       style={[
-//         styles.row,
-//         {
-//           justifyContent: 'space-between',
-//           backgroundColor: item.is_scan === 'SCANED' ? '#F3FFEC' : null,
-//           borderTopWidth: 0.5,
-//           borderColor: '#ccc',
-//           borderStyle: 'dashed'
-//         }
-//       ]}>
-//       <View
-//         style={{
-//           flex: 0.5,
-//           alignItems: 'center',
-//           width: '100%'
-//         }}>
-//         <Text style={{color: '#999', fontSize: 16, fontStyle: 'italic'}}>
-//           {count}
-//         </Text>
-//       </View>
-//       <View
-//         style={{
-//           flex: 1,
-//           alignItems: 'center',
-//           width: '100%'
-//         }}>
-//         <Text style={{color: '#000', fontSize: 16}}>{box_id}</Text>
-//       </View>
-//       <View style={{flex: 2, alignItems: 'center'}}>
-//         <Text style={{fontSize: 14, color: '#000'}}>{item.box_id}</Text>
-//       </View>
-
-//       <View
-//         style={{
-//           flex: 1,
-//           alignItems: 'center'
-//         }}>
-//         {item.is_scan === 'SCANED' ? (
-//           <Ionicons
-//             name={'checkmark-circle-outline'}
-//             size={20}
-//             color={'green'}
-//           />
-//         ) : (
-//           <Ionicons
-//             name={'ellipsis-horizontal-outline'}
-//             size={20}
-//             // color={'#000'}
-//           />
-//         )}
-//       </View>
-//     </View>
-//   )
-// })
-
-const ScanItem = React.memo(({item, idx}) => {
+const ScanItem = React.memo(({item, box_id}) => {
   return (
     <View
-      key={idx}
       style={[
         styles.row,
         {
-          // justifyContent: 'space-between',
-          // borderTopWidth: 1,
-          // borderColor: '#ccc',
-          // borderStyle: 'dashed'
+          justifyContent: 'space-around',
+          backgroundColor: item.is_scan === 'SCANED' ? '#F3FFEC' : null,
+          borderTopWidth: 1,
+          borderColor: '#ccc',
+          borderStyle: 'dashed'
         }
       ]}>
-      <View
-        style={{
-          flex: 0.5,
-          alignItems: 'center',
-          width: '100%'
-        }}>
-        <Text style={{color: '#000', fontSize: 16}}>{item.num_box}</Text>
-      </View>
-      <View style={{flex: 2, alignItems: 'center'}}>
-        <Text
-          style={{
-            fontSize: 16,
-            color: '#000'
-          }}>
-          {/* {box_id} */}
-        </Text>
-      </View>
-      <View style={{flex: 2, alignItems: 'center'}}>
-        <Text style={{fontSize: 14, color: '#000'}}>{item.item_no}</Text>
-      </View>
-      <View style={{flex: 1, alignItems: 'center'}}>
-        <Text
-          style={{
-            fontSize: 16,
-            color: '#000'
-          }}>
-          {item.qty_box}
+      <View style={{alignItems: 'center', width: '20%'}}>
+        <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
+          {item.num_box}
         </Text>
       </View>
 
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center'
-        }}>
+      <View style={{width: '50%', alignItems: 'center'}}>
+        <Text style={{fontSize: 14, color: '#000'}}>{item.box_id}</Text>
+      </View>
+      <View style={{width: '10%', alignItems: 'center'}}>
+        <Text style={{fontSize: 14, color: '#000'}}>{box_id}</Text>
+      </View>
+      <View style={{width: '20%', alignItems: 'center'}}>
         {item.is_scan === 'SCANED' ? (
           <Ionicons
             name={'checkmark-circle-outline'}
-            size={20}
+            size={25}
             color={'green'}
           />
         ) : (
           <Ionicons
             name={'ellipsis-horizontal-outline'}
-            size={20}
+            size={25}
             color={'#000'}
           />
         )}
@@ -371,7 +273,7 @@ const styles = StyleSheet.create({
     maxHeight: 300
   },
   row: {
-    display: 'flex',
+    // display: 'flex',
     flexDirection: 'row',
     alignItems: 'center'
   },

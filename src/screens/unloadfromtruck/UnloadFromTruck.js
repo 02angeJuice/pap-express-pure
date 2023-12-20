@@ -1,4 +1,5 @@
-import React, {useEffect, useState, useCallback, useRef} from 'react'
+import React, {useEffect, useState, useRef, useCallback, createRef} from 'react'
+
 import {
   StyleSheet,
   View,
@@ -8,7 +9,6 @@ import {
   TextInput,
   Image,
   Alert,
-  Platform,
   Keyboard,
   ActivityIndicator,
   TouchableWithoutFeedback
@@ -16,30 +16,26 @@ import {
 import debounce from 'lodash.debounce'
 import moment from 'moment'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import TabViewList from './TabViewList'
 import ModalHeader from './ModalHeader'
-import ModalDetail from './ModalDetail'
-import ModalScan from './ModalScan'
 // == Global Modal
 import ModalCamera from '../../components/ModalCamera'
 import ModalSignature from '../../components/ModalSignature'
 import {path} from '../../constants/url'
 import {useToast} from 'react-native-toast-notifications'
 import {useTranslation} from 'react-i18next'
-import {useAuthToken, useScan} from '../../hooks'
+import {useAuthToken} from '../../hooks'
 import {useDispatch} from 'react-redux'
 import {resetToken} from '../../store/slices/tokenSlice'
+import {setfetchfocus} from '../../store/slices/focusSlice'
 import {
   fetchDetail,
-  fetchDetailSelect,
   fetchHeaderSelect,
   hh_sel_box_by_receipt,
   sendConfirm,
-  sendDetailConfirm,
   sendSignature
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
-import socket from '../../utils/socket'
+
 import Scan from './Scan'
 import TabViewList_2 from './TabViewList_2'
 import ModalHeaderInfo from '../../components/ModalHeaderInfo'
@@ -60,20 +56,20 @@ const UnloadFromTruck = ({navigation}) => {
   const [headerSelected, setHeaderSelected] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailSelected, setDetailSelected] = useState(null)
-  const [detailInfo, setDetailInfo] = useState(null)
   const [currentSign, setCurrentSign] = useState(null)
   const [currentImage, setCurrentImage] = useState(null)
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
   const [input, setInput] = useState('')
-  const inputRef2 = useRef(null)
-  const toast = useToast()
 
   const [redata, setredata] = useState(false)
 
+  const toast = useToast()
   const {t} = useTranslation()
-  const {userName, token, refresh} = useAuthToken()
-  const {boxAvail, setBoxAvail} = useScan()
+  const {userName, refresh} = useAuthToken()
+
+  const inputRef = useRef(null)
+  const ref = createRef(null)
 
   const dispatch = useDispatch()
 
@@ -89,16 +85,15 @@ const UnloadFromTruck = ({navigation}) => {
     const detail = await fetchDetail(receipt_no)
     setDetail(detail.data)
   }
-  const fetchDetailSelect_API = async ({header_id, detail_id}) => {
-    const select = await fetchDetailSelect({header_id, detail_id})
-    setDetailSelected(select.data[0])
-  }
-
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    inputRef2.current && inputRef2.current?.focus()
+    if (ref?.current) {
+      ref.current?.focus()
+    } else {
+      inputRef.current?.focus()
+    }
   }, [])
 
   useEffect(() => {
@@ -142,14 +137,6 @@ const UnloadFromTruck = ({navigation}) => {
     setCurrentImage(null)
     setInput('')
   }
-  const handleSetDetailSelected = (target) => {
-    setDetailSelected(target)
-    target?.status !== 'UNLOADED' && setToggleState(ToggleState.SCAN)
-  }
-  const handleSetDetailInfo = (target) => {
-    setDetailInfo(target)
-    setToggleState(ToggleState.DETAIL)
-  }
   const onPressClear = () => {
     setHeaderSelected(null)
     setDetail(null)
@@ -157,12 +144,11 @@ const UnloadFromTruck = ({navigation}) => {
     setCurrentImage(null)
     setCurrentSign(null)
     setInput('')
-    inputRef2.current?.focus()
+    inputRef.current?.focus()
   }
 
   const onPressConfirm = async () => {
     const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
-
     const checkStatus = res?.every((el) => el.is_scan === 'IDLE')
     console.log(checkStatus, checkStatus ? 'completed' : 'incomplete')
 
@@ -266,16 +252,14 @@ const UnloadFromTruck = ({navigation}) => {
   }
 
   const alertReUse = (msg, detail) => {
-    Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
-      : alert(t(msg), t(detail))
+    Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
   }
 
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <TouchableWithoutFeedback>
+    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
       <ScrollView
         style={styles.container}
         scrollEnabled={true}
@@ -294,7 +278,7 @@ const UnloadFromTruck = ({navigation}) => {
                 style={{flex: 0.7}}
                 pointerEvents={headerSelected ? 'none' : 'auto'}>
                 <TextInput
-                  ref={inputRef2}
+                  ref={inputRef}
                   style={[
                     styles.groupInput,
                     {
@@ -324,13 +308,11 @@ const UnloadFromTruck = ({navigation}) => {
 
               <TouchableOpacity
                 disabled={!headerSelected}
-                style={[
-                  {
-                    flex: 0.15,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }
-                ]}
+                style={{
+                  flex: 0.15,
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
                 onPress={() => toggleSetState(ToggleState.INFO)}>
                 <Ionicons
                   style={styles.rightIcon}
@@ -359,13 +341,7 @@ const UnloadFromTruck = ({navigation}) => {
                     color="#fff"
                   />
                   <Text
-                    style={[
-                      {
-                        color: '#fff',
-                        fontSize: 20,
-                        textAlign: 'center'
-                      }
-                    ]}>
+                    style={{color: '#fff', fontSize: 20, textAlign: 'center'}}>
                     {t('receipt')}
                   </Text>
                 </View>
@@ -394,7 +370,6 @@ const UnloadFromTruck = ({navigation}) => {
                     backgroundColor: '#D2D2D2',
                     fontWeight: 'bold',
                     fontSize: 20,
-
                     color: '#000',
                     textAlign: 'center'
                   }
@@ -417,7 +392,7 @@ const UnloadFromTruck = ({navigation}) => {
                     backgroundColor: '#D2D2D2',
                     fontWeight: 'bold',
                     color: '#000',
-                    fontSize: 20
+                    fontSize: 16
                   }
                 ]}
                 defaultValue={headerSelected?.customer_id}
@@ -443,13 +418,7 @@ const UnloadFromTruck = ({navigation}) => {
                     color="#fff"
                   />
                   <Text
-                    style={[
-                      {
-                        color: '#fff',
-                        fontSize: 20,
-                        textAlign: 'center'
-                      }
-                    ]}>
+                    style={{color: '#fff', fontSize: 20, textAlign: 'center'}}>
                     {t('clear')}
                   </Text>
                 </View>
@@ -468,8 +437,9 @@ const UnloadFromTruck = ({navigation}) => {
         )}
 
         {headerSelected && <TabViewList_2 detail={detail} />}
-        {headerSelected && <Scan detail={detail} data={headerSelected} />}
-
+        {headerSelected && (
+          <Scan ref={ref} detail={detail} data={headerSelected?.receipt_no} />
+        )}
         {headerSelected && toggleState === ToggleState.INFO && (
           <ModalHeaderInfo
             data={headerSelected}
@@ -490,9 +460,7 @@ const UnloadFromTruck = ({navigation}) => {
                     <Image
                       resizeMode={'contain'}
                       style={{width: '100%', height: 180}}
-                      source={{
-                        uri: currentImage
-                      }}
+                      source={{uri: currentImage}}
                     />
                   ) : (
                     <Image
@@ -541,9 +509,7 @@ const UnloadFromTruck = ({navigation}) => {
                     <Image
                       resizeMode="contain"
                       style={{width: '100%', height: 180}}
-                      source={{
-                        uri: currentSign
-                      }}
+                      source={{uri: currentSign}}
                     />
                   ) : (
                     <Image
@@ -724,7 +690,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
     height: 200,
     backgroundColor: '#F0F0F0',
-    borderRadius: 5
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc'
   },
   preview: {
     flex: 1,

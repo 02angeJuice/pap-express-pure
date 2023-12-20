@@ -8,49 +8,41 @@ import {
   TextInput,
   Image,
   Alert,
-  ActivityIndicator,
-  Platform,
   Keyboard,
-  TouchableWithoutFeedback,
-  FlatList
+  ActivityIndicator,
+  TouchableWithoutFeedback
 } from 'react-native'
 import debounce from 'lodash.debounce'
 import moment from 'moment'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import SelectDropdown from 'react-native-select-dropdown'
-import TabViewList from './TabViewList'
 import ModalHeader from './ModalHeader'
-import ModalDetail from './ModalDetail'
-import ModalScan from './ModalScan'
 // == Global Modal
 import ModalCamera from '../../components/ModalCamera'
 import ModalSignature from '../../components/ModalSignature'
 import {path} from '../../constants/url'
 import {useToast} from 'react-native-toast-notifications'
 import {useTranslation} from 'react-i18next'
-import {useAuthToken, useScan} from '../../hooks'
+import {useAuthToken} from '../../hooks'
 import {useDispatch} from 'react-redux'
 import {resetToken} from '../../store/slices/tokenSlice'
+import {setfetchfocus} from '../../store/slices/focusSlice'
 import {
   fetchDetail,
-  fetchDetailSelect,
   fetchHeaderSelect,
   hh_check_ro_qty_box,
-  hh_sel_box_by_receipt,
   sendConfirm,
-  sendDetailConfirm,
   sendShipmentConfirm,
   sendSignature
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
-import ContainerAlert from '../../components/ContainerAlert'
-import {Empty} from '../../components/SpinnerEmpty'
 
-import PagerView from 'react-native-pager-view'
+import ContainerAlert from '../../components/ContainerAlert'
 import Scan from './Scan'
 import TabViewList_2 from './TabViewList_2'
 import ModalHeaderInfo from '../../components/ModalHeaderInfo'
-import {setfetchfocus} from '../../store/slices/focusSlice'
+
+// import PagerView from 'react-native-pager-view'
 
 const ToggleState = {
   HEADER: 'HEADER',
@@ -68,7 +60,6 @@ const LoadToTruck = ({navigation}) => {
   const [headerSelected, setHeaderSelected] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailSelected, setDetailSelected] = useState(null)
-  const [detailInfo, setDetailInfo] = useState(null)
   const [currentSign, setCurrentSign] = useState(null)
   const [currentImage, setCurrentImage] = useState(null)
   const [shipment, setShipment] = useState(null)
@@ -83,17 +74,9 @@ const LoadToTruck = ({navigation}) => {
   const toast = useToast()
   const {t} = useTranslation()
   const {userName, refresh} = useAuthToken()
-  const {boxAvail, setBoxAvail} = useScan()
-
-  const [box, setBox] = useState(null)
-  const [rebox, setrebox] = useState(false)
-
-  const [information, setInformation] = useState(null)
 
   const inputRef = useRef(null)
   const ref = createRef(null)
-
-  const [expanded, setExpanded] = useState(false)
 
   const dispatch = useDispatch()
 
@@ -109,21 +92,6 @@ const LoadToTruck = ({navigation}) => {
     const detail = await fetchDetail(receipt_no)
     setDetail(detail.data)
   }
-
-  useEffect(() => {
-    const fetch_hh_sel_box_by_receipt = async () => {
-      try {
-        const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
-        setBox(res)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-    if (headerSelected?.receipt_no) {
-      fetch_hh_sel_box_by_receipt()
-    }
-  }, [rebox, headerSelected?.receipt_no])
-
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
@@ -178,14 +146,6 @@ const LoadToTruck = ({navigation}) => {
     setContainerOk(null)
     setHeaderSelected(target)
   }
-  const handleSetDetailSelected = (target) => {
-    setDetailSelected(target)
-    target?.status !== 'LOADED' && setToggleState(ToggleState.SCAN)
-  }
-  const handleSetDetailInfo = (target) => {
-    setDetailInfo(target)
-    setToggleState(ToggleState.DETAIL)
-  }
   const onPressClear = () => {
     setHeaderSelected(null)
     setDetail(null)
@@ -202,9 +162,7 @@ const LoadToTruck = ({navigation}) => {
     const res = await hh_check_ro_qty_box({
       receipt_no: headerSelected?.receipt_no
     })
-
     const checkStatus = res === undefined ? true : false
-
     console.log(checkStatus, checkStatus ? 'completed' : 'incomplete')
 
     if (!checkStatus) {
@@ -333,19 +291,12 @@ const LoadToTruck = ({navigation}) => {
   }
 
   const alertReUse = (msg, detail) => {
-    Platform.OS === 'android'
-      ? Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
-      : alert(t(msg), t(detail))
+    Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
   }
   const handleContainerClose = () => {
     setAlert(!alert)
     setLoading(false)
-    // Keyboard.dismiss()
   }
-
-  // const renderItem = useCallback(({item}) => {
-  //   return <ScanItem item={item} />
-  // }, [])
 
   // ----------------------------------------------------------
   // == MAIN
@@ -358,14 +309,7 @@ const LoadToTruck = ({navigation}) => {
         // keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
-          <View
-            style={[
-              styles.row,
-              {
-                gap: 0,
-                justifyContent: 'space-evenly'
-              }
-            ]}>
+          <View style={[styles.row, {gap: 0, justifyContent: 'space-evenly'}]}>
             <View flex={0.4}>
               <Text style={{color: '#000', fontSize: 20}}>
                 {t('transport_type')}:{' '}
@@ -445,13 +389,11 @@ const LoadToTruck = ({navigation}) => {
 
               <TouchableOpacity
                 disabled={!headerSelected}
-                style={[
-                  {
-                    flex: 0.15,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }
-                ]}
+                style={{
+                  flex: 0.15,
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
                 onPress={() => toggleSetState(ToggleState.INFO)}>
                 <Ionicons
                   style={styles.rightIcon}
@@ -480,13 +422,7 @@ const LoadToTruck = ({navigation}) => {
                     color="#fff"
                   />
                   <Text
-                    style={[
-                      {
-                        color: '#fff',
-                        fontSize: 20,
-                        textAlign: 'center'
-                      }
-                    ]}>
+                    style={{color: '#fff', fontSize: 20, textAlign: 'center'}}>
                     {t('receipt')}
                   </Text>
                 </View>
@@ -548,7 +484,7 @@ const LoadToTruck = ({navigation}) => {
                     backgroundColor: '#D2D2D2',
                     fontWeight: 'bold',
                     color: '#000',
-                    fontSize: 20
+                    fontSize: 16
                   }
                 ]}
                 defaultValue={headerSelected?.customer_id}
@@ -557,11 +493,7 @@ const LoadToTruck = ({navigation}) => {
             </View>
 
             <View
-              style={{
-                display: 'flex',
-                flex: 0.3,
-                justifyContent: 'flex-end'
-              }}>
+              style={{display: 'flex', flex: 0.3, justifyContent: 'flex-end'}}>
               <TouchableOpacity
                 style={[
                   styles.clearButton,
@@ -578,13 +510,7 @@ const LoadToTruck = ({navigation}) => {
                     color="#fff"
                   />
                   <Text
-                    style={[
-                      {
-                        color: '#fff',
-                        fontSize: 20,
-                        textAlign: 'center'
-                      }
-                    ]}>
+                    style={{color: '#fff', fontSize: 20, textAlign: 'center'}}>
                     {t('clear')}
                   </Text>
                 </View>
@@ -602,33 +528,15 @@ const LoadToTruck = ({navigation}) => {
           />
         )}
 
-        {/* {headerSelected && detail?.length > 0 && (
-          <TabViewList detail={detail} />
-        )} */}
-
         {headerSelected && <TabViewList_2 ref={ref} detail={detail} />}
         {headerSelected && (
-          <Scan
-            ref={ref}
-            detail={detail}
-            box={box}
-            setredata={setrebox}
-            data={headerSelected?.receipt_no}
-          />
+          <Scan ref={ref} detail={detail} data={headerSelected?.receipt_no} />
         )}
 
         {headerSelected && toggleState === ToggleState.INFO && (
           <ModalHeaderInfo
             data={headerSelected}
             visible={toggleState === ToggleState.INFO}
-            setVisible={() => toggleSetState(null)}
-          />
-        )}
-
-        {toggleState === ToggleState.DETAIL && (
-          <ModalDetail
-            data={information}
-            visible={toggleState === ToggleState.DETAIL}
             setVisible={() => toggleSetState(null)}
           />
         )}
@@ -656,9 +564,7 @@ const LoadToTruck = ({navigation}) => {
                     <Image
                       resizeMode={'contain'}
                       style={{width: '100%', height: 180}}
-                      source={{
-                        uri: currentImage
-                      }}
+                      source={{uri: currentImage}}
                     />
                   ) : (
                     <Image
@@ -706,9 +612,7 @@ const LoadToTruck = ({navigation}) => {
                     <Image
                       resizeMode="contain"
                       style={{width: '100%', height: 180}}
-                      source={{
-                        uri: currentSign
-                      }}
+                      source={{uri: currentSign}}
                     />
                   ) : (
                     <Image
@@ -890,7 +794,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
     height: 200,
     backgroundColor: '#F0F0F0',
-    borderRadius: 5
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc'
   },
   preview: {
     flex: 1,

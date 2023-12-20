@@ -1,54 +1,46 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react'
+import React, {useEffect, useState, forwardRef, useCallback} from 'react'
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
   TextInput,
-  Alert,
-  FlatList,
-  Keyboard,
-  Modal,
-  ActivityIndicator,
-  ScrollView
+  ScrollView,
+  TouchableWithoutFeedback
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import CustomTextInputAlert from '../../components/CustomTextInputAlert'
-import {Empty} from '../../components/SpinnerEmpty'
 import {useTranslation} from 'react-i18next'
-import {useScan} from '../../hooks'
-import {fetchBox, hh_check_ro_qty_box, hh_sel_box_by_od} from '../../apis'
+import {useFocus, useScan} from '../../hooks'
+import {hh_sel_box_by_od} from '../../apis'
+import {setfetchfocus} from '../../store/slices/focusSlice'
+import {useDispatch} from 'react-redux'
+
+import {Empty} from '../../components/SpinnerEmpty'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
-const Scan = ({
-  detail,
-  checkScan,
-  distribute_id,
-  visible,
-  setVisible,
-  confirm,
-  force,
-  forceConfirm,
-  navigation
-}) => {
-  const [alert, setAlert] = useState(false)
+const Scan = forwardRef(({detail, distribute_id, navigation}, ref) => {
   const [alertBarcode, setAlertBarcode] = useState(false)
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
   const [box, setBox] = useState(null)
   const [boxcheck, setboxcheck] = useState(null)
-
-  const {insertDetailsBox, setBoxAvail} = useScan()
-  const {t} = useTranslation()
-  const scanRef = useRef(null)
-
   const [redata, setredata] = useState(false)
+  const [expanded, setExpanded] = useState(true)
+
+  const {t} = useTranslation()
+  const dispatch = useDispatch()
+  const {insertDetailsBox} = useScan()
+  const {fetchfocus} = useFocus()
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    const fetch_hh_sel_box_by_receipt = async () => {
+    ref.current?.focus()
+  }, [fetchfocus])
+
+  useEffect(() => {
+    const fetch_hh_sel_box_by_od = async () => {
       try {
         const res = await hh_sel_box_by_od(distribute_id)
         setBox(res)
@@ -58,20 +50,8 @@ const Scan = ({
       }
     }
 
-    // const check_hh_sel_check_qty_box = async () => {
-    //   try {
-    //     const res = await hh_check_ro_qty_box({receipt_no: data?.receipt_no})
-    //     console.log('---', res)
-    //     console.log(res === undefined)
-    //     setCompleted(res === undefined)
-    //   } catch (error) {
-    //     console.log(error)
-    //   }
-    // }
-    // check_hh_sel_check_qty_box()
-
     if (distribute_id) {
-      fetch_hh_sel_box_by_receipt()
+      fetch_hh_sel_box_by_od()
     }
   }, [redata, distribute_id])
 
@@ -81,49 +61,23 @@ const Scan = ({
     }
   }, [barcode])
 
-  // useEffect(() => {
-  //   scanRef.current && scanRef.current?.focus()
-  //   fetchBox_API(data?.item_no)
-
-  //   const interval = setInterval(() => {
-  //     fetchBox_API(data?.item_no)
-  //   }, 10000)
-
-  //   return () => clearInterval(interval)
-  // }, [scan])
-
-  // useEffect(() => {
-  //   setBoxAvail(box?.filter((el) => el.is_scan_d === 'SCANED').length)
-
-  //   box?.length != 0 && box?.every((el) => el.is_scan_d === 'SCANED')
-  //     ? setCheckStatus(true)
-  //     : setCheckStatus(false)
-  // }, [box])
-
   // รอแก้ไปเช็คในเบส
-  const check = (box_id) => {
-    const res = boxcheck?.findIndex((el) => el.box_id == box_id)
-    return res < 0 ? false : true
-  }
+  const check = useCallback(
+    (box_id) => {
+      const res = boxcheck?.findIndex((el) => el.box_id == box_id)
+      return res < 0 ? false : true
+    },
+    [boxcheck]
+  )
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
-  const handleInputChange = async (value) => {
-    setInput(value.toUpperCase())
-  }
-
   const handleInputSubmit = async (text) => {
     const newValue = text.split('/')
-    // const isValid = box?.find((el) => el.box_id === text)
-
     const checked = check(text)
 
     if (!checked) {
-      // Alert.alert(t('barcode_invalid'), t('barcode_invalid_detail'), [], {
-      //   cancelable: true
-      // })
-
       setInput('')
     } else {
       await insertDetailsBox(
@@ -134,51 +88,29 @@ const Scan = ({
         navigation
       )
       setredata((el) => !el)
-
       setInput('')
     }
   }
-
-  // const renderItem = useCallback(({item}) => {
-  //   return <ScanItem item={item} />
-  // }, [])
 
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <View style={styles.container} onLayout={() => console.log('6566666')}>
-      <View
-        style={{
-          marginVertical: 5,
-          backgroundColor: '#fff',
-          borderRadius: 5,
-          flex: 1
-        }}>
+    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+      <View style={styles.container}>
         <View
           style={[
             styles.row,
             {
               justifyContent: 'space-between',
               borderBottomWidth: 0.5,
-              marginBottom: 5,
               borderStyle: 'dashed'
             }
           ]}>
-          <View
-            style={{
-              flex: 0.5,
-              alignItems: 'center',
-              width: '100%'
-            }}>
+          <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
             <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
           </View>
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              width: '100%'
-            }}>
+          <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
             <Text
               style={{
                 color: box
@@ -186,7 +118,7 @@ const Scan = ({
                   .every((el) => el.is_scan_d === 'DONE')
                   ? 'magenta'
                   : '#000',
-                fontSize: 20
+                fontSize: 16
               }}>{`${t('box')}(${
               box?.filter((el) => el.is_scan_d === 'DONE')?.length || 0
             }/${
@@ -196,33 +128,19 @@ const Scan = ({
           </View>
           <View style={{flex: 2, alignItems: 'center'}}>
             <TextInput
-              ref={scanRef}
-              style={{
-                fontSize: 20,
-                color: '#000'
-              }}
+              ref={ref}
+              style={{fontSize: 20, color: '#000'}}
               value={input}
               onChangeText={(value) => handleInputSubmit(value)}
               placeholder={t('enter_barcode')}
               placeholderTextColor="#009DFF"
               blurOnSubmit={false}
-              // onSubmitEditing={() => handleInputSubmit(input)}
-              autoFocus={true}
-              selectTextOnFocus={true}
-              onStartShouldSetResponder={() => {
-                Keyboard.dismiss()
-                return false
-              }}
               showSoftInputOnFocus={false}
-              // onPressOut={() => setAlertBarcode(!alertBarcode)}
             />
           </View>
 
           <TouchableOpacity
-            style={{
-              flex: 1,
-              alignItems: 'center'
-            }}
+            style={{flex: 1, alignItems: 'center'}}
             onPress={() => setAlertBarcode(!alertBarcode)}>
             <Ionicons
               style={styles.rightIcon}
@@ -232,127 +150,112 @@ const Scan = ({
             />
           </TouchableOpacity>
         </View>
+        {expanded && (
+          <>
+            {box !== null ? (
+              <TouchableWithoutFeedback
+                onPress={() => dispatch(setfetchfocus())}>
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled={true}
+                  style={styles.modalContainer}>
+                  {box?.map((item, idx) => (
+                    <ScanItem
+                      key={idx}
+                      item={item}
+                      box_id={item.box_id?.split('/')[1]}
+                    />
+                  ))}
+                </ScrollView>
+              </TouchableWithoutFeedback>
+            ) : (
+              <Empty text={box && t('empty')} />
+            )}
+          </>
+        )}
 
-        {box !== null ? (
-          <ScrollView nestedScrollEnabled={true} style={styles.modalContainer}>
-            {box?.map((el, idx) => (
-              <ScanItem
-                key={idx}
-                item={el}
-                idx={detail?.find((e) => e.item_no === el.item_no)?.row_id}
-                count={el.num_box}
-              />
-            ))}
-          </ScrollView>
-        ) : (
-          <Empty text={box && t('empty')} />
+        <TouchableOpacity
+          onPress={() => setExpanded(!expanded)}
+          style={{width: '100%', alignItems: 'center'}}>
+          <Ionicons
+            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+            size={25}
+            color={'#777'}
+          />
+        </TouchableOpacity>
+
+        {alertBarcode && (
+          <BarcodeInputAlert
+            visible={alertBarcode}
+            onClose={() => setAlertBarcode(!alertBarcode)}
+            setBarcode={setBarcode}
+            // item_no={item?.item_no}
+          />
         )}
       </View>
-
-      {/* <CustomTextInputAlert
-        visible={alert}
-        onClose={() => setAlert(!alert)}
-        forceConfirm={forceConfirm}
-        remark={data?.remark}
-      /> */}
-
-      {alertBarcode && (
-        <BarcodeInputAlert
-          visible={alertBarcode}
-          onClose={() => setAlertBarcode(!alertBarcode)}
-          setBarcode={setBarcode}
-          // item_no={item?.item_no}
-        />
-      )}
-    </View>
+    </TouchableWithoutFeedback>
   )
-}
+})
 
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, idx, count}) => (
-  <View
-    key={item?.box_id}
-    style={[
-      styles.row,
-      {
-        justifyContent: 'space-between',
-        marginVertical: 3,
-        backgroundColor:
-          item?.is_scan_d === 'DONE'
-            ? '#ABFC7430'
-            : item?.is_scan_d !== 'SCANED'
-            ? '#ccc'
-            : null
-      },
-      idx &&
-        idx !== 1 && {
+const ScanItem = React.memo(({item, box_id}) => {
+  return (
+    <View
+      style={[
+        styles.row,
+        {
+          justifyContent: 'space-around',
+          backgroundColor:
+            item?.is_scan_d === 'DONE'
+              ? '#ABFC7430'
+              : item?.is_scan_d !== 'SCANED'
+              ? '#ccc'
+              : null,
           borderTopWidth: 1,
           borderColor: '#ccc',
           borderStyle: 'dashed'
         }
-    ]}>
-    <View
-      style={{
-        flex: 0.5,
-        alignItems: 'center',
-        width: '100%'
-      }}>
-      <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
-        {count}
-      </Text>
+      ]}>
+      <View style={{alignItems: 'center', width: '20%'}}>
+        <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
+          {item.num_box}
+        </Text>
+      </View>
+      <View style={{width: '50%', alignItems: 'center'}}>
+        <Text style={{fontSize: 14, color: '#000'}}>{item.box_id}</Text>
+      </View>
+      <View style={{width: '10%', alignItems: 'center'}}>
+        <Text style={{fontSize: 14, color: '#000'}}>{box_id}</Text>
+      </View>
+      <View style={{width: '20%', alignItems: 'center'}}>
+        {item?.is_scan_d === 'DONE' ? (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'checkmark-circle-outline'}
+            size={25}
+            color={'green'}
+          />
+        ) : item?.is_scan_d !== 'SCANED' ? (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'close-circle-outline'}
+            size={20}
+            color={'red'}
+          />
+        ) : (
+          <Ionicons
+            style={{alignSelf: 'center'}}
+            name={'ellipsis-horizontal-outline'}
+            size={20}
+            color={'#000'}
+          />
+        )}
+      </View>
     </View>
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        width: '100%'
-      }}>
-      <Text style={{color: '#000', fontSize: 20}}>
-        {item.box_id.split('/')[1]}
-      </Text>
-    </View>
-    <View style={{flex: 2, alignItems: 'center'}}>
-      <Text
-        style={{
-          fontSize: 20,
-          color: '#000'
-        }}>
-        {item.box_id}
-      </Text>
-    </View>
-
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center'
-      }}>
-      {item?.is_scan_d === 'DONE' ? (
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'checkmark-circle-outline'}
-          size={25}
-          color={'green'}
-        />
-      ) : item?.is_scan_d !== 'SCANED' ? (
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'close-circle-outline'}
-          size={20}
-          color={'red'}
-        />
-      ) : (
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'ellipsis-horizontal-outline'}
-          size={20}
-          color={'#000'}
-        />
-      )}
-    </View>
-  </View>
-))
+  )
+})
 
 // ----------------------------------------------------------
 // == STYLE

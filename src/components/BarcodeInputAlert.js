@@ -91,7 +91,7 @@ const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
                   justifyContent: 'space-evenly',
                   alignItems: 'center'
                 }}>
-                <Text style={{color: '#000', fontSize: 20}}>{clip}/</Text>
+                <Text style={{color: '#000', fontSize: 16}}>{clip}/</Text>
                 <TextInput
                   onChangeText={handleInputChange}
                   style={styles.textInput}
@@ -201,7 +201,7 @@ const styles = {
     backgroundColor: '#fff',
     borderRadius: 5,
     color: '#000',
-    fontSize: 25
+    fontSize: 20
   },
   button: {
     backgroundColor: '#fff',
