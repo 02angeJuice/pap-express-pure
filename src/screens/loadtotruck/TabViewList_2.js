@@ -1,35 +1,27 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react'
+import React, {useState, forwardRef} from 'react'
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  TextInput,
-  Alert,
-  FlatList,
-  Keyboard,
-  Modal,
-  ActivityIndicator,
-  ScrollView
+  ScrollView,
+  TouchableWithoutFeedback
 } from 'react-native'
 import Clipboard from '@react-native-clipboard/clipboard'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import CustomTextInputAlert from '../../components/CustomTextInputAlert'
 import {Empty} from '../../components/SpinnerEmpty'
 import {useTranslation} from 'react-i18next'
-import {useScan} from '../../hooks'
-import {fetchBox, hh_sel_box_by_receipt} from '../../apis'
-import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 import ModalDetail from '../../components/ModalDetail'
+import {useDispatch} from 'react-redux'
+import {setfetchfocus} from '../../store/slices/focusSlice'
 
 const ToggleState = {
   DETAIL: 'DETAIL'
 }
 
-const TabViewList_2 = ({detail}) => {
-  const [redata, setredata] = useState(false)
-
+const TabViewList_2 = forwardRef(({detail}, ref) => {
   const {t} = useTranslation()
+  const dispatch = useDispatch()
   const [toggleState, setToggleState] = useState(null)
   const [information, setInformation] = useState(null)
   const [expanded, setExpanded] = useState(false)
@@ -40,135 +32,123 @@ const TabViewList_2 = ({detail}) => {
       : setToggleState(null)
   }
 
-  // ----------------------------------------------------------
-  // == API
-  // ----------------------------------------------------------
-
-  // ----------------------------------------------------------
-  // == EFFECT
-  // ----------------------------------------------------------
-
-  // ----------------------------------------------------------
-  // == HANDLE
-  // ----------------------------------------------------------
-
-  // const renderItem = useCallback(({item}) => {
-  //   return <ScanItem item={item} />
-  // }, [])
-  // ----------------------------------------------------------
-  // == MAIN
-  // ----------------------------------------------------------
   return (
-    <View style={styles.container}>
-      <View
-        style={{
-          marginVertical: 5,
-          backgroundColor: '#fff',
-          borderRadius: 5,
-          flex: 1
-        }}>
+    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+      <View style={styles.container}>
         <View
-          style={[
-            styles.row,
-            {
-              justifyContent: 'space-between',
-              borderBottomWidth: 0.5,
-              marginBottom: 5,
-              borderStyle: 'dashed'
-            }
-          ]}>
+          style={{
+            marginVertical: 5,
+            backgroundColor: '#fff',
+            borderRadius: 5,
+            flex: 1
+          }}>
           <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              width: '100%'
-            }}>
-            <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
-          </View>
-          <View
-            style={{
-              flex: 2,
-              alignItems: 'center',
-              width: '100%'
-            }}>
-            <Text style={{color: '#000', fontSize: 20}}>{`${t(
-              'tracking_four'
-            )}`}</Text>
-          </View>
-          <View style={{flex: 2, alignItems: 'center', width: '100%'}}>
-            <Text style={{color: '#000', fontSize: 20}}>{t('item_no')}</Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              width: '100%'
-            }}>
-            <Text style={{color: '#000', fontSize: 20}}>{t('box')}</Text>
-          </View>
-          <View
-            style={{
-              flex: 2,
-              alignItems: 'center',
-              width: '100%'
-            }}>
-            <Text style={{color: '#000', fontSize: 20}}>{t('status')}</Text>
+            style={[
+              styles.row,
+              {
+                justifyContent: 'space-between',
+                borderBottomWidth: 0.5,
+                marginBottom: 5,
+                borderStyle: 'dashed'
+              }
+            ]}>
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                width: '100%'
+              }}>
+              <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
+            </View>
+            <View
+              style={{
+                flex: 2,
+                alignItems: 'center',
+                width: '100%'
+              }}>
+              <Text style={{color: '#000', fontSize: 20}}>{`${t(
+                'tracking_four'
+              )}`}</Text>
+            </View>
+            <View style={{flex: 2, alignItems: 'center', width: '100%'}}>
+              <Text style={{color: '#000', fontSize: 20}}>{t('item_no')}</Text>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                width: '100%'
+              }}>
+              <Text style={{color: '#000', fontSize: 20}}>{t('box')}</Text>
+            </View>
+            <View
+              style={{
+                flex: 2,
+                alignItems: 'center',
+                width: '100%'
+              }}>
+              <Text style={{color: '#000', fontSize: 20}}>{t('status')}</Text>
+            </View>
+
+            <View
+              style={{
+                flex: 0,
+                alignItems: 'center'
+              }}></View>
           </View>
 
-          <View
+          {expanded && (
+            <>
+              {detail !== null ? (
+                <TouchableWithoutFeedback
+                  onPress={() => dispatch(setfetchfocus())}>
+                  <ScrollView
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                    style={styles.modalContainer}>
+                    {detail?.map((item, idx) => (
+                      <ScanItem
+                        key={idx}
+                        item={item}
+                        idx={idx}
+                        setInformation={setInformation}
+                        setToggleState={setToggleState}
+                      />
+                    ))}
+                  </ScrollView>
+                </TouchableWithoutFeedback>
+              ) : (
+                <Empty text={detail && t('empty')} />
+              )}
+            </>
+          )}
+
+          <TouchableOpacity
+            onPress={() => setExpanded(!expanded)}
             style={{
-              flex: 0,
+              width: '100%',
               alignItems: 'center'
-            }}></View>
+            }}>
+            <Ionicons
+              style={styles.rightIcon}
+              name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+              size={20}
+              color={'#777'}
+            />
+          </TouchableOpacity>
         </View>
 
-        {expanded && (
-          <>
-            {detail !== null ? (
-              <ScrollView
-                nestedScrollEnabled={true}
-                style={styles.modalContainer}>
-                {detail?.map((el, idx) => (
-                  <ScanItem
-                    key={idx}
-                    item={el}
-                    idx={idx}
-                    setInformation={setInformation}
-                    setToggleState={setToggleState}
-                  />
-                ))}
-              </ScrollView>
-            ) : (
-              <Empty text={detail && t('empty')} />
-            )}
-          </>
-        )}
-
-        <TouchableOpacity
-          onPress={() => setExpanded(!expanded)}
-          style={{
-            width: '100%',
-            alignItems: 'center'
-          }}>
-          <Ionicons
-            style={styles.rightIcon}
-            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-            size={20}
-            color={'#777'}
+        {information && toggleState === ToggleState.DETAIL && (
+          <ModalDetail
+            data={information}
+            visible={toggleState === ToggleState.DETAIL}
+            setVisible={() => toggleSetState(null)}
           />
-        </TouchableOpacity>
+        )}
       </View>
-
-      {information && toggleState === ToggleState.DETAIL && (
-        <ModalDetail
-          data={information}
-          visible={toggleState === ToggleState.DETAIL}
-          setVisible={() => toggleSetState(null)}
-        />
-      )}
-    </View>
+    </TouchableWithoutFeedback>
   )
-}
+})
 
 // ----------------------------------------------------------
 // == COMPONENT
@@ -181,9 +161,6 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
         styles.row,
         {
           justifyContent: 'space-between',
-          marginVertical: 3
-        },
-        idx && {
           borderTopWidth: 1,
           borderColor: '#ccc',
           borderStyle: 'dashed'
@@ -212,13 +189,7 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
           Clipboard.setString(item.item_no)
           console.log('copy ', item.item_no)
         }}>
-        <Text
-          style={{
-            fontSize: 16,
-            color: '#000'
-          }}>
-          {item.item_no}
-        </Text>
+        <Text style={{fontSize: 14, color: '#000'}}>{item.item_no}</Text>
       </TouchableOpacity>
       <View style={{flex: 1, alignItems: 'center'}}>
         <Text
@@ -244,7 +215,7 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
               ? styles.LOADED
               : styles.UNLOAD
           ]}>
-          <Text style={{fontSize: 12, color: '#ffff'}}>{item.status}</Text>
+          <Text style={{fontSize: 10, color: '#ffff'}}>{item.status}</Text>
         </View>
       </View>
 
@@ -257,13 +228,9 @@ const ScanItem = React.memo(({item, idx, setInformation, setToggleState}) => {
         onPress={() => {
           setInformation(item)
           setToggleState(ToggleState.DETAIL)
+          // dispatch(setfetchfocus())
         }}>
-        <Ionicons
-          style={styles.rightIcon}
-          name={'search-circle'}
-          size={40}
-          color={'#777'}
-        />
+        <Ionicons name={'search-circle'} size={40} color={'#777'} />
       </TouchableOpacity>
     </View>
   )

@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react'
+import React, {useEffect, useState, useRef, useCallback, createRef} from 'react'
 import {
   StyleSheet,
   View,
@@ -50,6 +50,7 @@ import PagerView from 'react-native-pager-view'
 import Scan from './Scan'
 import TabViewList_2 from './TabViewList_2'
 import ModalHeaderInfo from '../../components/ModalHeaderInfo'
+import {setfetchfocus} from '../../store/slices/focusSlice'
 
 const ToggleState = {
   HEADER: 'HEADER',
@@ -79,20 +80,26 @@ const LoadToTruck = ({navigation}) => {
 
   const [redata, setredata] = useState(false)
 
-  const inputRef = useRef(null)
   const toast = useToast()
   const {t} = useTranslation()
-  const {userName, token, refresh} = useAuthToken()
+  const {userName, refresh} = useAuthToken()
   const {boxAvail, setBoxAvail} = useScan()
 
-  // const scanRef = useRef(null)
+  const [box, setBox] = useState(null)
+  const [rebox, setrebox] = useState(false)
+
+  const [information, setInformation] = useState(null)
+
+  const inputRef = useRef(null)
+  const ref = createRef(null)
+
+  const [expanded, setExpanded] = useState(false)
 
   const dispatch = useDispatch()
 
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
-
   const fetchHeaderSelect_API = async (receipt_no) => {
     const select = await fetchHeaderSelect(receipt_no)
     setHeaderSelected(select.data[0])
@@ -102,16 +109,30 @@ const LoadToTruck = ({navigation}) => {
     const detail = await fetchDetail(receipt_no)
     setDetail(detail.data)
   }
-  const fetchDetailSelect_API = async ({header_id, detail_id}) => {
-    const select = await fetchDetailSelect({header_id, detail_id})
-    setDetailSelected(select.data[0])
-  }
+
+  useEffect(() => {
+    const fetch_hh_sel_box_by_receipt = async () => {
+      try {
+        const res = await hh_sel_box_by_receipt(headerSelected?.receipt_no)
+        setBox(res)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    if (headerSelected?.receipt_no) {
+      fetch_hh_sel_box_by_receipt()
+    }
+  }, [rebox, headerSelected?.receipt_no])
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    inputRef.current && inputRef.current?.focus()
+    if (ref?.current) {
+      ref.current?.focus()
+    } else {
+      inputRef.current?.focus()
+    }
   }, [])
 
   useEffect(() => {
@@ -319,7 +340,7 @@ const LoadToTruck = ({navigation}) => {
   const handleContainerClose = () => {
     setAlert(!alert)
     setLoading(false)
-    Keyboard.dismiss()
+    // Keyboard.dismiss()
   }
 
   // const renderItem = useCallback(({item}) => {
@@ -330,13 +351,11 @@ const LoadToTruck = ({navigation}) => {
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
       <ScrollView
-        // onLayout={() => inputRef.current?.focus()}
-
         style={styles.container}
         scrollEnabled={true}
-        keyboardDismissMode="on-drag"
+        // keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           <View
@@ -392,7 +411,9 @@ const LoadToTruck = ({navigation}) => {
               </Text>
             </View>
             <View style={styles.groupForm}>
-              <View style={{flex: 0.7}}>
+              <View
+                style={{flex: 0.7}}
+                pointerEvents={headerSelected ? 'none' : 'auto'}>
                 <TextInput
                   ref={inputRef}
                   style={[
@@ -585,13 +606,29 @@ const LoadToTruck = ({navigation}) => {
           <TabViewList detail={detail} />
         )} */}
 
-        {headerSelected && <TabViewList_2 detail={detail} />}
-        {headerSelected && <Scan detail={detail} data={headerSelected} />}
+        {headerSelected && <TabViewList_2 ref={ref} detail={detail} />}
+        {headerSelected && (
+          <Scan
+            ref={ref}
+            detail={detail}
+            box={box}
+            setredata={setrebox}
+            data={headerSelected?.receipt_no}
+          />
+        )}
 
         {headerSelected && toggleState === ToggleState.INFO && (
           <ModalHeaderInfo
             data={headerSelected}
             visible={toggleState === ToggleState.INFO}
+            setVisible={() => toggleSetState(null)}
+          />
+        )}
+
+        {toggleState === ToggleState.DETAIL && (
+          <ModalDetail
+            data={information}
+            visible={toggleState === ToggleState.DETAIL}
             setVisible={() => toggleSetState(null)}
           />
         )}
@@ -766,61 +803,6 @@ const LoadToTruck = ({navigation}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item}) => (
-  <View key={item.box_id}>
-    <View
-      style={[
-        styles.row,
-        {
-          justifyContent: 'space-between',
-          marginVertical: 3
-        }
-      ]}>
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          width: '100%'
-        }}>
-        <Text style={{color: '#000', fontSize: 20}}>
-          {item.box_id?.split('/')[1]}
-        </Text>
-      </View>
-      <View style={{flex: 2, alignItems: 'center'}}>
-        <TouchableOpacity
-          onLongPress={async () => {
-            Clipboard.setString(item.box_id)
-            console.log('copy ', item.box_id)
-            // await Clipboard.getString()
-          }}>
-          <Text style={{color: '#000', fontSize: 20}}>{item.box_id}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center'
-        }}>
-        {item?.is_scan === 'SCANED' ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'checkmark-circle-outline'}
-            size={20}
-            color={'green'}
-          />
-        ) : (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'ellipsis-horizontal-outline'}
-            size={10}
-            color={'#000'}
-          />
-        )}
-      </View>
-    </View>
-  </View>
-))
 
 const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   return (

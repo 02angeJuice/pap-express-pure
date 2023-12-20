@@ -14,16 +14,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage' // react-na
 import loginSlice from './slices/loginSlice'
 import tokenSlice from './slices/tokenSlice'
 import settingSlice from './slices/settingSlice'
+import focusSlice from './slices/focusSlice'
 
 const persistConfig = {
   key: 'root',
-  storage: AsyncStorage
+  storage: AsyncStorage,
+  blacklist: ['focus']
 }
 
 const rootReducer = combineReducers({
   login: loginSlice,
   token: tokenSlice,
-  setting: settingSlice
+  setting: settingSlice,
+  focus: focusSlice
 })
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)

@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   Modal,
   PermissionsAndroid,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Keyboard
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -23,32 +24,30 @@ const ModalCamera = ({set, visible, setVisible}) => {
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
-  useEffect(() => {
-    requestPermission()
-  }, [])
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
-  const requestPermission = async () => {
-    try {
-      console.log('asking for permission')
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-      ])
-      if (
-        granted['android.permission.CAMERA'] &&
-        granted['android.permission.WRITE_EXTERNAL_STORAGE']
-      ) {
-        console.log('You can use the camera')
-      } else {
-        console.log('Camera permission denied')
-      }
-    } catch (error) {
-      console.log('permission error', error)
-    }
-  }
+  // const requestPermission = async () => {
+  //   try {
+  //     console.log('asking for permission')
+  //     const granted = await PermissionsAndroid.requestMultiple([
+  //       PermissionsAndroid.PERMISSIONS.CAMERA,
+  //       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+  //     ])
+  //     if (
+  //       granted['android.permission.CAMERA'] &&
+  //       granted['android.permission.WRITE_EXTERNAL_STORAGE']
+  //     ) {
+  //       console.log('You can use the camera')
+  //     } else {
+  //       console.log('Camera permission denied')
+  //     }
+  //   } catch (error) {
+  //     console.log('permission error', error)
+  //   }
+  // }
+
   const options = {
     mediaType: 'photo',
     includeBase64: false,

@@ -157,7 +157,7 @@ const UnloadFromTruck = ({navigation}) => {
     setCurrentImage(null)
     setCurrentSign(null)
     setInput('')
-    inputRef2.current.focus()
+    inputRef2.current?.focus()
   }
 
   const onPressConfirm = async () => {
@@ -275,11 +275,11 @@ const UnloadFromTruck = ({navigation}) => {
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback>
       <ScrollView
         style={styles.container}
         scrollEnabled={true}
-        keyboardDismissMode="on-drag"
+        // keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           {/* RECEIPT */}
@@ -290,7 +290,9 @@ const UnloadFromTruck = ({navigation}) => {
               </Text>
             </View>
             <View style={styles.groupForm}>
-              <View style={{flex: 0.7}}>
+              <View
+                style={{flex: 0.7}}
+                pointerEvents={headerSelected ? 'none' : 'auto'}>
                 <TextInput
                   ref={inputRef2}
                   style={[
@@ -316,6 +318,7 @@ const UnloadFromTruck = ({navigation}) => {
                   editable={true}
                   blurOnSubmit={false}
                   onSubmitEditing={Keyboard.dismiss}
+                  showSoftInputOnFocus={!headerSelected}
                 />
               </View>
 

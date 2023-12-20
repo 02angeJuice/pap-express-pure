@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Platform
+  Platform,
+  PermissionsAndroid
 } from 'react-native'
 
 import {useTranslation} from 'react-i18next'
@@ -58,11 +59,32 @@ const Home = ({navigation}) => {
     }
   }
 
+  const requestPermission = async () => {
+    try {
+      console.log('asking for permission')
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      ])
+      if (
+        granted['android.permission.CAMERA'] &&
+        granted['android.permission.WRITE_EXTERNAL_STORAGE']
+      ) {
+        console.log('You can use the camera')
+      } else {
+        console.log('Camera permission denied')
+      }
+    } catch (error) {
+      console.log('permission error', error)
+    }
+  }
+
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
     language !== i18n.language && i18n.changeLanguage(language)
+    requestPermission()
     checkRefreshToken()
   }, [])
 
