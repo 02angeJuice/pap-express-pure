@@ -471,7 +471,13 @@ const LoadToTruck = ({navigation}) => {
               </TouchableOpacity>
             </View>
 
-            <View style={{display: 'flex', flex: 0.4, flexDirection: 'column'}}>
+            <View
+              style={{
+                display: 'flex',
+                flex: 0.4,
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}>
               <View>
                 <Text style={{color: '#000', fontSize: 20}}>
                   {t('customer')}
@@ -530,7 +536,12 @@ const LoadToTruck = ({navigation}) => {
 
         {headerSelected && <TabViewList_2 ref={ref} detail={detail} />}
         {headerSelected && (
-          <Scan ref={ref} detail={detail} data={headerSelected?.receipt_no} />
+          <Scan
+            ref={ref}
+            detail={detail}
+            data={headerSelected?.receipt_no}
+            orderStatus={headerSelected?.status}
+          />
         )}
 
         {headerSelected && toggleState === ToggleState.INFO && (

@@ -81,6 +81,7 @@ export const fetchDetailSelect = async (obj) =>
 
 // export const fetchOrderSelect = async (distribution_id) =>
 //   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}`)
+// ----------------------------------------------------------------
 
 export const hh_sel_distributes_by_status = async (status) =>
   await axios.post(`${path.URL}/api/hh/distribute/all`, {
@@ -91,6 +92,22 @@ export const hh_sel_distributes_by_id = async (distribution_id) =>
   await axios.post(`${path.URL}/api/hh/distribute/all`, {
     distribution_id: distribution_id
   })
+
+export const hh_sel_distributes_pagination = async (status, data) => {
+  try {
+    const res = await axios.post(
+      `${path.URL}/api/hh/distribute/HHSelOrderDistribution?status=${
+        status || ''
+      }`,
+      data
+    )
+    return res.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// ----------------------------------------------------------------
 
 export const fetchOrderDetail = async (distribution_id) =>
   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}/detail`)

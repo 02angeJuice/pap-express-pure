@@ -18,183 +18,198 @@ import {useDispatch} from 'react-redux'
 import {Empty} from '../../components/SpinnerEmpty'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
-const Scan = forwardRef(({detail, distribute_id, navigation}, ref) => {
-  const [alertBarcode, setAlertBarcode] = useState(false)
-  const [barcode, setBarcode] = useState('')
-  const [input, setInput] = useState('')
-  const [box, setBox] = useState(null)
-  const [boxcheck, setboxcheck] = useState(null)
-  const [redata, setredata] = useState(false)
-  const [expanded, setExpanded] = useState(true)
+const Scan = forwardRef(
+  ({detail, distribute_id, orderStatus, navigation}, ref) => {
+    const [alertBarcode, setAlertBarcode] = useState(false)
+    const [barcode, setBarcode] = useState('')
+    const [input, setInput] = useState('')
+    const [box, setBox] = useState(null)
+    const [boxcheck, setboxcheck] = useState(null)
+    const [redata, setredata] = useState(false)
+    const [expanded, setExpanded] = useState(true)
 
-  const {t} = useTranslation()
-  const dispatch = useDispatch()
-  const {insertDetailsBox} = useScan()
-  const {fetchfocus} = useFocus()
+    const {t} = useTranslation()
+    const dispatch = useDispatch()
+    const {insertDetailsBox} = useScan()
+    const {fetchfocus} = useFocus()
 
-  // ----------------------------------------------------------
-  // == EFFECT
-  // ----------------------------------------------------------
-  useEffect(() => {
-    ref.current?.focus()
-  }, [fetchfocus])
+    // ----------------------------------------------------------
+    // == EFFECT
+    // ----------------------------------------------------------
+    useEffect(() => {
+      ref.current?.focus()
+    }, [fetchfocus])
 
-  useEffect(() => {
-    const fetch_hh_sel_box_by_od = async () => {
-      try {
-        const res = await hh_sel_box_by_od(distribute_id)
-        setBox(res)
-        setboxcheck(res.filter((el) => el.is_scan_d === 'SCANED'))
-      } catch (error) {
-        console.log(error)
+    useEffect(() => {
+      const fetch_hh_sel_box_by_od = async () => {
+        try {
+          const res = await hh_sel_box_by_od(distribute_id)
+          setBox(res)
+          setboxcheck(res.filter((el) => el.is_scan_d === 'SCANED'))
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
+      if (distribute_id) {
+        fetch_hh_sel_box_by_od()
+      }
+    }, [redata, distribute_id])
+
+    useEffect(() => {
+      if (barcode.length != 0) {
+        handleInputSubmit(barcode)
+      }
+    }, [barcode])
+
+    // รอแก้ไปเช็คในเบส
+    const check = useCallback(
+      (box_id) => {
+        const res = boxcheck?.findIndex((el) => el.box_id == box_id)
+        return res < 0 ? false : true
+      },
+      [boxcheck]
+    )
+
+    // ----------------------------------------------------------
+    // == HANDLE
+    // ----------------------------------------------------------
+    const handleInputSubmit = async (text) => {
+      const newValue = text.split('/')
+      const checked = check(text)
+
+      console.log(checked)
+
+      if (!checked) {
+        setInput('')
+      } else {
+        await insertDetailsBox(
+          newValue[0],
+          Number(newValue[1]),
+          null,
+          'receive',
+          navigation
+        )
+        setredata((el) => !el)
+        setInput('')
       }
     }
 
-    if (distribute_id) {
-      fetch_hh_sel_box_by_od()
-    }
-  }, [redata, distribute_id])
+    // ----------------------------------------------------------
+    // == MAIN
+    // ----------------------------------------------------------
+    return (
+      <View style={styles.container}>
+        <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+          <View
+            style={[
+              styles.row,
+              {
+                justifyContent: 'space-between',
+                borderBottomWidth: 0.5,
+                borderStyle: 'dashed'
+              }
+            ]}>
+            <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
+              <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
+            </View>
+            <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
+              <Text
+                style={{
+                  color: box
+                    ?.filter(
+                      (el) =>
+                        el.is_scan === 'IDLE' &&
+                        (el.is_scan_d === 'SCANED' || el.is_scan_d === 'DONE')
+                    )
+                    .every((el) => el.is_scan_d === 'DONE')
+                    ? 'magenta'
+                    : '#000',
+                  fontSize: 16
+                }}>
+                {`(${
+                  box?.filter((el) => el.is_scan_d === 'DONE')?.length || 0
+                }/${
+                  box?.filter(
+                    (el) =>
+                      (el.is_scan === 'IDLE' && el.is_scan_d === 'SCANED') ||
+                      el.is_scan_d === 'DONE'
+                  )?.length || 0
+                })`}
+              </Text>
+            </View>
+            <View style={{flex: 2, alignItems: 'center'}}>
+              <TextInput
+                editable={orderStatus === 'ONSHIP'}
+                ref={ref}
+                style={{fontSize: 20, color: '#000'}}
+                value={input}
+                onChangeText={(value) => handleInputSubmit(value)}
+                placeholder={t('enter_barcode')}
+                placeholderTextColor={orderStatus === 'ONSHIP' && '#009DFF'}
+                blurOnSubmit={false}
+                showSoftInputOnFocus={false}
+              />
+            </View>
 
-  useEffect(() => {
-    if (barcode.length != 0) {
-      handleInputSubmit(barcode)
-    }
-  }, [barcode])
+            <TouchableOpacity
+              style={{flex: 1, alignItems: 'center'}}
+              onPress={() => setAlertBarcode(!alertBarcode)}>
+              <Ionicons
+                style={styles.rightIcon}
+                name={'hammer-outline'}
+                size={30}
+                color="#eee"
+              />
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+        {expanded && (
+          <>
+            {box !== null ? (
+              <TouchableWithoutFeedback
+                onPress={() => dispatch(setfetchfocus())}>
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled={true}
+                  style={styles.modalContainer}>
+                  {box?.map((item, idx) => (
+                    <ScanItem
+                      key={idx}
+                      item={item}
+                      box_id={item.box_id?.split('/')[1]}
+                    />
+                  ))}
+                </ScrollView>
+              </TouchableWithoutFeedback>
+            ) : (
+              <Empty text={box && t('empty')} />
+            )}
+          </>
+        )}
 
-  // รอแก้ไปเช็คในเบส
-  const check = useCallback(
-    (box_id) => {
-      const res = boxcheck?.findIndex((el) => el.box_id == box_id)
-      return res < 0 ? false : true
-    },
-    [boxcheck]
-  )
+        <TouchableOpacity
+          onPress={() => setExpanded(!expanded)}
+          style={{width: '100%', alignItems: 'center'}}>
+          <Ionicons
+            name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+            size={25}
+            color={'#777'}
+          />
+        </TouchableOpacity>
 
-  // ----------------------------------------------------------
-  // == HANDLE
-  // ----------------------------------------------------------
-  const handleInputSubmit = async (text) => {
-    const newValue = text.split('/')
-    const checked = check(text)
-
-    if (!checked) {
-      setInput('')
-    } else {
-      await insertDetailsBox(
-        newValue[0],
-        Number(newValue[1]),
-        null,
-        'receive',
-        navigation
-      )
-      setredata((el) => !el)
-      setInput('')
-    }
+        {alertBarcode && (
+          <BarcodeInputAlert
+            visible={alertBarcode}
+            onClose={() => setAlertBarcode(!alertBarcode)}
+            setBarcode={setBarcode}
+            // item_no={item?.item_no}
+          />
+        )}
+      </View>
+    )
   }
-
-  // ----------------------------------------------------------
-  // == MAIN
-  // ----------------------------------------------------------
-  return (
-    <View style={styles.container}>
-      <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
-        <View
-          style={[
-            styles.row,
-            {
-              justifyContent: 'space-between',
-              borderBottomWidth: 0.5,
-              borderStyle: 'dashed'
-            }
-          ]}>
-          <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
-            <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
-          </View>
-          <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
-            <Text
-              style={{
-                color: box
-                  ?.filter((el) => el.is_scan === 'IDLE')
-                  .every((el) => el.is_scan_d === 'DONE')
-                  ? 'magenta'
-                  : '#000',
-                fontSize: 16
-              }}>{`${t('box')}(${
-              box?.filter((el) => el.is_scan_d === 'DONE')?.length || 0
-            }/${
-              box?.length -
-                box?.filter((el) => el.is_scan !== 'IDLE')?.length || 0
-            })`}</Text>
-          </View>
-          <View style={{flex: 2, alignItems: 'center'}}>
-            <TextInput
-              ref={ref}
-              style={{fontSize: 20, color: '#000'}}
-              value={input}
-              onChangeText={(value) => handleInputSubmit(value)}
-              placeholder={t('enter_barcode')}
-              placeholderTextColor="#009DFF"
-              blurOnSubmit={false}
-              showSoftInputOnFocus={false}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={{flex: 1, alignItems: 'center'}}
-            onPress={() => setAlertBarcode(!alertBarcode)}>
-            <Ionicons
-              style={styles.rightIcon}
-              name={'hammer-outline'}
-              size={30}
-              color="#eee"
-            />
-          </TouchableOpacity>
-        </View>
-      </TouchableWithoutFeedback>
-      {expanded && (
-        <>
-          {box !== null ? (
-            <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                nestedScrollEnabled={true}
-                style={styles.modalContainer}>
-                {box?.map((item, idx) => (
-                  <ScanItem
-                    key={idx}
-                    item={item}
-                    box_id={item.box_id?.split('/')[1]}
-                  />
-                ))}
-              </ScrollView>
-            </TouchableWithoutFeedback>
-          ) : (
-            <Empty text={box && t('empty')} />
-          )}
-        </>
-      )}
-
-      <TouchableOpacity
-        onPress={() => setExpanded(!expanded)}
-        style={{width: '100%', alignItems: 'center'}}>
-        <Ionicons
-          name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-          size={25}
-          color={'#777'}
-        />
-      </TouchableOpacity>
-
-      {alertBarcode && (
-        <BarcodeInputAlert
-          visible={alertBarcode}
-          onClose={() => setAlertBarcode(!alertBarcode)}
-          setBarcode={setBarcode}
-          // item_no={item?.item_no}
-        />
-      )}
-    </View>
-  )
-})
+)
 
 // ----------------------------------------------------------
 // == COMPONENT

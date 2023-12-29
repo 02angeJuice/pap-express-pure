@@ -10,9 +10,9 @@ export const path = {
   JAM: `https://www.similantechnology.org:4433/pap_api/dist`,
   IMG: `https://www.similantechnology.org:4433/pap_api/img_pap/contents/`
 
-  // URL: `http://192.168.1.135:3009`,
-  // JAM: `http://192.168.1.135:3009`,
-  // IMG: `http://192.168.1.135/img_pap/contents/`
+  // URL: `https://6dd5-125-25-134-110.ngrok-free.app`,
+  // JAM: `https://6dd5-125-25-134-110.ngrok-free.app`,
+  // IMG: `https://6dd5-125-25-134-110.ngrok-free.app/img_pap/contents/`
 
   // URL: ` https://15cd-171-100-219-62.ngrok-free.app`,
   // JAM: ` https://15cd-171-100-219-62.ngrok-free.app`,

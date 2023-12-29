@@ -154,10 +154,10 @@ const Info = ({navigation}) => {
             )}
           </View>
         </View>
-
+        {/* 
         <InfoItem icon="person" text={t('personal_info')} />
         <InfoItem icon="help-circle" text={t('help')} />
-        <InfoItem icon="settings" text={t('setting')} />
+        <InfoItem icon="settings" text={t('setting')} /> */}
         <TouchableOpacity
           style={styles.infoMenuItem}
           onPress={checkVersion_API}>

@@ -18,7 +18,7 @@ import {useDispatch} from 'react-redux'
 import {Empty} from '../../components/SpinnerEmpty'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
-const Scan = forwardRef(({detail, data, navigation}, ref) => {
+const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
   const [alertBarcode, setAlertBarcode] = useState(false)
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
@@ -117,18 +117,19 @@ const Scan = forwardRef(({detail, data, navigation}, ref) => {
                   ? 'magenta'
                   : '#000',
                 fontSize: 16
-              }}>{`${t('box')}(${
+              }}>{`(${
               box?.filter((el) => el.is_scan === 'IDLE')?.length || 0
             }/${box?.length || 0})`}</Text>
           </View>
           <View style={{flex: 2, alignItems: 'center'}}>
             <TextInput
+              editable={orderStatus === 'ONSHIP'}
               ref={ref}
               style={{fontSize: 20, color: '#000'}}
               value={input}
               onChangeText={(value) => handleInputSubmit(value)}
               placeholder={t('enter_barcode')}
-              placeholderTextColor="#009DFF"
+              placeholderTextColor={orderStatus === 'ONSHIP' && '#009DFF'}
               blurOnSubmit={false}
               showSoftInputOnFocus={false}
             />

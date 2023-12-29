@@ -105,7 +105,11 @@ const ScanReceiveDetail = ({navigation, route}) => {
   const onPressConfirm = async () => {
     const res = await hh_sel_box_by_od(order_id)
     const checkStatus = res
-      ?.filter((el) => el.is_scan === 'IDLE')
+      ?.filter(
+        (el) =>
+          el.is_scan === 'IDLE' &&
+          (el.is_scan_d === 'SCANED' || el.is_scan_d === 'DONE')
+      )
       .every((el) => el.is_scan_d === 'DONE')
 
     console.log(checkStatus, checkStatus ? 'completed' : 'incomplete')
@@ -146,7 +150,7 @@ const ScanReceiveDetail = ({navigation, route}) => {
       currentSign !== null
         ? obj.append('files', {
             uri: currentSign,
-            name: `SIGNATURE-OD.${signType}`,
+            name: `SIGNATURE-C-OD.${signType}`,
             type: `image/${signType}`
           })
         : obj.append('files', null)
@@ -188,15 +192,15 @@ const ScanReceiveDetail = ({navigation, route}) => {
             dispatch(resetToken())
 
             navigation.reset({index: 0, routes: [{name: screenMap.Login}]})
-            alertReUse('auth_access_denied', err.message)
+            alertReUse('auth_access_denied', 'auth_access_denied_detail')
           }
 
-          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+          alertReUse('auth_access_denied', err.message)
         })
 
       setredata((el) => !el)
 
-      dispatch(setFilterRe('CLOSED'))
+      // dispatch(setFilterRe('CLOSED'))
 
       setLoading(false)
     }
@@ -218,218 +222,249 @@ const ScanReceiveDetail = ({navigation, route}) => {
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
-  return (
-    <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
-      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-        {orderSelected ? (
-          <View
-            style={[
-              styles.column,
-              {
-                marginTop: 10,
-                backgroundColor: '#FFF',
-                borderRadius: 10,
-                gap: 3
-              },
-              styles.itemContent,
-              orderSelected?.status === 'DATA ENTRY' && {
-                borderLeftColor: '#FF003C',
-                borderLeftWidth: 10,
-                backgroundColor: '#FFEBF1'
-              },
-              orderSelected?.status === 'ONSHIP' && {
-                borderLeftColor: '#539ffc',
-                borderLeftWidth: 10,
-                backgroundColor: '#EBF4FF'
-              },
-              orderSelected?.status === 'CLOSED' && {
-                borderLeftColor: '#95ed66',
-                borderLeftWidth: 10,
-                backgroundColor: '#E3FFD4'
-              }
-            ]}>
-            <View style={[styles.row, {justifyContent: 'space-end'}]}>
-              <View style={[styles.row, {gap: 3}]}>
-                <Text style={{color: '#000', fontSize: 18}}>
-                  {t('receipt_no')}:
-                </Text>
-                <Text style={{color: '#000', fontSize: 18, fontWeight: '700'}}>
-                  {orderSelected?.distribution_id}
-                </Text>
-              </View>
-            </View>
-
-            {orderSelected?.distributeType !== 'PDT001' && (
-              <Text style={{color: '#000', fontSize: 18}}>
-                {t('driver')}: {orderSelected?.driver}
-              </Text>
-            )}
-
-            <View style={[styles.row, {justifyContent: 'space-between'}]}>
-              <View style={[styles.row, {gap: 3}]}>
-                <Text style={{color: '#000', fontSize: 18}}>
-                  {t('recipient')}:
-                </Text>
-                <Text style={{color: '#000', fontSize: 18, fontWeight: 'bold'}}>
-                  {orderSelected?.customer_id}
-                </Text>
-              </View>
-              <Text style={{color: '#000', fontSize: 18, fontStyle: 'italic'}}>
-                ({orderSelected?.first_name} {orderSelected?.last_name})
-              </Text>
-            </View>
-
+  if (!orderSelected) {
+    return <Empty />
+  } else {
+    return (
+      <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+        <ScrollView
+          style={styles.container}
+          keyboardShouldPersistTaps="handled">
+          {orderSelected ? (
             <View
               style={[
                 styles.column,
-                {justifyContent: 'flex-start', marginTop: 10}
-              ]}>
-              <View style={[styles.row, {gap: 3}]}>
-                <Text style={{color: '#000', fontSize: 18}}>Phone: </Text>
-
-                <TouchableOpacity
-                  disabled={!orderSelected?.phone}
-                  onPress={() => handleCallPress(orderSelected?.phone)}>
-                  <Text
-                    style={{
-                      color: orderSelected?.phone ? '#007ECC' : '#000',
-                      fontSize: 18,
-                      fontWeight: 'bold'
-                    }}>
-                    {orderSelected?.phone || '--'}
-                  </Text>
-                </TouchableOpacity>
-
-                {orderSelected?.phone && (
-                  <Ionicons name={'call'} size={20} color="#007ECC" />
-                )}
-              </View>
-
-              <View style={[styles.row, {gap: 3}]}>
-                <Text style={{color: '#000', fontSize: 18}}>Phone2: </Text>
-
-                <TouchableOpacity
-                  disabled={!orderSelected?.phonespare}
-                  onPress={() => handleCallPress(orderSelected?.phonespare)}>
-                  <Text
-                    style={{
-                      color: orderSelected?.phonespare ? '#007ECC' : '#000',
-                      fontSize: 18,
-                      fontWeight: 'bold'
-                    }}>
-                    {orderSelected?.phonespare || '--'}
-                  </Text>
-                </TouchableOpacity>
-
-                {orderSelected?.phonespare && (
-                  <Ionicons name={'call'} size={20} color="#007ECC" />
-                )}
-              </View>
-            </View>
-
-            <View
-              style={[
-                styles.row,
                 {
-                  justifyContent: 'center',
-                  gap: 3,
-                  backgroundColor: '#fff',
-                  borderRadius: 5,
-                  borderColor: '#eee',
-                  borderWidth: 1,
-                  padding: 3,
-                  marginVertical: 4
+                  marginTop: 10,
+                  backgroundColor: '#FFF',
+                  borderRadius: 10,
+                  gap: 3
+                },
+                styles.itemContent,
+                orderSelected?.status === 'DATA ENTRY' && {
+                  borderLeftColor: '#FF003C',
+                  borderLeftWidth: 10,
+                  backgroundColor: '#FFEBF1'
+                },
+                orderSelected?.status === 'ONSHIP' && {
+                  borderLeftColor: '#539ffc',
+                  borderLeftWidth: 10,
+                  backgroundColor: '#EBF4FF'
+                },
+                orderSelected?.status === 'CLOSED' && {
+                  borderLeftColor: '#95ed66',
+                  borderLeftWidth: 10,
+                  backgroundColor: '#E3FFD4'
                 }
               ]}>
-              <Ionicons color="#FF0000" name="location-outline" size={20} />
-              <Text
-                style={{
-                  flex: 1,
-                  flexWrap: 'wrap',
-                  color: '#000',
-                  fontSize: 18
-                }}>
-                {orderSelected?.address} - {orderSelected?.subdistrict}{' '}
-                {orderSelected?.district} {orderSelected?.province}{' '}
-                {orderSelected?.zip_code}
-              </Text>
-            </View>
+              <View style={[styles.row, {justifyContent: 'space-end'}]}>
+                <View style={[styles.row, {gap: 3}]}>
+                  <Text style={{color: '#000', fontSize: 18}}>
+                    {t('receipt_no')}:
+                  </Text>
+                  <Text
+                    style={{color: '#000', fontSize: 18, fontWeight: '700'}}>
+                    {orderSelected?.distribution_id}
+                  </Text>
+                </View>
+              </View>
 
-            <View style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
-              <Text style={{color: '#000', fontSize: 18}}>
-                {t('transport_type')}:{' '}
-              </Text>
+              {orderSelected?.distributeType !== 'PDT001' && (
+                <Text style={{color: '#000', fontSize: 18}}>
+                  {t('driver')}: {orderSelected?.driver}
+                </Text>
+              )}
+
+              <View style={[styles.row, {justifyContent: 'space-between'}]}>
+                <View style={[styles.row, {gap: 3}]}>
+                  <Text style={{color: '#000', fontSize: 18}}>
+                    {t('recipient')}:
+                  </Text>
+                  <Text
+                    style={{color: '#000', fontSize: 18, fontWeight: 'bold'}}>
+                    {orderSelected?.customer_id}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: '#000',
+                    fontSize: 20,
+                    fontStyle: 'italic',
+                    fontWeight: 700
+                  }}>
+                  {`${
+                    orderSelected?.first_name === '-'
+                      ? ''
+                      : orderSelected?.first_name || ''
+                  }`}
+                  {`${
+                    orderSelected?.last_name === '-'
+                      ? ''
+                      : ' ' + orderSelected?.last_name || ''
+                  }`}
+                </Text>
+              </View>
+
               <View
                 style={[
-                  styles.status,
+                  styles.column,
+                  {justifyContent: 'flex-start', marginTop: 10}
+                ]}>
+                <View style={[styles.row, {gap: 3}]}>
+                  <Text style={{color: '#000', fontSize: 18}}>Phone: </Text>
+
+                  <TouchableOpacity
+                    disabled={!orderSelected?.phone}
+                    onPress={() => handleCallPress(orderSelected?.phone)}>
+                    <Text
+                      style={{
+                        color: orderSelected?.phone ? '#007ECC' : '#000',
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                      }}>
+                      {orderSelected?.phone || '--'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {orderSelected?.phone && (
+                    <Ionicons name={'call'} size={20} color="#007ECC" />
+                  )}
+                </View>
+
+                <View style={[styles.row, {gap: 3}]}>
+                  <Text style={{color: '#000', fontSize: 18}}>Phone2: </Text>
+
+                  <TouchableOpacity
+                    disabled={!orderSelected?.phonespare}
+                    onPress={() => handleCallPress(orderSelected?.phonespare)}>
+                    <Text
+                      style={{
+                        color: orderSelected?.phonespare ? '#007ECC' : '#000',
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                      }}>
+                      {orderSelected?.phonespare || '--'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {orderSelected?.phonespare && (
+                    <Ionicons name={'call'} size={20} color="#007ECC" />
+                  )}
+                </View>
+              </View>
+
+              <View
+                style={[
                   styles.row,
-                  orderSelected?.distributeType === 'PDT001'
-                    ? styles.PICKED
-                    : orderSelected?.distributeType === 'PDT002'
-                    ? styles.ONSHIP
-                    : orderSelected?.distributeType === 'PDT003'
-                    ? styles.ARRIVED
-                    : styles.OFFICE,
                   {
                     justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 5,
-                    borderColor: '#000',
-                    borderWidth: 0.5
+                    gap: 3,
+                    backgroundColor: '#fff',
+                    borderRadius: 5,
+                    borderColor: '#eee',
+                    borderWidth: 1,
+                    padding: 3,
+                    marginVertical: 4
                   }
                 ]}>
-                <Ionicons
-                  color={'#000'}
-                  name={
-                    orderSelected?.distributeType === 'PDT001'
-                      ? 'home'
-                      : orderSelected?.distributeType === 'PDT002'
-                      ? 'bag-handle'
-                      : orderSelected?.distributeType === 'PDT003'
-                      ? 'cube'
-                      : 'business'
-                  }
-                  size={15}
-                />
-                <Text style={{padding: 2, color: '#000', fontSize: 18}}>
-                  {orderSelected?.distributeType === 'PDT001'
-                    ? `${t('od_type_warehouse')}`
-                    : orderSelected?.distributeType === 'PDT002'
-                    ? `${t('od_type_express')}`
-                    : orderSelected?.distributeType === 'PDT003'
-                    ? `${t('od_type_self')}`
-                    : `${t('od_type_office')}`}
+                <Ionicons color="#FF0000" name="location-outline" size={20} />
+                <Text
+                  style={{
+                    flex: 1,
+                    flexWrap: 'wrap',
+                    color: '#000',
+                    fontSize: 18
+                  }}>
+                  {orderSelected?.address?.replace('-', '')}{' '}
+                  {orderSelected?.subdistrict} {orderSelected?.district}{' '}
+                  {orderSelected?.province} {orderSelected?.zip_code}
                 </Text>
               </View>
-            </View>
 
-            <View style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
-              <Text style={{color: '#000', fontSize: 18}}>{t('status')}:</Text>
               <View
-                style={[
-                  styles.status,
-
-                  orderSelected?.status === 'CLOSED'
-                    ? {backgroundColor: '#2FC58B'}
-                    : orderSelected?.status === 'ONSHIP'
-                    ? {backgroundColor: '#009DFF'}
-                    : {backgroundColor: '#FF2F61'}
-                ]}>
-                <Text style={{padding: 2, color: '#FFF', fontSize: 18}}>
-                  {orderSelected?.status}
+                style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
+                <Text style={{color: '#000', fontSize: 18}}>
+                  {t('transport_type')}:{' '}
                 </Text>
+                <View
+                  style={[
+                    styles.status,
+                    styles.row,
+                    orderSelected?.distributeType === 'PDT001'
+                      ? styles.PICKED
+                      : orderSelected?.distributeType === 'PDT002'
+                      ? styles.ONSHIP
+                      : orderSelected?.distributeType === 'PDT003'
+                      ? styles.ARRIVED
+                      : styles.OFFICE,
+                    {
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 5,
+                      borderColor: '#000',
+                      borderWidth: 0.5
+                    }
+                  ]}>
+                  <Ionicons
+                    color={'#000'}
+                    name={
+                      orderSelected?.distributeType === 'PDT001'
+                        ? 'home'
+                        : orderSelected?.distributeType === 'PDT002'
+                        ? 'bag-handle'
+                        : orderSelected?.distributeType === 'PDT003'
+                        ? 'cube'
+                        : 'business'
+                    }
+                    size={15}
+                  />
+                  <Text style={{padding: 2, color: '#000', fontSize: 18}}>
+                    {orderSelected?.distributeType === 'PDT001'
+                      ? `${t('od_type_warehouse')}`
+                      : orderSelected?.distributeType === 'PDT002'
+                      ? `${t('od_type_express')}`
+                      : orderSelected?.distributeType === 'PDT003'
+                      ? `${t('od_type_self')}`
+                      : `${t('od_type_office')}`}
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
+                <Text style={{color: '#000', fontSize: 18}}>
+                  {t('status')}:
+                </Text>
+                <View
+                  style={[
+                    styles.status,
+
+                    orderSelected?.status === 'CLOSED'
+                      ? {backgroundColor: '#2FC58B'}
+                      : orderSelected?.status === 'ONSHIP'
+                      ? {backgroundColor: '#009DFF'}
+                      : {backgroundColor: '#FF2F61'}
+                  ]}>
+                  <Text style={{padding: 2, color: '#FFF', fontSize: 18}}>
+                    {orderSelected?.status}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        ) : (
-          <Empty text={orderSelected && t('empty')} />
-        )}
+          ) : (
+            <Empty text={orderSelected && t('empty')} />
+          )}
 
-        {order_id && <TabViewList_2 detail={detail} />}
-        {order_id && (
-          <Scan ref={ref} detail={detail} distribute_id={order_id} />
-        )}
-        {/* <PagerView
+          {order_id && <TabViewList_2 detail={detail} />}
+          {order_id && (
+            <Scan
+              ref={ref}
+              detail={detail}
+              distribute_id={order_id}
+              orderStatus={orderSelected?.status}
+            />
+          )}
+          {/* <PagerView
         style={{width: '100%', height: 375}}
         initialPage={1}
         pageMargin={10}>
@@ -444,99 +479,104 @@ const ScanReceiveDetail = ({navigation, route}) => {
         )}
       </PagerView> */}
 
-        {order_id && (
-          <TouchableOpacity
-            style={[
-              styles.signatureBox,
-              !currentSign && {
-                borderWidth: 1,
-                borderStyle: 'dashed',
-                borderColor: '#7A7A7A'
-              }
-            ]}
-            onPress={() => toggleSetState(ToggleState.SIGNATURE)}
-            disabled={orderSelected?.status !== 'ONSHIP'}>
-            {currentSign !== null || orderSelected?.signature_img ? (
-              <View style={styles.preview}>
-                {currentSign ? (
-                  <FastImage
-                    resizeMode={FastImage.resizeMode.contain}
-                    source={{
-                      uri: currentSign,
-                      priority: FastImage.priority.normal
-                    }}
-                    style={{width: '100%', height: 180}}
-                  />
-                ) : (
-                  <Image
-                    resizeMode={'contain'}
-                    style={{width: '100%', height: 180}}
-                    source={{
-                      uri: `${path.IMG}/${orderSelected?.signature_img}`
-                    }}
-                  />
-                )}
-              </View>
-            ) : (
-              <View style={styles.imageUpload}>
-                <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                <Text style={{color: '#000', fontSize: 18}}>{`${t(
-                  'signature'
-                )}`}</Text>
-              </View>
-            )}
-
-            {toggleState === ToggleState.SIGNATURE && (
-              <ModalSignature
-                set={setCurrentSign}
-                visible={true}
-                setVisible={() => toggleSetState(null)}
-              />
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* {detail?.every((el) => el.status !== 'ONSHIP') &&
-        orderSelected?.status === 'ONSHIP' && ( */}
-
-        {order_id && (
-          <View style={styles.buttonGroup}>
+          {order_id && (
             <TouchableOpacity
-              disabled={orderSelected?.status !== 'ONSHIP'}
               style={[
-                styles.button,
-                styles.shadow,
-                styles.row,
-                {justifyContent: 'center', gap: 10},
-                {
-                  backgroundColor:
-                    orderSelected?.status === 'ONSHIP' ? '#ABFC74' : '#ccc'
+                styles.signatureBox,
+                !currentSign && {
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                  borderColor: '#7A7A7A'
                 }
               ]}
-              onPress={onPressConfirm}>
-              {loading ? (
-                <ActivityIndicator size={25} />
+              onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+              disabled={orderSelected?.status !== 'ONSHIP'}>
+              {currentSign !== null || orderSelected?.signature_customer_img ? (
+                <View style={styles.preview}>
+                  {currentSign ? (
+                    <FastImage
+                      resizeMode={FastImage.resizeMode.contain}
+                      source={{
+                        uri: currentSign,
+                        priority: FastImage.priority.normal
+                      }}
+                      style={{width: '100%', height: 180}}
+                    />
+                  ) : (
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri: `${path.IMG}/${orderSelected?.signature_customer_img}`
+                      }}
+                    />
+                  )}
+                </View>
               ) : (
-                <Ionicons name={'checkmark-outline'} size={25} color={'#000'} />
+                <View style={styles.imageUpload}>
+                  <Ionicons name="pencil" size={40} color="#4d4d4d" />
+                  <Text style={{color: '#000', fontSize: 18}}>{`${t(
+                    'signature'
+                  )}`}</Text>
+                </View>
               )}
 
-              <Text
-                style={[
-                  {
-                    color: '#183B00',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    fontSize: 18
-                  }
-                ]}>
-                {t('confirm')}
-              </Text>
+              {toggleState === ToggleState.SIGNATURE && (
+                <ModalSignature
+                  set={setCurrentSign}
+                  visible={true}
+                  setVisible={() => toggleSetState(null)}
+                />
+              )}
             </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-    </TouchableWithoutFeedback>
-  )
+          )}
+
+          {/* {detail?.every((el) => el.status !== 'ONSHIP') &&
+        orderSelected?.status === 'ONSHIP' && ( */}
+
+          {order_id && (
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity
+                disabled={orderSelected?.status !== 'ONSHIP'}
+                style={[
+                  styles.button,
+                  styles.shadow,
+                  styles.row,
+                  {justifyContent: 'center', gap: 10},
+                  {
+                    backgroundColor:
+                      orderSelected?.status === 'ONSHIP' ? '#ABFC74' : '#ccc'
+                  }
+                ]}
+                onPress={onPressConfirm}>
+                {loading ? (
+                  <ActivityIndicator size={25} />
+                ) : (
+                  <Ionicons
+                    name={'checkmark-outline'}
+                    size={25}
+                    color={'#000'}
+                  />
+                )}
+
+                <Text
+                  style={[
+                    {
+                      color: '#183B00',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      fontSize: 18
+                    }
+                  ]}>
+                  {t('confirm')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    )
+  }
 }
 
 // ----------------------------------------------------------

@@ -13,6 +13,7 @@ import {useTranslation} from 'react-i18next'
 
 const ModalHeaderInfo = ({data, visible, setVisible}) => {
   const {t} = useTranslation()
+  console.log(data)
 
   const handleCallPress = async (tel) => {
     const phoneNumberWithPrefix = `tel:${tel}`
@@ -22,6 +23,7 @@ const ModalHeaderInfo = ({data, visible, setVisible}) => {
       console.error('Error opening phone app:', error)
     }
   }
+
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
@@ -30,9 +32,7 @@ const ModalHeaderInfo = ({data, visible, setVisible}) => {
       visible={visible}
       transparent={true}
       statusBarTranslucent={true}
-      // animationType="slide"
       onRequestClose={() => setVisible(!visible)}>
-      {/* <TouchableWithoutFeedback onPress={() => setVisible(!visible)}> */}
       <View style={styles.modalContainer}>
         <View style={styles.container}>
           <View style={styles.nav}>
@@ -62,11 +62,10 @@ const ModalHeaderInfo = ({data, visible, setVisible}) => {
                   alignItems: 'center'
                 }}>
                 <Text style={{color: '#000', fontSize: 20}}>
-                  {t('container_no')}:{' '}
-                  {data?.container_no === null ? '-' : data?.container_no}{' '}
+                  {t('container_no')}: {data?.container_no || '--'}
                 </Text>
                 <Text style={{color: '#000', fontSize: 20}}>
-                  {data?.customer_id === null ? '-' : data?.customer_id}
+                  {data?.customer_id || '--'}
                 </Text>
               </View>
 
@@ -79,32 +78,20 @@ const ModalHeaderInfo = ({data, visible, setVisible}) => {
                 }}
               />
               <Text style={{color: '#000', fontSize: 20}}>
-                {t('date_departure')}:{' '}
-                {data?.date_departure === null ? '-' : data?.date_departure}
-              </Text>
-
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('date_arrival')}:{' '}
-                {data?.date_departure === null ? '-' : data?.date_departure}
-              </Text>
-
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('car_regis')}:{' '}
-                {data?.Chinese_car_registration === null
-                  ? '-'
-                  : data?.Chinese_car_registration}
+                {t('date_departure')}: {data?.date_departure || '--'}
               </Text>
               <Text style={{color: '#000', fontSize: 20}}>
-                {t('driver')}:{' '}
-                {data?.Chinese_driver === null ? '-' : data?.Chinese_driver}
+                {t('date_arrival')}: {data?.arrival_date || '--'}
+              </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('car_regis')}: {data?.Chinese_car_registration || '--'}
+              </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('driver')}: {data?.Chinese_driver || '--'}
               </Text>
               <Text style={{color: '#000', fontSize: 20}}>
                 {t('transport_type')}:{' '}
-                {data?.shipment === null
-                  ? '-'
-                  : data?.shipment === 'car'
-                  ? `${t('car')}`
-                  : `${t('ship')}`}
+                {data?.shipment === 'car' ? t('car') : t('ship') || '--'}
               </Text>
 
               <View
@@ -115,13 +102,38 @@ const ModalHeaderInfo = ({data, visible, setVisible}) => {
                   gap: 10
                 }}>
                 <Text style={{color: '#000', fontSize: 20}}>{t('phone')}:</Text>
-                <TouchableOpacity onPress={() => handleCallPress(data?.phone)}>
+
+                <TouchableOpacity
+                  disabled={!data?.phone}
+                  onPress={() => handleCallPress(data?.phone)}>
                   <Text
                     style={{
-                      color: '#009DFF',
+                      color: data?.phone ? '#007ECC' : '#000',
                       fontSize: 20
                     }}>
-                    {data?.phone === null ? '-' : data?.phone}
+                    {data?.phone || '--'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  gap: 10
+                }}>
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('phone2')}:
+                </Text>
+                <TouchableOpacity
+                  disabled={!data?.phone_spare}
+                  onPress={() => handleCallPress(data?.phone_spare)}>
+                  <Text
+                    style={{
+                      color: data?.phone_spare ? '#007ECC' : '#000',
+                      fontSize: 20
+                    }}>
+                    {data?.phone_spare || '--'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -157,7 +169,6 @@ const ModalHeaderInfo = ({data, visible, setVisible}) => {
           </View>
         </View>
       </View>
-      {/* </TouchableWithoutFeedback> */}
     </Modal>
   )
 }

@@ -7,126 +7,181 @@ import {
   TouchableOpacity,
   FlatList,
   TouchableWithoutFeedback,
+  ActivityIndicator,
   Keyboard
 } from 'react-native'
+import {Button, Chip} from '@rneui/themed'
 import debounce from 'lodash.debounce'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {Empty} from '../../components/SpinnerEmpty'
 import {screenMap} from '../../constants/screenMap'
 import {useTranslation} from 'react-i18next'
 import {useDispatch} from 'react-redux'
-import {resetFilter, setFilterRe} from '../../store/slices/settingSlice'
-import {useSettings} from '../../hooks'
-import {
-  hh_sel_distributes_by_id,
-  hh_sel_distributes_by_status
-} from '../../apis'
+import {useFocus} from '../../hooks'
+import {hh_sel_distributes_pagination} from '../../apis'
+import {setfetchfocus} from '../../store/slices/focusSlice'
+import {useNavigationState} from '@react-navigation/native'
 
 const ScanReceive = ({navigation}) => {
-  const [order, setOrder] = useState(null)
-  const [orderSelected, setOrderSelected] = useState(null)
+  const [order, setOrder] = useState([])
   const [input, setInput] = useState('')
   const [toggleType, setToggleType] = useState(false)
-  const [type, setType] = useState('all')
+  const [inputEnd, setInputEnd] = useState(false)
+
+  const [key, setkey] = useState(false)
 
   const inputRef = useRef(null)
   const {t} = useTranslation()
-  const {filter_re} = useSettings()
   const dispatch = useDispatch()
+
+  const {fetchfocus} = useFocus()
+
+  const state = useNavigationState((state) => state)
+
+  const [status, setStatus] = useState('ONSHIP')
+  const [type, setType] = useState('')
+
+  const [loading, setloading] = useState(false)
+
+  const [pageNumber, setPageNumber] = useState(1)
+  const [count, setcount] = useState(0)
+
+  const fetchData = async () => {
+    try {
+      const res = await hh_sel_distributes_pagination(status, {
+        page: pageNumber, // Increment the page number for the next page
+        perPage: 20,
+        search: input,
+        distributeType: type
+      })
+
+      if (res?.result) {
+        setOrder(res.result)
+        setcount(res.count === 0 ? 1 : Math.ceil(res.count / 20))
+      } else {
+        setOrder([])
+      }
+    } catch (error) {
+      console.log(error)
+    }
+    setloading(false)
+  }
 
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
-  const fetchOrder_API = async () => {
-    const orders = await hh_sel_distributes_by_status(filter_re)
-    setOrder(
-      orders?.data.filter((el) =>
-        el.status === 'CLOSED'
-          ? el.distributeType !== 'PDT001'
-          : el.status !== 'DATA ENTRY'
-      )
-    )
-  }
+  useEffect(() => {
+    setloading(true)
+    fetchData()
+  }, [type, status, pageNumber, inputEnd])
+  // const fetchOrder_API = async () => {
+  //   const orders = await hh_sel_distributes_by_status(filter_re)
+  //   setOrder(
+  //     orders?.data.filter((el) =>
+  //       el.status === 'CLOSED'
+  //         ? el.distributeType !== 'PDT001'
+  //         : el.status !== 'DATA ENTRY'
+  //     )
+  //   )
+  // }
 
-  const fetcOrderSelect_API = async (distribution_id) => {
-    const orders = await hh_sel_distributes_by_id(distribution_id)
-    setOrder(
-      orders?.data.filter((el) =>
-        el.status === 'CLOSED'
-          ? el.distributeType !== 'PDT001'
-          : el.status !== 'DATA ENTRY'
-      )
-    )
-  }
+  // const fetcOrderSelect_API = async (distribution_id) => {
+  //   const orders = await hh_sel_distributes_by_id(distribution_id)
+  //   setOrder(
+  //     orders?.data.filter((el) =>
+  //       el.status === 'CLOSED'
+  //         ? el.distributeType !== 'PDT001'
+  //         : el.status !== 'DATA ENTRY'
+  //     )
+  //   )
+  // }
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    inputRef.current && inputRef.current?.focus()
-  }, [])
+    inputRef.current?.focus()
+  }, [fetchfocus])
 
   useEffect(() => {
-    return () => {
-      dispatch(resetFilter())
-    }
-  }, [])
+    dispatch(setfetchfocus())
+    // setkey(() => false)
+  }, [state])
 
-  useEffect(() => {
-    fetchOrder_API()
-  }, [filter_re])
-
-  useEffect(() => {
-    debouncedSearch()
-    return debouncedSearch.cancel
-  }, [input, debouncedSearch])
+  // useEffect(() => {
+  //   if (!inputEnd) {
+  //     debouncedSearch()
+  //   }
+  //   return debouncedSearch.cancel
+  // }, [inputEnd, debouncedSearch])
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
-  const search = () => {
-    input?.length !== 0 ? fetcOrderSelect_API(input) : fetchOrder_API(filter_re)
-  }
-
-  const debouncedSearch = useCallback(debounce(search, 750), [input])
-
-  const handleChangeTextInput = (text) => {
-    setReload(true)
+  const handleInputChange = (text) => {
     setInput(text)
+    setPageNumber(1)
+
+    setInputEnd((e) => !e)
+    // setkey(() => false)
+  }
+  const debouncedSearch = debounce(handleInputChange, 500)
+
+  const handleChangeType = (cType) => {
+    setPageNumber(1)
+    cType === type ? setType('') : setType(cType)
+    setToggleType(false)
+    // setkey(() => false)
+
+    setkey(() => false)
+    Keyboard.dismiss()
+    dispatch(setfetchfocus())
   }
 
-  const handleSetOrderSelected = useCallback(
-    (target) => {
-      setOrderSelected(target.distribution_id)
+  const handleChangeStatus = (cStatus) => {
+    setPageNumber(1)
+    setStatus(cStatus)
+    // setkey(() => false)
 
-      navigation.navigate(screenMap.ScanReceiveDetail, {
-        order_id: target.distribution_id
-      })
+    setkey(() => false)
+    Keyboard.dismiss()
+    dispatch(setfetchfocus())
+  }
+
+  const handlePagination = (cPage) => {
+    setPageNumber((el) => el + cPage)
+
+    // dispatch(setfetchfocus())
+    setkey(() => false)
+    Keyboard.dismiss()
+    dispatch(setfetchfocus())
+  }
+
+  const handleSetOrderSelected = (target) => {
+    navigation.navigate(screenMap.ScanReceiveDetail, {
+      order_id: target.distribution_id
+    })
+  }
+
+  const handleClear = () => {
+    setInputEnd((e) => !e)
+    setPageNumber(1)
+    // setType('')
+    // setStatus('ONSHIP')
+    setInput('')
+    inputRef?.current.clear()
+
+    setkey(() => false)
+    Keyboard.dismiss()
+    dispatch(setfetchfocus())
+  }
+
+  const renderItem = useCallback(
+    ({item}) => {
+      return <ItemOrder item={item} selected={handleSetOrderSelected} />
     },
-    [navigation]
+    [handleSetOrderSelected]
   )
-
-  const handleChangeType = (change) => {
-    dispatch(setFilterRe(change))
-    setType(change)
-    setToggleType(false)
-  }
-
-  const handleChangeStatus = (change) => {
-    dispatch(setFilterRe(change))
-    setToggleType(false)
-    setType('all')
-  }
-
-  const renderItem = useCallback(({item}) => {
-    return (
-      <ItemOrder
-        item={item}
-        selected={handleSetOrderSelected}
-        orderSelected={orderSelected}
-      />
-    )
-  }, [])
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
@@ -134,6 +189,7 @@ const ScanReceive = ({navigation}) => {
     <TouchableWithoutFeedback
       onPress={() => {
         setToggleType(false)
+        dispatch(setfetchfocus())
       }}>
       <View style={styles.container}>
         <View
@@ -142,13 +198,13 @@ const ScanReceive = ({navigation}) => {
             <StatusButtonComponent
               color="#539ffc"
               text="ONSHIP"
-              status={filter_re}
+              status={status}
               onPress={() => handleChangeStatus('ONSHIP')}
             />
             <StatusButtonComponent
               color="#95ed66"
               text="CLOSED"
-              status={filter_re}
+              status={status}
               onPress={() => handleChangeStatus('CLOSED')}
             />
           </View>
@@ -163,9 +219,9 @@ const ScanReceive = ({navigation}) => {
               type === 'PDT003' && {backgroundColor: '#FFC4D2'},
               type === 'PDT004' && {backgroundColor: '#E0C9FF'}
             ]}
-            onPress={() => setToggleType(!toggleType)}>
+            onPress={() => setToggleType((el) => !el)}>
             <Text style={{padding: 3, color: '#000'}}>
-              {type === 'all' ? (
+              {type === '' ? (
                 <Ionicons color={'#000'} name={'funnel-outline'} size={25} />
               ) : type === 'PDT001' ? (
                 <Ionicons color={'#000'} name={'home-outline'} size={25} />
@@ -197,7 +253,7 @@ const ScanReceive = ({navigation}) => {
                 },
                 styles.shadow
               ]}>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={[
                   styles.row,
                   {gap: 8, borderRadius: 3, padding: 12},
@@ -212,7 +268,7 @@ const ScanReceive = ({navigation}) => {
                     {t('od_type_warehouse')}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity
                 style={[
@@ -277,7 +333,6 @@ const ScanReceive = ({navigation}) => {
         </View>
 
         <View style={[styles.header, {marginVertical: 5}]}>
-          {/* <Text style={{color: '#000'}}>{t('receipt_no')}</Text> */}
           <TextInput
             ref={inputRef}
             style={[
@@ -285,37 +340,59 @@ const ScanReceive = ({navigation}) => {
               {
                 color: '#000',
                 fontSize: 20,
-                backgroundColor: '#D2D2D2',
+                backgroundColor: '#e2e2e2',
                 fontWeight: 'normal',
                 paddingHorizontal: 10,
                 paddingVertical: 6
               }
             ]}
-            onChangeText={handleChangeTextInput}
+            keyboardShouldPersistTaps="handled"
+            onChangeText={debouncedSearch}
             placeholder={t('enter_barcode')}
-            placeholderTextColor="#000"
-            value={input}
-            editable={true}
+            placeholderTextColor="#009DFF"
+            // value={input}
+            // editable={true}
             blurOnSubmit={false}
-            onSubmitEditing={Keyboard.dismiss}
+            // onSubmitEditing={Keyboard.dismiss}
             selectTextOnFocus={true}
-            onStartShouldSetResponder={() => {
-              Keyboard.dismiss()
-              return false
-            }}
+            // recommended
+            showSoftInputOnFocus={key}
+            onFocus={() => setkey(() => true)}
+            // clearTextOnFocus={true}
           />
-          <TouchableOpacity
-            style={styles.clearButtonX}
-            onPress={() => {
-              setInput('')
-            }}>
+          <TouchableOpacity style={styles.clearButtonX} onPress={handleClear}>
             <Ionicons name="close" size={25} color="#777" />
           </TouchableOpacity>
         </View>
 
+        {loading ? (
+          <ActivityIndicator />
+        ) : (
+          <FlatList
+            onScrollBeginDrag={() => {
+              dispatch(setfetchfocus())
+              setkey(() => false)
+            }}
+            style={styles.list}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+            keyExtractor={(el) => el.distribution_id.toString()}
+            data={order}
+            initialNumToRender={3}
+            windowSize={5}
+            renderItem={renderItem}
+            ListEmptyComponent={
+              <Empty text={order?.length <= 0 && t('empty')} />
+            }
+          />
+        )}
+
+        {/* 
         <FlatList
           onScrollBeginDrag={() => {
-            setToggleType(false)
+            dispatch(setfetchfocus())
+            setkey(() => false)
+            Keyboard.dismiss()
           }}
           keyboardShouldPersistTaps="handled"
           style={styles.list}
@@ -326,7 +403,46 @@ const ScanReceive = ({navigation}) => {
           scrollEventThrottle={10}
           renderItem={renderItem}
           ListEmptyComponent={<Empty text={order && t('empty')} />}
-        />
+        /> */}
+
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 10,
+            right: 10,
+            flexDirection: 'row',
+            gap: 10
+          }}>
+          <Chip disabled title={`${pageNumber}/${count}`} />
+
+          <Button
+            disabled={pageNumber === 1}
+            buttonStyle={{borderRadius: 10}}
+            onPress={() => handlePagination(-1)}
+            icon={{
+              name: 'arrow-left',
+              type: 'font-awesome',
+              size: 15,
+              color: 'white'
+            }}
+            iconleft>
+            Prev
+          </Button>
+
+          <Button
+            disabled={pageNumber === count}
+            buttonStyle={{borderRadius: 10}}
+            onPress={() => handlePagination(+1)}
+            icon={{
+              name: 'arrow-right',
+              type: 'font-awesome',
+              size: 15,
+              color: 'white'
+            }}
+            iconRight>
+            Next
+          </Button>
+        </View>
       </View>
     </TouchableWithoutFeedback>
   )
@@ -335,28 +451,12 @@ const ScanReceive = ({navigation}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ItemOrder = React.memo(({item, selected, orderSelected}) => {
+const ItemOrder = React.memo(({item, selected}) => {
   const {t} = useTranslation()
 
   return (
     <TouchableOpacity
-      style={[
-        styles.item,
-        styles.shadow,
-        item?.distribution_id === orderSelected && {
-          borderWidth: 2.5,
-          borderLeftWidth: 10
-        },
-        item?.status === 'DATA ENTRY' && {
-          borderColor: '#FF003C'
-        },
-        item?.status === 'ONSHIP' && {
-          borderColor: '#539ffc'
-        },
-        item?.status === 'CLOSED' && {
-          borderColor: '#95ed66'
-        }
-      ]}
+      style={[styles.item, styles.shadow]}
       onPress={() => selected(item)}>
       <View
         key={item?.distribution_id}
@@ -398,8 +498,9 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
               {item.customer_id}
             </Text>
           </View>
-          <Text style={{color: '#000', fontStyle: 'italic'}}>
-            ({item.first_name} {item.last_name})
+          <Text style={{color: '#000', fontStyle: 'italic', fontWeight: 700}}>
+            {`${item.first_name === '-' ? '' : item.first_name || ''}`}
+            {`${item.last_name === '-' ? '' : ' ' + item.last_name || ''}`}
           </Text>
         </View>
 
@@ -419,8 +520,8 @@ const ItemOrder = React.memo(({item, selected, orderSelected}) => {
           ]}>
           <Ionicons color={'#FF0000'} name={'location-outline'} size={15} />
           <Text style={{flex: 1, flexWrap: 'wrap', color: '#000'}}>
-            {item.address} - {item.subdistrict} {item.district} {item.province}{' '}
-            {item.zip_code}
+            {item.address?.replace('-', '')} {item.subdistrict} {item.district}{' '}
+            {item.province} {item.zip_code}
           </Text>
         </View>
 
@@ -600,7 +701,7 @@ const styles = StyleSheet.create({
   groupInput: {
     backgroundColor: '#F4F4F4',
     borderColor: '#7A7A7A',
-    borderRadius: 5,
+    borderRadius: 10,
     paddingHorizontal: 6,
     width: '100%'
   },

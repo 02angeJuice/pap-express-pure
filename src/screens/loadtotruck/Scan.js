@@ -14,11 +14,13 @@ import {useFocus, useScan} from '../../hooks'
 import {hh_sel_box_by_receipt} from '../../apis'
 import {setfetchfocus} from '../../store/slices/focusSlice'
 import {useDispatch} from 'react-redux'
+import {sumBy} from 'lodash'
 
 import {Empty} from '../../components/SpinnerEmpty'
+
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 
-const Scan = forwardRef(({detail, data, navigation}, ref) => {
+const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
   const [alertBarcode, setAlertBarcode] = useState(false)
   const [barcode, setBarcode] = useState('')
   const [input, setInput] = useState('')
@@ -30,6 +32,14 @@ const Scan = forwardRef(({detail, data, navigation}, ref) => {
   const dispatch = useDispatch()
   const {insertDetailsBox} = useScan()
   const {fetchfocus} = useFocus()
+
+  const [boxcount, setboxcount] = useState(0)
+
+  useEffect(() => {
+    if (detail?.[0]) {
+      setboxcount(sumBy(detail, (e) => Number(e?.qty_box)))
+    }
+  }, [detail])
 
   // ----------------------------------------------------------
   // == EFFECT
@@ -129,24 +139,19 @@ const Scan = forwardRef(({detail, data, navigation}, ref) => {
           <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
             <Text
               style={{
-                color:
-                  box?.length ==
-                  detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0)
-                    ? 'magenta'
-                    : '#000',
+                color: box?.length == boxcount ? 'magenta' : '#000',
                 fontSize: 16
-              }}>{`${t('box')}(${box?.length || 0}/${
-              detail?.reduce((sum, el) => sum + Number(el?.qty_box), 0) || 0
-            })`}</Text>
+              }}>{`(${box?.length || 0}/${boxcount})`}</Text>
           </View>
           <View style={{flex: 2, alignItems: 'center'}}>
             <TextInput
+              editable={orderStatus === 'PICKED'}
               ref={ref}
               style={{fontSize: 20, color: '#000'}}
               value={input}
               onChangeText={(value) => handleInputSubmit(value)}
               placeholder={t('enter_barcode')}
-              placeholderTextColor="#009DFF"
+              placeholderTextColor={orderStatus === 'PICKED' && '#009DFF'}
               blurOnSubmit={false}
               showSoftInputOnFocus={false}
             />

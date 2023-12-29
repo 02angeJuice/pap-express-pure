@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   Modal
+  // ScrollView
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {Empty} from '../../components/SpinnerEmpty'
@@ -13,28 +14,30 @@ import {fetchHeader} from '../../apis'
 import {useTranslation} from 'react-i18next'
 
 const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
+  const {t} = useTranslation()
+
   const [header, setHeader] = useState(null)
   const [status, setStatus] = useState('PICKED')
-  const {t} = useTranslation()
 
   // ----------------------------------------------------------
   // == API
   // ----------------------------------------------------------
-  const fetchHeader_API = async (status) => {
-    const header = await fetchHeader(status)
-
-    setHeader(
-      header.data?.filter(
-        (el) => el.status !== 'ARRIVED' && el.status !== 'CLOSED'
-      )
-    )
-  }
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    fetchHeader_API(status)
+    const fetchHeader_API = async () => {
+      const header = await fetchHeader(status)
+
+      setHeader(
+        header.data?.filter(
+          (el) => el.status !== 'ARRIVED' && el.status !== 'CLOSED'
+        )
+      )
+    }
+
+    fetchHeader_API()
   }, [status])
 
   const renderItem = useCallback(
@@ -45,7 +48,7 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
         headerSelected={headerSelected}
       />
     ),
-    []
+    [onPress, headerSelected]
   )
   // ----------------------------------------------------------
   // == MAIN
@@ -62,7 +65,8 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
           <Text style={styles.textNav}>{t('load_to_truck')}</Text>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setVisible(false)}>
+            // onPress={() => setVisible(false)}
+            onPress={setVisible}>
             <Ionicons name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -106,12 +110,30 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
           ListEmptyComponent={<Empty text={t('empty')} />}
         />
 
+        {/* {header !== null ? (
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
+            // style={styles.modalContainer}
+            style={[styles.list, {borderRadius: 5}]}>
+            {header?.map((item, idx) => (
+              <HeaderItem
+                key={idx}
+                item={item}
+                onPress={onPress}
+                headerSelected={headerSelected}
+              />
+            ))}
+          </ScrollView>
+        ) : (
+          <Empty text={header && t('empty')} />
+        )} */}
+
         <ButtonComponent
           text={t('close')}
           fontWeight="bold"
           color="#000"
-          // color="#6E0000"
-          // backgroundColor="#FF7676"
           backgroundColor="#FFF"
           onPress={() => setVisible(false)}
         />
@@ -147,9 +169,7 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
           <Text
             style={[
               styles.textHeader,
-              item.status_hh === 'EDITING' && {
-                color: '#000'
-              }
+              item.status_hh === 'EDITING' && {color: '#000'}
             ]}>
             {t('receipt_no')}: {item.receipt_no}
           </Text>
@@ -181,9 +201,7 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
             borderStyle: 'dashed',
             borderTopWidth: 0
           },
-          item.status_hh === 'EDITING' && {
-            borderColor: '#000'
-          }
+          item.status_hh === 'EDITING' && {borderColor: '#000'}
         ]}>
         <View
           style={{
@@ -245,13 +263,26 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
               alignItems: 'center',
               gap: 5
             }}>
-            <Text>
-              {item.shipment === 'car' ? `${t('car')}` : `${t('ship')}`}
+            <Text style={{color: '#F00'}}>
+              {item.shipment_confirm && `（${t('change')}）`}
             </Text>
+            {item.shipment_confirm && (
+              <Ionicons
+                style={{
+                  alignSelf: 'center',
+                  color: `${item.shipment === 'ship' ? '#FF009E' : '#009DFF'}`
+                }}
+                name={`${item.shipment === 'car' ? 'boat' : 'car'}-outline`}
+                size={20}
+                color={'#000'}
+              />
+            )}
+
             <Ionicons
               style={{
                 alignSelf: 'center',
-                color: `${item.shipment === 'car' ? '#FF009E' : '#009DFF'}`
+                color: `${item.shipment === 'car' ? '#FF009E' : '#009DFF'}`,
+                opacity: item.shipment_confirm && 0.1
               }}
               name={`${item.shipment === 'car' ? 'car' : 'boat'}-outline`}
               size={20}
@@ -264,23 +295,21 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
   )
 })
 
-const StatusButtonComponent = ({color, backgroundColor, text, onPress}) => {
-  return (
-    <TouchableOpacity
-      style={[styles.filter, {backgroundColor: backgroundColor}]}
-      onPress={onPress}>
-      <View style={[styles.row, {justifyContent: 'center'}]}>
-        <Ionicons
-          style={{alignSelf: 'center'}}
-          name={'ellipse'}
-          size={15}
-          color={color}
-        />
-        <Text style={{fontSize: 12, color: '#000'}}> {text}</Text>
-      </View>
-    </TouchableOpacity>
-  )
-}
+const StatusButtonComponent = ({color, backgroundColor, text, onPress}) => (
+  <TouchableOpacity
+    style={[styles.filter, {backgroundColor: backgroundColor}]}
+    onPress={onPress}>
+    <View style={[styles.row, {justifyContent: 'center'}]}>
+      <Ionicons
+        style={{alignSelf: 'center'}}
+        name={'ellipse'}
+        size={15}
+        color={color}
+      />
+      <Text style={{fontSize: 12, color: '#000'}}> {text}</Text>
+    </View>
+  </TouchableOpacity>
+)
 
 const ButtonComponent = ({
   text,
@@ -288,22 +317,15 @@ const ButtonComponent = ({
   color,
   backgroundColor,
   onPress
-}) => {
-  return (
-    <TouchableOpacity
-      style={[styles.button, {backgroundColor: backgroundColor}]}
-      onPress={onPress}>
-      <Text
-        style={{
-          color: color,
-          fontWeight: fontWeight,
-          textAlign: 'center'
-        }}>
-        {text}
-      </Text>
-    </TouchableOpacity>
-  )
-}
+}) => (
+  <TouchableOpacity
+    style={[styles.button, {backgroundColor: backgroundColor}]}
+    onPress={onPress}>
+    <Text style={{color: color, fontWeight: fontWeight, textAlign: 'center'}}>
+      {text}
+    </Text>
+  </TouchableOpacity>
+)
 
 // ----------------------------------------------------------
 // == STYLE

@@ -144,7 +144,7 @@ const ScanItem = React.memo(({item, setInformation, setToggleState}) => {
         <Text style={{fontSize: 16, color: '#000'}}>{item.qty_box}</Text>
       </View>
 
-      <View style={{flex: 1, alignItems: 'center'}}>
+      <View style={{flex: 1.5, alignItems: 'center'}}>
         <View
           style={[
             styles.status,
@@ -154,7 +154,7 @@ const ScanItem = React.memo(({item, setInformation, setToggleState}) => {
               ? styles.LOADED
               : styles.UNLOAD
           ]}>
-          <Text style={{fontSize: 10, color: '#ffff'}}>{item.status}</Text>
+          <Text style={{fontSize: 9, color: '#ffff'}}>{item.status}</Text>
         </View>
       </View>
 

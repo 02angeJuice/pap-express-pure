@@ -1,4 +1,4 @@
-import React, {useState, forwardRef} from 'react'
+import React, {useState, forwardRef, useEffect} from 'react'
 import {
   StyleSheet,
   View,
@@ -14,6 +14,7 @@ import {useTranslation} from 'react-i18next'
 import ModalDetail from '../../components/ModalDetail'
 import {useDispatch} from 'react-redux'
 import {setfetchfocus} from '../../store/slices/focusSlice'
+import {hh_sel_box_by_receipt} from '../../apis'
 
 const ToggleState = {
   DETAIL: 'DETAIL'
@@ -25,6 +26,8 @@ const TabViewList_2 = forwardRef(({detail}, ref) => {
   const [toggleState, setToggleState] = useState(null)
   const [information, setInformation] = useState(null)
   const [expanded, setExpanded] = useState(false)
+
+  const [redata, setredata] = useState(false)
 
   const toggleSetState = (newToggleState) => {
     toggleState === newToggleState
