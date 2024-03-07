@@ -17,6 +17,7 @@ import {useDispatch} from 'react-redux'
 
 import {Empty} from '../../components/SpinnerEmpty'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
+import CustomText from '../../components/CustomText'
 
 const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
   const [alertBarcode, setAlertBarcode] = useState(false)
@@ -92,6 +93,8 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
     }
   }
 
+  console.log(box?.[0])
+
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
@@ -121,6 +124,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
               box?.filter((el) => el.is_scan === 'IDLE')?.length || 0
             }/${box?.length || 0})`}</Text>
           </View>
+
           <View style={{flex: 2, alignItems: 'center'}}>
             <TextInput
               editable={orderStatus === 'ONSHIP'}
@@ -158,6 +162,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
                 style={styles.modalContainer}>
                 {box?.map((item, idx) => (
                   <ScanItem
+                    idx={idx + 1}
                     key={idx}
                     item={item}
                     box_id={item.box_id?.split('/')[1]}
@@ -195,7 +200,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, box_id}) => {
+const ScanItem = React.memo(({item, box_id, idx}) => {
   return (
     <View
       style={[
@@ -214,16 +219,16 @@ const ScanItem = React.memo(({item, box_id}) => {
         }
       ]}>
       <View style={{alignItems: 'center', width: '20%'}}>
-        <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
-          {item.num_box}
-        </Text>
+        <CustomText size="lg" color="#999" text={idx} />
       </View>
-
-      <View style={{width: '50%', alignItems: 'center'}}>
-        <Text style={{fontSize: 14, color: '#000'}}>{item.box_id}</Text>
+      <View style={{width: '40%', alignItems: 'center'}}>
+        <CustomText
+          size="md"
+          text={`${item?.item_serial}-${item.num_box}` || ''}
+        />
       </View>
-      <View style={{width: '10%', alignItems: 'center'}}>
-        <Text style={{fontSize: 14, color: '#000'}}>{box_id}</Text>
+      <View style={{width: '20%', alignItems: 'center'}}>
+        <CustomText size="xs" text={item.maker || '--'} />
       </View>
       <View style={{width: '20%', alignItems: 'center'}}>
         {item?.is_scan === 'IDLE' ? (

@@ -2,7 +2,6 @@ import React, {useEffect, useState, forwardRef, useCallback} from 'react'
 import {
   StyleSheet,
   View,
-  Text,
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -19,6 +18,7 @@ import {sumBy} from 'lodash'
 import {Empty} from '../../components/SpinnerEmpty'
 
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
+import CustomText from '../../components/CustomText'
 
 const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
   const [alertBarcode, setAlertBarcode] = useState(false)
@@ -91,28 +91,28 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
       } else {
         const checkHasScaned = box?.findIndex((el) => el.box_id === text)
 
-        if (checkHasScaned < 0) {
-          let numBox = null
+        // if (checkHasScaned < 0) {
+        let numBox = null
 
-          for (const res of detail) {
-            if (res.item_no === newValue[0]) {
-              numBox += Number(newValue[1])
-              break
-            } else {
-              numBox += Number(res.qty_box)
-            }
+        for (const res of detail) {
+          if (res.item_no === newValue[0]) {
+            numBox += Number(newValue[1])
+            break
+          } else {
+            numBox += Number(res.qty_box)
           }
-
-          await insertDetailsBox(
-            newValue[0],
-            Number(newValue[1]),
-            numBox,
-            'load',
-            navigation
-          )
-          setredata((el) => !el)
-          setInput('')
         }
+
+        await insertDetailsBox(
+          newValue[0],
+          Number(newValue[1]),
+          numBox,
+          'load',
+          navigation
+        )
+        setredata((el) => !el)
+        setInput('')
+        // }
       }
     },
     [box, check, detail, insertDetailsBox, navigation, setredata]
@@ -134,15 +134,27 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
             }
           ]}>
           <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
-            <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
+            {/* <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text> */}
+
+            <CustomText size="md" text="#" />
           </View>
           <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
-            <Text
+            {/* <Text
               style={{
                 color: box?.length == boxcount ? 'magenta' : '#000',
                 fontSize: 16
               }}>{`(${box?.length || 0}/${boxcount})`}</Text>
+ */}
+
+            <CustomText
+              size="sm"
+              color={box?.every((el) => el.is_scan === 'SCANED') && 'magenta'}
+              text={`(${
+                box?.filter((el) => el.is_scan === 'SCANED')?.length || 0
+              }/${boxcount})`}
+            />
           </View>
+
           <View style={{flex: 2, alignItems: 'center'}}>
             <TextInput
               editable={orderStatus === 'PICKED'}
@@ -181,11 +193,21 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
                 style={styles.modalContainer}>
                 {box?.map((item, idx) => (
                   <ScanItem
+                    idx={idx + 1}
                     key={idx}
                     item={item}
                     box_id={item.box_id?.split('/')[1]}
                   />
                 ))}
+                {/* 
+                {Array.from({length: boxcount}, (_, idx) => (
+                  <ScanItem
+                    idx={idx + 1}
+                    key={idx}
+                    item={box[idx]}
+                    box_id={box[idx]?.box_id?.split('/')[1]}
+                  />
+                ))} */}
               </ScrollView>
             </TouchableWithoutFeedback>
           ) : (
@@ -218,33 +240,33 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, box_id}) => {
+const ScanItem = React.memo(({item, box_id, idx}) => {
   return (
     <View
       style={[
         styles.row,
         {
           justifyContent: 'space-around',
-          backgroundColor: item.is_scan === 'SCANED' ? '#F3FFEC' : null,
+          backgroundColor: item?.is_scan === 'SCANED' ? '#F3FFEC' : null,
           borderTopWidth: 1,
           borderColor: '#ccc',
           borderStyle: 'dashed'
         }
       ]}>
       <View style={{alignItems: 'center', width: '20%'}}>
-        <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
-          {item.num_box}
-        </Text>
+        <CustomText size="lg" color="#999" text={idx} />
       </View>
-
-      <View style={{width: '50%', alignItems: 'center'}}>
-        <Text style={{fontSize: 14, color: '#000'}}>{item.box_id}</Text>
-      </View>
-      <View style={{width: '10%', alignItems: 'center'}}>
-        <Text style={{fontSize: 14, color: '#000'}}>{box_id}</Text>
+      <View style={{width: '40%', alignItems: 'center'}}>
+        <CustomText
+          size="md"
+          text={`${item?.item_serial}-${item.num_box}` || ''}
+        />
       </View>
       <View style={{width: '20%', alignItems: 'center'}}>
-        {item.is_scan === 'SCANED' ? (
+        <CustomText size="xs" color="#999" text={item?.maker || '-'} />
+      </View>
+      <View style={{width: '20%', alignItems: 'center'}}>
+        {item?.is_scan === 'SCANED' ? (
           <Ionicons
             name={'checkmark-circle-outline'}
             size={25}

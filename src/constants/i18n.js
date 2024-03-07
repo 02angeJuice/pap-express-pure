@@ -13,6 +13,7 @@ const i18n = createInstance({
   resources: {
     th: {
       translation: {
+        network_offline_message: 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
         version: 'อัปเดตเวอร์ชัน',
         version_detail: 'ดาวน์โหลดเวอร์ชันใหม่เพื่อใช้งานเวอร์ชันล่าสุด.',
 
@@ -143,6 +144,8 @@ const i18n = createInstance({
     },
     gb: {
       translation: {
+        network_offline_message: 'Please Check Internet Connection.',
+
         version: 'Update version',
         version_detail: 'Download the new version for up to date.',
 
@@ -275,6 +278,8 @@ const i18n = createInstance({
     },
     cn: {
       translation: {
+        network_offline_message: '请检查互联网连接。',
+
         version: '更新版本',
         version_detail: '下载最新版本以保持更新。',
 

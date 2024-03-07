@@ -261,11 +261,16 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
             )}
 
             <Ionicons
-              style={{
-                alignSelf: 'center',
-                color: `${item.shipment === 'car' ? '#FF009E' : '#009DFF'}`,
-                opacity: item.shipment_confirm && 0.1
-              }}
+              style={[
+                {
+                  alignSelf: 'center',
+                  color: `${item.shipment === 'car' ? '#FF009E' : '#009DFF'}`
+                  // opacity: item.shipment_confirm && 0.1
+                },
+                item.shipment_confirm && {
+                  color: '#7a7a7a'
+                }
+              ]}
               name={`${item.shipment === 'car' ? 'car' : 'boat'}-outline`}
               size={20}
               color={'#000'}

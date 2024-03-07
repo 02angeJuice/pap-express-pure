@@ -13,7 +13,7 @@ import {Empty} from '../../components/SpinnerEmpty'
 import {fetchHeader} from '../../apis'
 import {useTranslation} from 'react-i18next'
 
-const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
+const ModalHeader = ({onPress, open, handleOpen, headerSelected}) => {
   const {t} = useTranslation()
 
   const [header, setHeader] = useState(null)
@@ -45,6 +45,7 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
       <HeaderItem
         item={item}
         onPress={onPress}
+        handleOpen={handleOpen}
         headerSelected={headerSelected}
       />
     ),
@@ -55,18 +56,18 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
   // ----------------------------------------------------------
   return (
     <Modal
-      visible={visible}
+      visible={open}
       transparent={true}
       statusBarTranslucent={true}
       // animationType="slide"
-      onRequestClose={() => setVisible(!visible)}>
+      onRequestClose={() => handleOpen(!open)}>
       <View style={styles.modalContainer}>
         <View style={styles.nav}>
           <Text style={styles.textNav}>{t('load_to_truck')}</Text>
           <TouchableOpacity
             style={styles.closeButton}
-            // onPress={() => setVisible(false)}
-            onPress={setVisible}>
+            // onPress={() => handleOpen(false)}
+            onPress={() => handleOpen(!open)}>
             <Ionicons name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -135,7 +136,7 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
           fontWeight="bold"
           color="#000"
           backgroundColor="#FFF"
-          onPress={() => setVisible(false)}
+          onPress={() => handleOpen(!open)}
         />
       </View>
     </Modal>
@@ -145,11 +146,15 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
+const HeaderItem = React.memo(({item, onPress, handleOpen, headerSelected}) => {
   const {t} = useTranslation()
 
   return (
-    <TouchableOpacity style={[styles.item]} onPress={() => onPress(item)}>
+    <TouchableOpacity
+      style={[styles.item]}
+      onPress={() => {
+        onPress(item), handleOpen(false)
+      }}>
       <View
         key={item?.receipt_no}
         style={[
@@ -264,7 +269,7 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
               gap: 5
             }}>
             <Text style={{color: '#F00'}}>
-              {item.shipment_confirm && `（${t('change')}）`}
+              {item?.shipment_confirm && `（${t('change')}）`}
             </Text>
             {item.shipment_confirm && (
               <Ionicons
@@ -279,11 +284,16 @@ const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
             )}
 
             <Ionicons
-              style={{
-                alignSelf: 'center',
-                color: `${item.shipment === 'car' ? '#FF009E' : '#009DFF'}`,
-                opacity: item.shipment_confirm && 0.1
-              }}
+              style={[
+                {
+                  alignSelf: 'center',
+                  color: `${item.shipment === 'car' ? '#FF009E' : '#009DFF'}`
+                  // opacity: item.shipment_confirm && 0.1
+                },
+                item.shipment_confirm && {
+                  color: '#7a7a7a'
+                }
+              ]}
               name={`${item.shipment === 'car' ? 'car' : 'boat'}-outline`}
               size={20}
               color={'#000'}

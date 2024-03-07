@@ -21,6 +21,7 @@ import {useFocus} from '../../hooks'
 import {hh_sel_distributes_pagination} from '../../apis'
 import {setfetchfocus} from '../../store/slices/focusSlice'
 import {useNavigationState} from '@react-navigation/native'
+import NetInfoCheck from '../../components/NetInfoCheck'
 
 const ScanReceive = ({navigation}) => {
   const [order, setOrder] = useState([])
@@ -186,74 +187,83 @@ const ScanReceive = ({navigation}) => {
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        setToggleType(false)
-        dispatch(setfetchfocus())
-      }}>
-      <View style={styles.container}>
-        <View
-          style={[styles.row, {marginTop: 5, justifyContent: 'space-between'}]}>
-          <View style={[styles.row, {justifyContent: 'flex-start', gap: 7}]}>
-            <StatusButtonComponent
-              color="#539ffc"
-              text="ONSHIP"
-              status={status}
-              onPress={() => handleChangeStatus('ONSHIP')}
-            />
-            <StatusButtonComponent
-              color="#95ed66"
-              text="CLOSED"
-              status={status}
-              onPress={() => handleChangeStatus('CLOSED')}
-            />
-          </View>
-
-          <TouchableOpacity
+    <>
+      <NetInfoCheck />
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setToggleType(false)
+          dispatch(setfetchfocus())
+        }}>
+        <View style={styles.container}>
+          <View
             style={[
-              styles.shadow,
-              styles.filter,
-              {justifyContent: 'center', alignItems: 'center'},
-              type === 'PDT001' && {backgroundColor: '#CFFFAE'},
-              type === 'PDT002' && {backgroundColor: '#B5E3FF'},
-              type === 'PDT003' && {backgroundColor: '#FFC4D2'},
-              type === 'PDT004' && {backgroundColor: '#E0C9FF'}
-            ]}
-            onPress={() => setToggleType((el) => !el)}>
-            <Text style={{padding: 3, color: '#000'}}>
-              {type === '' ? (
-                <Ionicons color={'#000'} name={'funnel-outline'} size={25} />
-              ) : type === 'PDT001' ? (
-                <Ionicons color={'#000'} name={'home-outline'} size={25} />
-              ) : type === 'PDT002' ? (
-                <Ionicons
-                  color={'#000'}
-                  name={'bag-handle-outline'}
-                  size={25}
-                />
-              ) : type === 'PDT003' ? (
-                <Ionicons color={'#000'} name={'cube-outline'} size={25} />
-              ) : (
-                <Ionicons color={'#000'} name={'business-outline'} size={25} />
-              )}
-            </Text>
-          </TouchableOpacity>
+              styles.row,
+              {marginTop: 5, justifyContent: 'space-between'}
+            ]}>
+            <View style={[styles.row, {justifyContent: 'flex-start', gap: 7}]}>
+              <StatusButtonComponent
+                color="#539ffc"
+                text="ONSHIP"
+                status={status}
+                onPress={() => handleChangeStatus('ONSHIP')}
+              />
+              <StatusButtonComponent
+                color="#95ed66"
+                text="CLOSED"
+                status={status}
+                onPress={() => handleChangeStatus('CLOSED')}
+              />
+            </View>
 
-          {toggleType && (
-            <View
+            <TouchableOpacity
               style={[
-                {
-                  position: 'absolute',
-                  top: 45,
-                  right: 0,
-                  backgroundColor: '#fff',
-                  padding: 5,
-                  borderRadius: 5,
-                  zIndex: 2
-                },
-                styles.shadow
-              ]}>
-              {/* <TouchableOpacity
+                styles.shadow,
+                styles.filter,
+                {justifyContent: 'center', alignItems: 'center'},
+                type === 'PDT001' && {backgroundColor: '#CFFFAE'},
+                type === 'PDT002' && {backgroundColor: '#B5E3FF'},
+                type === 'PDT003' && {backgroundColor: '#FFC4D2'},
+                type === 'PDT004' && {backgroundColor: '#E0C9FF'}
+              ]}
+              onPress={() => setToggleType((el) => !el)}>
+              <Text style={{padding: 3, color: '#000'}}>
+                {type === '' ? (
+                  <Ionicons color={'#000'} name={'funnel-outline'} size={25} />
+                ) : type === 'PDT001' ? (
+                  <Ionicons color={'#000'} name={'home-outline'} size={25} />
+                ) : type === 'PDT002' ? (
+                  <Ionicons
+                    color={'#000'}
+                    name={'bag-handle-outline'}
+                    size={25}
+                  />
+                ) : type === 'PDT003' ? (
+                  <Ionicons color={'#000'} name={'cube-outline'} size={25} />
+                ) : (
+                  <Ionicons
+                    color={'#000'}
+                    name={'business-outline'}
+                    size={25}
+                  />
+                )}
+              </Text>
+            </TouchableOpacity>
+
+            {toggleType && (
+              <View
+                style={[
+                  {
+                    position: 'absolute',
+                    top: 45,
+                    right: 0,
+                    backgroundColor: '#fff',
+                    padding: 5,
+                    borderRadius: 5,
+                    zIndex: 2
+                  },
+                  styles.shadow
+                ]}>
+                {/* <TouchableOpacity
                 style={[
                   styles.row,
                   {gap: 8, borderRadius: 3, padding: 12},
@@ -270,124 +280,124 @@ const ScanReceive = ({navigation}) => {
                 </View>
               </TouchableOpacity> */}
 
-              <TouchableOpacity
-                style={[
-                  styles.row,
-                  {gap: 8, borderRadius: 3, padding: 12},
-                  type === 'PDT002' && {
-                    backgroundColor: '#B5E3FF'
-                  }
-                ]}
-                onPress={() => handleChangeType('PDT002')}>
-                <View style={[styles.row, {gap: 5}]}>
-                  <Ionicons
-                    color={'#000'}
-                    name={'bag-handle-outline'}
-                    size={15}
-                  />
-                  <Text style={{color: '#000', fontSize: 20}}>
-                    {t('od_type_express')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.row,
+                    {gap: 8, borderRadius: 3, padding: 12},
+                    type === 'PDT002' && {
+                      backgroundColor: '#B5E3FF'
+                    }
+                  ]}
+                  onPress={() => handleChangeType('PDT002')}>
+                  <View style={[styles.row, {gap: 5}]}>
+                    <Ionicons
+                      color={'#000'}
+                      name={'bag-handle-outline'}
+                      size={15}
+                    />
+                    <Text style={{color: '#000', fontSize: 20}}>
+                      {t('od_type_express')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.row,
-                  {gap: 8, borderRadius: 3, padding: 12},
-                  type === 'PDT003' && {
-                    backgroundColor: '#FFC4D2'
-                  }
-                ]}
-                onPress={() => handleChangeType('PDT003')}>
-                <View style={[styles.row, {gap: 5}]}>
-                  <Ionicons color={'#000'} name={'cube-outline'} size={15} />
-                  <Text style={{color: '#000', fontSize: 20}}>
-                    {t('od_type_self')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.row,
+                    {gap: 8, borderRadius: 3, padding: 12},
+                    type === 'PDT003' && {
+                      backgroundColor: '#FFC4D2'
+                    }
+                  ]}
+                  onPress={() => handleChangeType('PDT003')}>
+                  <View style={[styles.row, {gap: 5}]}>
+                    <Ionicons color={'#000'} name={'cube-outline'} size={15} />
+                    <Text style={{color: '#000', fontSize: 20}}>
+                      {t('od_type_self')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.row,
-                  {gap: 8, borderRadius: 3, padding: 12},
-                  type === 'PDT004' && {
-                    backgroundColor: '#E0C9FF'
-                  }
-                ]}
-                onPress={() => handleChangeType('PDT004')}>
-                <View style={[styles.row, {gap: 5}]}>
-                  <Ionicons
-                    color={'#000'}
-                    name={'business-outline'}
-                    size={15}
-                  />
-                  <Text style={{color: '#000', fontSize: 20}}>
-                    {t('od_type_office')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+                <TouchableOpacity
+                  style={[
+                    styles.row,
+                    {gap: 8, borderRadius: 3, padding: 12},
+                    type === 'PDT004' && {
+                      backgroundColor: '#E0C9FF'
+                    }
+                  ]}
+                  onPress={() => handleChangeType('PDT004')}>
+                  <View style={[styles.row, {gap: 5}]}>
+                    <Ionicons
+                      color={'#000'}
+                      name={'business-outline'}
+                      size={15}
+                    />
+                    <Text style={{color: '#000', fontSize: 20}}>
+                      {t('od_type_office')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
-        <View style={[styles.header, {marginVertical: 5}]}>
-          <TextInput
-            ref={inputRef}
-            style={[
-              styles.groupInput,
-              {
-                color: '#000',
-                fontSize: 20,
-                backgroundColor: '#e2e2e2',
-                fontWeight: 'normal',
-                paddingHorizontal: 10,
-                paddingVertical: 6
+          <View style={[styles.header, {marginVertical: 5}]}>
+            <TextInput
+              ref={inputRef}
+              style={[
+                styles.groupInput,
+                {
+                  color: '#000',
+                  fontSize: 20,
+                  backgroundColor: '#e2e2e2',
+                  fontWeight: 'normal',
+                  paddingHorizontal: 10,
+                  paddingVertical: 6
+                }
+              ]}
+              keyboardShouldPersistTaps="handled"
+              onChangeText={debouncedSearch}
+              placeholder={t('enter_barcode')}
+              placeholderTextColor="#009DFF"
+              // value={input}
+              // editable={true}
+              blurOnSubmit={false}
+              // onSubmitEditing={Keyboard.dismiss}
+              selectTextOnFocus={true}
+              // recommended
+              showSoftInputOnFocus={key}
+              onFocus={() => setkey(() => true)}
+              // clearTextOnFocus={true}
+            />
+            <TouchableOpacity style={styles.clearButtonX} onPress={handleClear}>
+              <Ionicons name="close" size={25} color="#777" />
+            </TouchableOpacity>
+          </View>
+
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <FlatList
+              onScrollBeginDrag={() => {
+                dispatch(setfetchfocus())
+                setkey(() => false)
+              }}
+              style={styles.list}
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              keyExtractor={(el) => el.distribution_id.toString()}
+              data={order}
+              initialNumToRender={3}
+              windowSize={5}
+              renderItem={renderItem}
+              ListEmptyComponent={
+                <Empty text={order?.length <= 0 && t('empty')} />
               }
-            ]}
-            keyboardShouldPersistTaps="handled"
-            onChangeText={debouncedSearch}
-            placeholder={t('enter_barcode')}
-            placeholderTextColor="#009DFF"
-            // value={input}
-            // editable={true}
-            blurOnSubmit={false}
-            // onSubmitEditing={Keyboard.dismiss}
-            selectTextOnFocus={true}
-            // recommended
-            showSoftInputOnFocus={key}
-            onFocus={() => setkey(() => true)}
-            // clearTextOnFocus={true}
-          />
-          <TouchableOpacity style={styles.clearButtonX} onPress={handleClear}>
-            <Ionicons name="close" size={25} color="#777" />
-          </TouchableOpacity>
-        </View>
+            />
+          )}
 
-        {loading ? (
-          <ActivityIndicator />
-        ) : (
-          <FlatList
-            onScrollBeginDrag={() => {
-              dispatch(setfetchfocus())
-              setkey(() => false)
-            }}
-            style={styles.list}
-            keyboardDismissMode="on-drag"
-            keyboardShouldPersistTaps="handled"
-            keyExtractor={(el) => el.distribution_id.toString()}
-            data={order}
-            initialNumToRender={3}
-            windowSize={5}
-            renderItem={renderItem}
-            ListEmptyComponent={
-              <Empty text={order?.length <= 0 && t('empty')} />
-            }
-          />
-        )}
-
-        {/* 
+          {/* 
         <FlatList
           onScrollBeginDrag={() => {
             dispatch(setfetchfocus())
@@ -405,46 +415,47 @@ const ScanReceive = ({navigation}) => {
           ListEmptyComponent={<Empty text={order && t('empty')} />}
         /> */}
 
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 10,
-            right: 10,
-            flexDirection: 'row',
-            gap: 10
-          }}>
-          <Chip disabled title={`${pageNumber}/${count}`} />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 10,
+              right: 10,
+              flexDirection: 'row',
+              gap: 10
+            }}>
+            <Chip disabled title={`${pageNumber}/${count}`} />
 
-          <Button
-            disabled={pageNumber === 1}
-            buttonStyle={{borderRadius: 10}}
-            onPress={() => handlePagination(-1)}
-            icon={{
-              name: 'arrow-left',
-              type: 'font-awesome',
-              size: 15,
-              color: 'white'
-            }}
-            iconleft>
-            Prev
-          </Button>
+            <Button
+              disabled={pageNumber === 1}
+              buttonStyle={{borderRadius: 10}}
+              onPress={() => handlePagination(-1)}
+              icon={{
+                name: 'arrow-left',
+                type: 'font-awesome',
+                size: 15,
+                color: 'white'
+              }}
+              iconleft>
+              Prev
+            </Button>
 
-          <Button
-            disabled={pageNumber === count}
-            buttonStyle={{borderRadius: 10}}
-            onPress={() => handlePagination(+1)}
-            icon={{
-              name: 'arrow-right',
-              type: 'font-awesome',
-              size: 15,
-              color: 'white'
-            }}
-            iconRight>
-            Next
-          </Button>
+            <Button
+              disabled={pageNumber === count}
+              buttonStyle={{borderRadius: 10}}
+              onPress={() => handlePagination(+1)}
+              icon={{
+                name: 'arrow-right',
+                type: 'font-awesome',
+                size: 15,
+                color: 'white'
+              }}
+              iconRight>
+              Next
+            </Button>
+          </View>
         </View>
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </>
   )
 }
 

@@ -23,6 +23,7 @@ import {resetToken} from '../../store/slices/tokenSlice'
 import {useDispatch} from 'react-redux'
 import {screenMap} from '../../constants/screenMap'
 import {checkVersion} from '../../apis'
+import NetInfoCheck from '../../components/NetInfoCheck'
 
 const Info = ({navigation}) => {
   const [outing, setOuting] = useState(false)
@@ -126,77 +127,80 @@ const Info = ({navigation}) => {
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <View style={styles.container}>
-      <View style={[styles.infoMenu, styles.shadow]}>
-        <View style={[styles.infoMenuItem, {backgroundColor: '#AE100F'}]}>
-          <View style={styles.groupStart}>
-            {!fething && (
-              <Image
-                resizeMode={'contain'}
-                style={styles.avatar}
-                source={{
-                  uri: `${path.IMG}/${profile?.img_idcard}`
-                }}
-              />
-            )}
+    <>
+      <NetInfoCheck />
+      <View style={styles.container}>
+        <View style={[styles.infoMenu, styles.shadow]}>
+          <View style={[styles.infoMenuItem, {backgroundColor: '#AE100F'}]}>
+            <View style={styles.groupStart}>
+              {!fething && (
+                <Image
+                  resizeMode={'contain'}
+                  style={styles.avatar}
+                  source={{
+                    uri: `${path.IMG}/${profile?.img_idcard}`
+                  }}
+                />
+              )}
 
-            {!fething && (
-              <View>
-                <Text
-                  style={{
-                    color: '#fff'
-                  }}>
-                  {`${profile?.first_name} ${profile?.last_name}`}
-                </Text>
-                <Text
-                  style={{color: '#fff'}}>{`ID:  ${profile?.user_id}`}</Text>
-              </View>
-            )}
+              {!fething && (
+                <View>
+                  <Text
+                    style={{
+                      color: '#fff'
+                    }}>
+                    {`${profile?.first_name} ${profile?.last_name}`}
+                  </Text>
+                  <Text
+                    style={{color: '#fff'}}>{`ID:  ${profile?.user_id}`}</Text>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-        {/* 
+          {/* 
         <InfoItem icon="person" text={t('personal_info')} />
         <InfoItem icon="help-circle" text={t('help')} />
         <InfoItem icon="settings" text={t('setting')} /> */}
+          <TouchableOpacity
+            style={styles.infoMenuItem}
+            onPress={checkVersion_API}>
+            <View style={styles.groupStart}>
+              <Ionicons name={`refresh-outline`} size={25} color={'#AE100F'} />
+              <Text style={styles.infoText}>{'Check for Update'}</Text>
+            </View>
+            <Ionicons
+              style={styles.rightIcon}
+              name={'chevron-forward-outline'}
+              size={25}
+              color={'#777'}
+            />
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
-          style={styles.infoMenuItem}
-          onPress={checkVersion_API}>
-          <View style={styles.groupStart}>
-            <Ionicons name={`refresh-outline`} size={25} color={'#AE100F'} />
-            <Text style={styles.infoText}>{'Check for Update'}</Text>
-          </View>
-          <Ionicons
-            style={styles.rightIcon}
-            name={'chevron-forward-outline'}
-            size={25}
-            color={'#777'}
-          />
+          // disabled={outing}
+          style={[
+            styles.signout,
+            styles.shadow,
+            styles.row,
+            {justifyContent: 'center', gap: 10},
+            outing && {backgroundColor: '#000'}
+          ]}
+          onPress={handleLogout}>
+          {outing ? (
+            <ActivityIndicator size={25} color="#FFF" />
+          ) : (
+            <Ionicons name={'log-out-outline'} size={25} color={'#fff'} />
+          )}
+
+          <Text style={styles.signoutText}>{t('logout')}</Text>
         </TouchableOpacity>
+        <Text style={{color: '#000', alignSelf: 'flex-end'}}>
+          {' '}
+          v.{VersionCheck.getCurrentVersion()}
+        </Text>
       </View>
-
-      <TouchableOpacity
-        // disabled={outing}
-        style={[
-          styles.signout,
-          styles.shadow,
-          styles.row,
-          {justifyContent: 'center', gap: 10},
-          outing && {backgroundColor: '#000'}
-        ]}
-        onPress={handleLogout}>
-        {outing ? (
-          <ActivityIndicator size={25} color="#FFF" />
-        ) : (
-          <Ionicons name={'log-out-outline'} size={25} color={'#fff'} />
-        )}
-
-        <Text style={styles.signoutText}>{t('logout')}</Text>
-      </TouchableOpacity>
-      <Text style={{color: '#000', alignSelf: 'flex-end'}}>
-        {' '}
-        v.{VersionCheck.getCurrentVersion()}
-      </Text>
-    </View>
+    </>
   )
 }
 

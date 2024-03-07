@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import {
   StyleSheet,
   StatusBar,
@@ -9,7 +9,8 @@ import {
   Image,
   Alert,
   Platform,
-  PermissionsAndroid
+  PermissionsAndroid,
+  ActivityIndicator
 } from 'react-native'
 
 import {useTranslation} from 'react-i18next'
@@ -26,11 +27,15 @@ import {resetToken} from '../../store/slices/tokenSlice'
 import {useDispatch} from 'react-redux'
 
 import {CheckOnlineWeb} from '../../apis/loginApi'
+import {Spinning} from '../../components/SpinnerEmpty'
+import NetInfoCheck from '../../components/NetInfoCheck'
 
 const Home = ({navigation}) => {
   const {t, i18n} = useTranslation()
   const {language} = useSettings()
   const {refresh} = useAuthToken()
+
+  const [loading, setloading] = useState(false)
 
   const dispatch = useDispatch()
 
@@ -38,10 +43,12 @@ const Home = ({navigation}) => {
   // == API
   // ----------------------------------------------------------
   const checkRefreshToken = async () => {
+    let result
+
     try {
       const res = await CheckOnlineWeb(refresh)
 
-      return true
+      result = true
     } catch (err) {
       const {error, message, statusCode} = err?.response?.data
       console.log('CheckOnlineWeb', err.response?.data)
@@ -55,8 +62,10 @@ const Home = ({navigation}) => {
         Alert.alert(`${statusCode} ${error}`, message)
       }
 
-      return false
+      result = false
     }
+
+    return result
   }
 
   const requestPermission = async () => {
@@ -98,50 +107,63 @@ const Home = ({navigation}) => {
   // == MAIN
   // ----------------------------------------------------------
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#AE100F" />
+    <>
+      <NetInfoCheck />
 
-      <TouchableOpacity
-        style={[styles.menu, styles.shadow]}
-        onPress={() => navigate(screenMap.LoadToTruck)}>
-        <DisplayMenu
-          text={t('load_to_truck')}
-          fileIcon={LOAD_PRODUCT}
-          x={125}
-          y={125}
-        />
-      </TouchableOpacity>
+      <View style={styles.container}>
+        <StatusBar backgroundColor="#AE100F" />
 
-      <TouchableOpacity
-        style={[styles.menu, styles.shadow]}
-        onPress={() => navigate(screenMap.UnloadFromTruck)}>
-        <DisplayMenu
-          text={t('unload_from_truck')}
-          fileIcon={UNLOAD_PRODUCT}
-          x={125}
-          y={125}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.menu, styles.shadow]}
+          onPress={() => navigate(screenMap.LoadToTruck)}>
+          <DisplayMenu
+            text={t('load_to_truck')}
+            fileIcon={LOAD_PRODUCT}
+            x={125}
+            y={125}
+          />
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.menu, styles.shadow]}
-        onPress={() => navigate(screenMap.Distribution)}>
-        <DisplayMenu
-          text={t('distribution')}
-          fileIcon={PAY_OUT_PRODUCT}
-          x={125}
-          y={125}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.menu, styles.shadow]}
+          onPress={() => navigate(screenMap.UnloadFromTruck)}>
+          <DisplayMenu
+            text={t('unload_from_truck')}
+            fileIcon={UNLOAD_PRODUCT}
+            x={125}
+            y={125}
+          />
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.menu, styles.shadow]}
-        onPress={() => navigate(screenMap.ScanReceive)}>
-        <DisplayMenu text={t('scan_receive')} fileIcon={SCAN} x={125} y={125} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.menu, styles.shadow]}
+          onPress={() => navigate(screenMap.Distribution)}>
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <DisplayMenu
+              text={t('distribution')}
+              fileIcon={PAY_OUT_PRODUCT}
+              x={125}
+              y={125}
+            />
+          )}
+        </TouchableOpacity>
 
-      <View style={{width: '44%', height: 150, margin: '2%'}}></View>
-    </View>
+        <TouchableOpacity
+          style={[styles.menu, styles.shadow]}
+          onPress={() => navigate(screenMap.ScanReceive)}>
+          <DisplayMenu
+            text={t('scan_receive')}
+            fileIcon={SCAN}
+            x={125}
+            y={125}
+          />
+        </TouchableOpacity>
+
+        <View style={{width: '44%', height: 150, margin: '2%'}}></View>
+      </View>
+    </>
   )
 }
 

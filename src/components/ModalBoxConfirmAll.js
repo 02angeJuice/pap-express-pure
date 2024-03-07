@@ -10,9 +10,8 @@ import {
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {useTranslation} from 'react-i18next'
-import CustomText from './CustomText'
 
-const ModalHeaderInfo = ({data, open, handleOpen}) => {
+const ModalBoxConfirmAll = ({data, open, handleOpen}) => {
   const {t} = useTranslation()
   // console.log(data)
 
@@ -37,12 +36,9 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
       <View style={styles.modalContainer}>
         <View style={styles.container}>
           <View style={styles.nav}>
-            <CustomText
-              size="md"
-              color="#FFF"
-              text={t('receipt_detail')}
-              style={{paddingVertical: 15, paddingHorizontal: 10}}
-            />
+            <Text style={[styles.textNav, {fontSize: 20}]}>
+              {t('receipt_detail')}
+            </Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => handleOpen(!open)}>
@@ -65,11 +61,12 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                <CustomText
-                  size="md"
-                  text={`${t('container_no')}: ${data?.container_no || '--'}`}
-                />
-                <CustomText size="md" text={data?.customer_id || '--'} />
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('container_no')}: {data?.container_no || '--'}
+                </Text>
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {data?.customer_id || '--'}
+                </Text>
               </View>
 
               <View
@@ -80,30 +77,23 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
                   margin: 2
                 }}
               />
-              <CustomText
-                size="md"
-                text={`${t('date_departure')}: ${data?.date_departure || '--'}`}
-              />
-              <CustomText
-                size="md"
-                text={`${t('date_arrival')}: ${data?.arrival_date || '--'}`}
-              />
-              <CustomText
-                size="md"
-                text={`${t('car_regis')}: ${
-                  data?.Chinese_car_registration || '--'
-                }`}
-              />
-              <CustomText
-                size="md"
-                text={`${t('driver')}: ${data?.Chinese_driver || '--'}`}
-              />
-              <CustomText
-                size="md"
-                text={`${t('transport_type')}: ${
-                  data?.shipment === 'car' ? t('car') : t('ship') || '--'
-                }`}
-              />
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('date_departure')}: {data?.date_departure || '--'}
+              </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('date_arrival')}: {data?.arrival_date || '--'}
+              </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('car_regis')}: {data?.Chinese_car_registration || '--'}
+              </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('driver')}: {data?.Chinese_driver || '--'}
+              </Text>
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('transport_type')}:{' '}
+                {data?.shipment === 'car' ? t('car') : t('ship') || '--'}
+              </Text>
+
               <View
                 style={{
                   flexDirection: 'row',
@@ -111,15 +101,18 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
                   alignItems: 'center',
                   gap: 10
                 }}>
-                <CustomText size="md" text={`${t('phone')}: `} />
+                <Text style={{color: '#000', fontSize: 20}}>{t('phone')}:</Text>
+
                 <TouchableOpacity
                   disabled={!data?.phone}
                   onPress={() => handleCallPress(data?.phone)}>
-                  <CustomText
-                    size="md"
-                    color={data?.phone ? '#007ECC' : '#000'}
-                    text={data?.phone || '--'}
-                  />
+                  <Text
+                    style={{
+                      color: data?.phone ? '#007ECC' : '#000',
+                      fontSize: 20
+                    }}>
+                    {data?.phone || '--'}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <View
@@ -129,17 +122,22 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
                   alignItems: 'center',
                   gap: 10
                 }}>
-                <CustomText size="md" text={`${t('phone2')}: `} />
+                <Text style={{color: '#000', fontSize: 20}}>
+                  {t('phone2')}:
+                </Text>
                 <TouchableOpacity
                   disabled={!data?.phone_spare}
                   onPress={() => handleCallPress(data?.phone_spare)}>
-                  <CustomText
-                    size="md"
-                    color={data?.phone_spare ? '#007ECC' : '#000'}
-                    text={data?.phone_spare || '--'}
-                  />
+                  <Text
+                    style={{
+                      color: data?.phone_spare ? '#007ECC' : '#000',
+                      fontSize: 20
+                    }}>
+                    {data?.phone_spare || '--'}
+                  </Text>
                 </TouchableOpacity>
               </View>
+
               <View
                 style={{
                   borderStyle: 'dashed',
@@ -148,10 +146,9 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
                   margin: 2
                 }}
               />
-              <CustomText
-                size="md"
-                text={`${t('status')}: ${data?.status || '--'}`}
-              />
+              <Text style={{color: '#000', fontSize: 20}}>
+                {t('status')}: {data?.status}
+              </Text>
             </View>
           </View>
 
@@ -159,11 +156,15 @@ const ModalHeaderInfo = ({data, open, handleOpen}) => {
             <TouchableOpacity
               style={[styles.button, {backgroundColor: '#FFF'}]}
               onPress={() => handleOpen(false)}>
-              <CustomText
-                size="md"
-                text={t('close')}
-                style={{fontWeight: 'bold', alignSelf: 'center'}}
-              />
+              <Text
+                style={{
+                  color: '#000',
+                  fontWeight: 'bold',
+                  alignSelf: 'center',
+                  fontSize: 20
+                }}>
+                {t('close')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -217,4 +218,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default ModalHeaderInfo
+export default ModalBoxConfirmAll
