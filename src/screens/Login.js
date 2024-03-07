@@ -158,10 +158,18 @@ const Login = ({navigation}) => {
         <ImageBackground style={styles.image} resizeMode="cover" source={LOGIN}>
           <View style={styles.groupForm}>
             <View style={styles.groupInput}>
-              <Input name={t('username')} type="username" control={control} />
+              <Input
+                placeholder={t('username')}
+                name="username"
+                control={control}
+              />
             </View>
             <View style={styles.groupInput}>
-              <Input name={t('password')} type="password" control={control} />
+              <Input
+                placeholder={t('password')}
+                name="password"
+                control={control}
+              />
             </View>
 
             <TouchableOpacity
@@ -204,11 +212,11 @@ const Login = ({navigation}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const Input = ({name, type, control}) => {
+const Input = ({placeholder, name, control}) => {
   const {field} = useController({
     control,
     defaultValue: '',
-    name: type
+    name: name
   })
 
   return (
@@ -216,8 +224,8 @@ const Input = ({name, type, control}) => {
       style={[styles.shadow, styles.input, {color: '#000', fontSize: 20}]}
       editable={true}
       maxLength={16}
-      secureTextEntry={type === 'password'}
-      placeholder={`${name}`}
+      secureTextEntry={name === 'password'}
+      placeholder={`${placeholder}`}
       placeholderTextColor="gray"
       value={field.value}
       onChangeText={field.onChange}
