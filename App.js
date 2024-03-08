@@ -18,8 +18,6 @@ import AppScreen from './src/screens'
 import {RefreshContextProvider} from './src/contexts/RefreshContext.js'
 import {ModalScanContextProvider} from './src/contexts/ModalScanContext.js'
 
-import {GestureHandlerRootView} from 'react-native-gesture-handler'
-
 const styles = StyleSheet.create({
   container: {
     flex: 1
@@ -28,36 +26,34 @@ const styles = StyleSheet.create({
 
 export default () => {
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <I18nextProvider i18n={i18n}>
-            <ThemeProvider>
-              <ToastProvider
-                renderType={{
-                  custom_type: (toast) => (
-                    <View
-                      style={{
-                        padding: 15,
-                        backgroundColor: 'grey',
-                        zIndex: 999
-                      }}>
-                      <Text>{toast.message}</Text>
-                    </View>
-                  )
-                }}>
-                <RefreshContextProvider>
-                  <ModalScanContextProvider>
-                    <NavigationContainer>
-                      <AppScreen />
-                    </NavigationContainer>
-                  </ModalScanContextProvider>
-                </RefreshContextProvider>
-              </ToastProvider>
-            </ThemeProvider>
-          </I18nextProvider>
-        </PersistGate>
-      </Provider>
-    </GestureHandlerRootView>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider>
+            <ToastProvider
+              renderType={{
+                custom_type: (toast) => (
+                  <View
+                    style={{
+                      padding: 15,
+                      backgroundColor: 'grey',
+                      zIndex: 999
+                    }}>
+                    <Text>{toast.message}</Text>
+                  </View>
+                )
+              }}>
+              <RefreshContextProvider>
+                <ModalScanContextProvider>
+                  <NavigationContainer>
+                    <AppScreen />
+                  </NavigationContainer>
+                </ModalScanContextProvider>
+              </RefreshContextProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </I18nextProvider>
+      </PersistGate>
+    </Provider>
   )
 }

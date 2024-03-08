@@ -590,7 +590,7 @@ const LoadToTruck = ({navigation}) => {
             />
           )}
 
-          <ImageCarousel />
+          {/* <ImageCarousel /> */}
 
           <View>
             {headerSelected && (
