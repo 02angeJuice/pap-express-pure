@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
   nav: {
     display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     backgroundColor: '#AE100F',
     borderRadius: 5
   },

@@ -10,8 +10,9 @@ import {
 } from 'react-native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {useTranslation} from 'react-i18next'
+import CustomText from './CustomText'
 
-const ModalBoxConfirmAll = ({data, open, handleOpen}) => {
+const ModalBoxConfirmAll = ({handleConfirmAll, open, handleOpen}) => {
   const {t} = useTranslation()
   // console.log(data)
 
@@ -37,7 +38,7 @@ const ModalBoxConfirmAll = ({data, open, handleOpen}) => {
         <View style={styles.container}>
           <View style={styles.nav}>
             <Text style={[styles.textNav, {fontSize: 20}]}>
-              {t('receipt_detail')}
+              {t('load_to_truck_confirm')}
             </Text>
             <TouchableOpacity
               style={styles.closeButton}
@@ -48,128 +49,71 @@ const ModalBoxConfirmAll = ({data, open, handleOpen}) => {
           <View
             style={{
               marginVertical: 5,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
+              paddingHorizontal: 15,
+              paddingVertical: 25,
               backgroundColor: '#fff',
-              borderRadius: 5
+              borderRadius: 5,
+              gap: 10
             }}>
-            <View>
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                <Text style={{color: '#000', fontSize: 20}}>
-                  {t('container_no')}: {data?.container_no || '--'}
-                </Text>
-                <Text style={{color: '#000', fontSize: 20}}>
-                  {data?.customer_id || '--'}
-                </Text>
-              </View>
+            <CustomText
+              size="lg"
+              text={t('confirmed_partial_title')}
+              // style={{textAlign: 'center'}}
+            />
 
-              <View
-                style={{
-                  borderStyle: 'dashed',
-                  borderColor: '#999',
-                  borderBottomWidth: 0.5,
-                  margin: 2
-                }}
-              />
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('date_departure')}: {data?.date_departure || '--'}
-              </Text>
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('date_arrival')}: {data?.arrival_date || '--'}
-              </Text>
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('car_regis')}: {data?.Chinese_car_registration || '--'}
-              </Text>
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('driver')}: {data?.Chinese_driver || '--'}
-              </Text>
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('transport_type')}:{' '}
-                {data?.shipment === 'car' ? t('car') : t('ship') || '--'}
-              </Text>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  gap: 10
-                }}>
-                <Text style={{color: '#000', fontSize: 20}}>{t('phone')}:</Text>
-
-                <TouchableOpacity
-                  disabled={!data?.phone}
-                  onPress={() => handleCallPress(data?.phone)}>
-                  <Text
-                    style={{
-                      color: data?.phone ? '#007ECC' : '#000',
-                      fontSize: 20
-                    }}>
-                    {data?.phone || '--'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  gap: 10
-                }}>
-                <Text style={{color: '#000', fontSize: 20}}>
-                  {t('phone2')}:
-                </Text>
-                <TouchableOpacity
-                  disabled={!data?.phone_spare}
-                  onPress={() => handleCallPress(data?.phone_spare)}>
-                  <Text
-                    style={{
-                      color: data?.phone_spare ? '#007ECC' : '#000',
-                      fontSize: 20
-                    }}>
-                    {data?.phone_spare || '--'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View
-                style={{
-                  borderStyle: 'dashed',
-                  borderColor: '#999',
-                  borderBottomWidth: 0.5,
-                  margin: 2
-                }}
-              />
-              <Text style={{color: '#000', fontSize: 20}}>
-                {t('status')}: {data?.status}
-              </Text>
-            </View>
+            <CustomText
+              size="lg"
+              text={`** ${t('confirmed_partial_detail')}`}
+              // style={{textAlign: 'center'}}
+            />
           </View>
 
-          <View>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 10
+            }}>
             <TouchableOpacity
-              style={[styles.button, {backgroundColor: '#FFF'}]}
-              onPress={() => handleOpen(false)}>
-              <Text
-                style={{
-                  color: '#000',
-                  fontWeight: 'bold',
-                  alignSelf: 'center',
-                  fontSize: 20
-                }}>
-                {t('close')}
-              </Text>
+              style={[
+                styles.row,
+                styles.button,
+                {justifyContent: 'center', backgroundColor: '#FFE7E7'}
+              ]}
+              onPress={() => handleConfirmAll('partial')}>
+              <Text style={styles.textButton}>{t('confirmed_partial')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.row,
+                styles.button,
+                {justifyContent: 'center', backgroundColor: '#E7FFDF'}
+              ]}
+              onPress={() => handleConfirmAll('all')}>
+              <Text style={styles.textButton}>{t('confirmed_all')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
     </Modal>
+  )
+}
+
+const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
+  return (
+    <TouchableOpacity
+      style={[styles.button, styles.shadow, {backgroundColor: backgroundColor}]}
+      onPress={onPress}>
+      <CustomText
+        size="md"
+        color={color}
+        text={'dsdsds'}
+        style={{fontWeight: 'bold', textAlign: 'center'}}
+      />
+    </TouchableOpacity>
   )
 }
 
@@ -192,6 +136,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   nav: {
     display: 'flex',
     flexDirection: 'row',
@@ -211,10 +160,25 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingRight: 15
   },
+
   button: {
-    backgroundColor: '#FF7676',
-    padding: 10,
-    borderRadius: 5
+    backgroundColor: '#fff',
+    borderRadius: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 10,
+    alignItems: 'center',
+    width: '50%'
+  },
+  textButton: {
+    color: '#000',
+    fontSize: 20
+  },
+  shadow: {
+    shadowOffset: {width: 0, height: 2},
+    shadowColor: '#171717',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2
   }
 })
 

@@ -1,58 +1,64 @@
-import React, {useEffect, useState, useRef} from 'react'
+import React, {useEffect, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {
   View,
   TextInput,
   TouchableOpacity,
   Text,
+  Alert,
+  Platform,
   Modal,
+  TouchableWithoutFeedback,
   KeyboardAvoidingView
 } from 'react-native'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import Clipboard from '@react-native-clipboard/clipboard'
 
-const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
-  const [inputValue, setInputValue] = useState('')
-  const [clip, setClip] = useState('')
+import Ionicons from 'react-native-vector-icons/Ionicons'
+
+const ModalContainer = ({
+  open,
+  handleOpen,
+  container_no,
+  setContainerOk,
+  containerOk
+}) => {
+  const [inputValue, setInputValue] = useState(
+    containerOk ? containerOk : container_no
+  )
+
   const {t} = useTranslation()
 
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
   useEffect(() => {
-    // You can use this effect to check the clipboard value when the component mounts
-    getClipboardContent()
-  }, [])
+    container_no && setInputValue(container_no)
+  }, [container_no])
 
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
-  const getClipboardContent = async () => {
-    try {
-      const clipboardContent = await Clipboard.getString()
-      console.log('Clipboard Content:', clipboardContent)
-      setClip(clipboardContent)
-    } catch (error) {
-      console.error('Error getting clipboard content:', error)
-    }
-  }
-
   const handleInputChange = (text) => {
     setInputValue(text)
   }
 
   const handleConfirm = () => {
-    setBarcode(`${clip}/${inputValue}`)
-    setClip('')
-    setInputValue('')
-    // Clipboard.setString('')
-    onClose()
+    if (inputValue == '00') {
+      alertReUse('container_required', 'container_required_detail')
+    } else {
+      setContainerOk(inputValue)
+      handleOpen(!open)
+    }
   }
 
   const handleClose = () => {
-    setInputValue('')
-    // Clipboard.setString('')
-    onClose()
+    setInputValue(containerOk ? containerOk : container_no)
+    handleOpen(!open)
+  }
+
+  const alertReUse = (msg, detail) => {
+    Platform.OS === 'android'
+      ? Alert.alert(t(msg), t(detail))
+      : alert(t(msg), t(detail))
   }
 
   // ----------------------------------------------------------
@@ -60,16 +66,19 @@ const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
   // ----------------------------------------------------------
   return (
     <Modal
-      visible={visible}
+      visible={open}
       transparent={true}
       statusBarTranslucent={true}
+      // // animationType="fade"
       onRequestClose={handleClose}>
       {/* <TouchableWithoutFeedback onPress={handleClose}> */}
       <View style={styles.modalContainer}>
         <KeyboardAvoidingView style={{flex: 1}} behavior="padding">
           <View style={styles.container}>
             <View style={styles.nav}>
-              <Text style={styles.textNav}>{t('enter_barcode_title')}</Text>
+              <Text style={[styles.textNav, {fontSize: 20}]}>
+                {t('item_container')}
+              </Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleClose}>
@@ -85,25 +94,16 @@ const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
                 backgroundColor: '#fff',
                 borderRadius: 5
               }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-evenly',
-                  alignItems: 'center'
-                }}>
-                <Text style={{color: '#000', fontSize: 16}}>{clip}/</Text>
-                <TextInput
-                  onChangeText={handleInputChange}
-                  style={styles.textInput}
-                  value={inputValue}
-                  placeholder={t('enter_barcode_box')}
-                  placeholderTextColor="#999"
-                  selectTextOnFocus={true}
-                  // autoFocus={true}
-                  // showSoftInputOnFocus={true}
-                  keyboardType="numeric"
-                />
-              </View>
+              <TextInput
+                onChangeText={handleInputChange}
+                style={styles.textInput}
+                // defaultValue={container_no}
+                value={inputValue}
+                placeholder={t('enter_container')}
+                placeholderTextColor="#000"
+                selectTextOnFocus={true}
+                keyboardType="numeric"
+              />
             </View>
 
             <View
@@ -111,7 +111,9 @@ const BarcodeInputAlert = ({visible, onClose, item_no, setBarcode}) => {
                 display: 'flex',
                 flexDirection: 'row',
                 justifyContent: 'flex-end',
+
                 alignItems: 'center',
+                // width: '95%',
                 gap: 10
               }}>
               <TouchableOpacity
@@ -201,7 +203,7 @@ const styles = {
     backgroundColor: '#fff',
     borderRadius: 5,
     color: '#000',
-    fontSize: 20
+    fontSize: 25
   },
   button: {
     backgroundColor: '#fff',
@@ -216,4 +218,4 @@ const styles = {
   }
 }
 
-export default React.memo(BarcodeInputAlert)
+export default React.memo(ModalContainer)

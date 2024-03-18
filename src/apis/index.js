@@ -64,7 +64,6 @@ export const fetchHeaderSelect = async (receipt_no) =>
   await axios.post(`${path.URL}/api/hh/receipt/all`, {
     receipt_no: receipt_no
   })
-// await axios.post(`${path.URL}/api/hh/receipt/${receipt_no}`)
 
 export const fetchDetail = async (receipt_no) =>
   await axios.post(`${path.URL}/api/hh/receipt/${receipt_no}/details`)
@@ -82,7 +81,6 @@ export const fetchDetailSelect = async (obj) =>
 // export const fetchOrderSelect = async (distribution_id) =>
 //   await axios.post(`${path.URL}/api/hh/distribute/${distribution_id}`)
 // ----------------------------------------------------------------
-
 export const hh_sel_distributes_by_status = async (status) =>
   await axios.post(`${path.URL}/api/hh/distribute/all`, {
     status: status
@@ -116,6 +114,32 @@ export const fetchOrderItem = async (obj) =>
   await axios.post(
     `${path.URL}/api/hh/distribute/${obj.order_id}/detail/${obj.item_id}`
   )
+
+export const hh_confirm_all = async (obj, token) => {
+  try {
+    const res = await axios.post(
+      `${path.URL}/api/hh/receipt/hh_confirm_all`,
+      obj,
+      {headers: {Authorization: `Bearer ${token}`}}
+    )
+    return res?.data
+  } catch (error) {
+    throw new Error(error.response?.data.statusCode)
+  }
+}
+
+export const hh_confirm_partial = async (obj, token) => {
+  try {
+    const res = await axios.post(
+      `${path.URL}/api/hh/receipt/hh_confirm_partial`,
+      obj,
+      {headers: {Authorization: `Bearer ${token}`}}
+    )
+    return res?.data
+  } catch (error) {
+    throw new Error(error.response?.data.statusCode)
+  }
+}
 
 // ----------------------------------------------------------
 // == PATCH
@@ -181,20 +205,30 @@ export const sendConfirm = async (obj, token) =>
       throw new Error(err.response?.data.statusCode)
     })
 
-export const sendSignature = async (obj, token) =>
-  await axios({
-    method: 'patch',
-    url: `${path.JAM}/admin/SaveSignature`,
-    data: obj,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${token}`
-    }
-  })
-    .then((res) => console.log('sendSignature SUCCESS, STATUS:', res.status))
-    .catch((err) => {
-      throw new Error(err.response?.data.statusCode)
+export const sendSignature = async (obj, token) => {
+  // .then((res) => console.log('sendSignature SUCCESS, STATUS:', res.status))
+  //   .catch((err) => {
+  //     throw new Error(err.response?.data.statusCode)
+  //   })
+
+  console.log(obj)
+
+  try {
+    const result = await axios({
+      method: 'patch',
+      url: `${path.JAM}/admin/SaveSignature`,
+      data: obj,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
     })
+
+    return result
+  } catch (err) {
+    throw new Error(err.response?.data.statusCode)
+  }
+}
 
 export const sendItemConfirm = async (obj, token) =>
   await axios

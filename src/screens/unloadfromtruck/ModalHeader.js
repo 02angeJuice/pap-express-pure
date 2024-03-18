@@ -13,7 +13,7 @@ import {Empty} from '../../components/SpinnerEmpty'
 import {fetchHeader} from '../../apis'
 import {useTranslation} from 'react-i18next'
 
-const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
+const ModalHeader = ({onPress, open, handleOpen, headerSelected}) => {
   const {t} = useTranslation()
 
   const [header, setHeader] = useState(null)
@@ -45,6 +45,7 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
       <HeaderItem
         item={item}
         onPress={onPress}
+        handleOpen={handleOpen}
         headerSelected={headerSelected}
       />
     ),
@@ -55,18 +56,17 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
   // ----------------------------------------------------------
   return (
     <Modal
-      visible={visible}
+      visible={open}
       transparent={true}
       statusBarTranslucent={true}
       // animationType="slide"
-      onRequestClose={() => setVisible(!visible)}>
+      onRequestClose={() => handleOpen(!open)}>
       <View style={styles.modalContainer}>
         <View style={styles.nav}>
           <Text style={styles.textNav}>{t('unload_from_truck')}</Text>
           <TouchableOpacity
             style={styles.closeButton}
-            // onPress={() => setVisible(false)}
-            onPress={setVisible}>
+            onPress={() => handleOpen(!open)}>
             <Ionicons name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -93,8 +93,10 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
             onPress={() => setStatus('ONSHIP')}
           />
           <StatusButtonComponent
-            color="#F78EA6"
-            backgroundColor="#FF003C"
+            color="#95ed66"
+            backgroundColor="#4AB800"
+            // color="#F78EA6"
+            // backgroundColor="#FF003C"
             text="ARRIVED"
             onPress={() => setStatus('ARRIVED')}
           />
@@ -114,7 +116,7 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
           fontWeight="bold"
           color="#000"
           backgroundColor="#FFF"
-          onPress={setVisible}
+          onPress={() => handleOpen(!open)}
         />
       </View>
     </Modal>
@@ -124,11 +126,15 @@ const ModalHeader = ({onPress, visible, setVisible, headerSelected}) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const HeaderItem = React.memo(({item, onPress, headerSelected}) => {
+const HeaderItem = React.memo(({item, onPress, handleOpen, headerSelected}) => {
   const {t} = useTranslation()
 
   return (
-    <TouchableOpacity style={[styles.item]} onPress={() => onPress(item)}>
+    <TouchableOpacity
+      style={[styles.item]}
+      onPress={() => {
+        onPress(item), handleOpen(false)
+      }}>
       <View
         key={item?.receipt_no}
         style={[
@@ -414,8 +420,10 @@ const styles = StyleSheet.create({
     color: '#003F67'
   },
   ARRIVED: {
-    backgroundColor: '#FF003C',
-    color: '#4A0011'
+    // backgroundColor: '#FF003C',
+    // color: '#4A0011'
+    backgroundColor: '#4AB800',
+    color: '#183B00'
   }
 })
 

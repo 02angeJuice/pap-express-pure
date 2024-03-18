@@ -93,8 +93,6 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
     }
   }
 
-  console.log(box?.[0])
-
   // ----------------------------------------------------------
   // == MAIN
   // ----------------------------------------------------------
@@ -111,18 +109,16 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
             }
           ]}>
           <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
-            <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
+            <CustomText size="md" text="#" />
           </View>
           <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
-            <Text
-              style={{
-                color: box?.every((el) => el.is_scan === 'IDLE')
-                  ? 'magenta'
-                  : '#000',
-                fontSize: 16
-              }}>{`(${
-              box?.filter((el) => el.is_scan === 'IDLE')?.length || 0
-            }/${box?.length || 0})`}</Text>
+            <CustomText
+              size="sm"
+              color={box?.every((el) => el.is_scan === 'IDLE') && '#FF00FF'}
+              text={`(${
+                box?.filter((el) => el.is_scan === 'IDLE')?.length || 0
+              }/${box?.length || 0})`}
+            />
           </View>
 
           <View style={{flex: 2, alignItems: 'center'}}>
@@ -144,7 +140,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
             onPress={() => setAlertBarcode(!alertBarcode)}>
             <Ionicons
               style={styles.rightIcon}
-              name={'hammer-outline'}
+              name="hammer-outline"
               size={30}
               color="#eee"
             />
@@ -161,12 +157,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
                 nestedScrollEnabled={true}
                 style={styles.modalContainer}>
                 {box?.map((item, idx) => (
-                  <ScanItem
-                    idx={idx + 1}
-                    key={idx}
-                    item={item}
-                    box_id={item.box_id?.split('/')[1]}
-                  />
+                  <ScanItem idx={idx + 1} key={idx} item={item} />
                 ))}
               </ScrollView>
             </TouchableWithoutFeedback>
@@ -182,7 +173,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
         <Ionicons
           name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
           size={25}
-          color={'#777'}
+          color="#777"
         />
       </TouchableOpacity>
 
@@ -200,7 +191,7 @@ const Scan = forwardRef(({detail, data, orderStatus, navigation}, ref) => {
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, box_id, idx}) => {
+const ScanItem = React.memo(({item, idx}) => {
   return (
     <View
       style={[
@@ -209,11 +200,11 @@ const ScanItem = React.memo(({item, box_id, idx}) => {
           justifyContent: 'space-around',
           backgroundColor:
             item?.is_scan === 'IDLE'
-              ? '#ABFC7430'
+              ? '#F3FFEC'
               : item?.is_scan !== 'SCANED'
-              ? '#ccc'
+              ? '#eaeaea'
               : null,
-          borderTopWidth: 1,
+          borderTopWidth: 0.9,
           borderColor: '#ccc',
           borderStyle: 'dashed'
         }
@@ -224,7 +215,8 @@ const ScanItem = React.memo(({item, box_id, idx}) => {
       <View style={{width: '40%', alignItems: 'center'}}>
         <CustomText
           size="md"
-          text={`${item?.item_serial}-${item.num_box}` || ''}
+          // text={`${item?.item_serial} ${item.num_box}/${allBox}` || ''}
+          text={`${item?.item_serial} ${item?.num_box_label}` || ''}
         />
       </View>
       <View style={{width: '20%', alignItems: 'center'}}>
@@ -232,26 +224,11 @@ const ScanItem = React.memo(({item, box_id, idx}) => {
       </View>
       <View style={{width: '20%', alignItems: 'center'}}>
         {item?.is_scan === 'IDLE' ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'checkmark-circle-outline'}
-            size={25}
-            color={'green'}
-          />
+          <Ionicons name="checkmark-circle-outline" size={25} color="#32A300" />
         ) : item?.is_scan !== 'SCANED' ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'close-circle-outline'}
-            size={20}
-            color={'red'}
-          />
+          <Ionicons name="close-circle-outline" size={25} color="#FF4646" />
         ) : (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'ellipsis-horizontal-outline'}
-            size={20}
-            color={'#000'}
-          />
+          <Ionicons name="ellipsis-horizontal-outline" size={25} color="#000" />
         )}
       </View>
     </View>

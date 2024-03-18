@@ -40,15 +40,9 @@ import Scan from './Scan'
 import TabViewList_2 from './TabViewList_2'
 import ModalHeaderInfo from '../../components/ModalHeaderInfo'
 import NetInfoCheck from '../../components/NetInfoCheck'
-
-const ToggleState = {
-  HEADER: 'HEADER',
-  INFO: 'INFO',
-  SCAN: 'SCAN',
-  DETAIL: 'DETAIL',
-  SIGNATURE: 'SIGNATURE',
-  CAMERA: 'CAMERA'
-}
+import ModalSignaturePad from '../../components/ModalSignaturePad'
+import ModalImagePicker from '../../components/ModalImagePicker'
+import CustomText from '../../components/CustomText'
 
 const UnloadFromTruck = ({navigation}) => {
   const [loading, setLoading] = useState(false)
@@ -57,11 +51,30 @@ const UnloadFromTruck = ({navigation}) => {
   const [headerSelected, setHeaderSelected] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailSelected, setDetailSelected] = useState(null)
+
   const [currentSign, setCurrentSign] = useState(null)
   const [currentImage, setCurrentImage] = useState(null)
+
+  const [img1, setImg1] = useState(null)
+  const [img2, setImg2] = useState(null)
+  const [img3, setImg3] = useState(null)
+  const [img4, setImg4] = useState(null)
+  const [img5, setImg5] = useState(null)
+
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
   const [input, setInput] = useState('')
+
+  const [openHeaderList, setOpenHeaderList] = useState(false)
+  const [openHeaderInfo, setOpenHeaderInfo] = useState(false)
+
+  const [openSignature, setOpenSignature] = useState(false)
+
+  const [openImg1, setOpenImg1] = useState(false)
+  const [openImg2, setOpenImg2] = useState(false)
+  const [openImg3, setOpenImg3] = useState(false)
+  const [openImg4, setOpenImg4] = useState(false)
+  const [openImg5, setOpenImg5] = useState(false)
 
   const [redata, setredata] = useState(false)
 
@@ -116,13 +129,7 @@ const UnloadFromTruck = ({navigation}) => {
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
-  const toggleSetState = (newToggleState) => {
-    if (toggleState === newToggleState) {
-      setToggleState(null) // Toggle off if pressed again
-    } else {
-      setToggleState(newToggleState)
-    }
-  }
+
   const search = () => {
     input?.length !== 0 && fetchHeaderSelect_API(input)
   }
@@ -175,8 +182,21 @@ const UnloadFromTruck = ({navigation}) => {
   const onSave = async () => {
     setLoading(true)
 
-    const imgName = currentImage?.split('/').pop()
-    const imgType = imgName?.split('.').pop()
+    const imgName1 = img1?.split('/').pop()
+    const imgType1 = imgName1?.split('.').pop()
+
+    const imgName2 = img2?.split('/').pop()
+    const imgType2 = imgName2?.split('.').pop()
+
+    const imgName3 = img3?.split('/').pop()
+    const imgType3 = imgName3?.split('.').pop()
+
+    const imgName4 = img4?.split('/').pop()
+    const imgType4 = imgName4?.split('.').pop()
+
+    const imgName5 = img5?.split('/').pop()
+    const imgType5 = imgName5?.split('.').pop()
+
     const signName = currentSign?.split('/').pop()
     const signType = signName?.split('.').pop()
 
@@ -193,17 +213,51 @@ const UnloadFromTruck = ({navigation}) => {
     // ==============================
     const obj = new FormData()
 
-    obj.append('files', {
-      uri: currentSign,
-      name: `SIGNATURE-1.${signType}`,
-      type: `image/${signType}`
-    })
-
-    currentImage !== null
+    currentSign !== null
       ? obj.append('files', {
-          uri: currentImage,
-          name: `ITEM-02.${imgType}`,
-          type: `image/${imgType}`
+          uri: currentSign,
+          name: `SIGNATURE-1.${signType}`,
+          type: `image/${signType}`
+        })
+      : obj.append('files', null)
+
+    img1 !== null
+      ? obj.append('files', {
+          uri: img1,
+          name: `ITEM-01.${imgType1}`,
+          type: `image/${imgType1}`
+        })
+      : obj.append('files', null)
+
+    img2 !== null
+      ? obj.append('files', {
+          uri: img2,
+          name: `ITEM-02.${imgType2}`,
+          type: `image/${imgType2}`
+        })
+      : obj.append('files', null)
+
+    img3 !== null
+      ? obj.append('files', {
+          uri: img3,
+          name: `ITEM-03.${imgType3}`,
+          type: `image/${imgType3}`
+        })
+      : obj.append('files', null)
+
+    img4 !== null
+      ? obj.append('files', {
+          uri: img4,
+          name: `ITEM-04.${imgType4}`,
+          type: `image/${imgType4}`
+        })
+      : obj.append('files', null)
+
+    img5 !== null
+      ? obj.append('files', {
+          uri: img5,
+          name: `ITEM-05.${imgType5}`,
+          type: `image/${imgType5}`
         })
       : obj.append('files', null)
 
@@ -245,6 +299,13 @@ const UnloadFromTruck = ({navigation}) => {
 
     setredata((el) => !el)
 
+    setCurrentSign(null)
+    setImg1(null)
+    setImg2(null)
+    setImg3(null)
+    setImg4(null)
+    setImg5(null)
+
     setToggleButton(false)
     setLoading(false)
     // }
@@ -262,6 +323,49 @@ const UnloadFromTruck = ({navigation}) => {
   return (
     <>
       <NetInfoCheck />
+      <ModalHeader
+        headerSelected={headerSelected?.receipt_no}
+        onPress={handleSetHeaderSelected}
+        open={openHeaderList}
+        handleOpen={setOpenHeaderList}
+      />
+      <ModalHeaderInfo
+        data={headerSelected}
+        open={openHeaderInfo}
+        handleOpen={setOpenHeaderInfo}
+      />
+
+      <ModalSignaturePad
+        set={setCurrentSign}
+        open={openSignature}
+        handleOpen={setOpenSignature}
+      />
+      <ModalImagePicker
+        set={setImg1}
+        open={openImg1}
+        handleOpen={setOpenImg1}
+      />
+      <ModalImagePicker
+        set={setImg2}
+        open={openImg2}
+        handleOpen={setOpenImg2}
+      />
+      <ModalImagePicker
+        set={setImg3}
+        open={openImg3}
+        handleOpen={setOpenImg3}
+      />
+      <ModalImagePicker
+        set={setImg4}
+        open={openImg4}
+        handleOpen={setOpenImg4}
+      />
+      <ModalImagePicker
+        set={setImg5}
+        open={openImg5}
+        handleOpen={setOpenImg5}
+      />
+
       <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
         <ScrollView
           style={styles.container}
@@ -316,7 +420,7 @@ const UnloadFromTruck = ({navigation}) => {
                     justifyContent: 'center',
                     alignItems: 'center'
                   }}
-                  onPress={() => toggleSetState(ToggleState.INFO)}>
+                  onPress={() => setOpenHeaderInfo(!openHeaderInfo)}>
                   <Ionicons
                     style={styles.rightIcon}
                     name={'newspaper-outline'}
@@ -329,12 +433,9 @@ const UnloadFromTruck = ({navigation}) => {
                   style={[
                     styles.clearButton,
                     styles.shadow,
-                    {
-                      backgroundColor: '#2a52be',
-                      flex: 0.3
-                    }
+                    {backgroundColor: '#2a52be', flex: 0.3}
                   ]}
-                  onPress={() => toggleSetState(ToggleState.HEADER)}>
+                  onPress={() => setOpenHeaderList(!openHeaderList)}>
                   <View
                     style={[styles.row, {justifyContent: 'center', gap: 1}]}>
                     <Ionicons
@@ -450,7 +551,7 @@ const UnloadFromTruck = ({navigation}) => {
               </View>
             </View>
           </View>
-
+          {/* 
           {toggleState === ToggleState.HEADER && (
             <ModalHeader
               headerSelected={headerSelected?.receipt_no}
@@ -458,7 +559,7 @@ const UnloadFromTruck = ({navigation}) => {
               visible={toggleState === ToggleState.HEADER}
               setVisible={() => toggleSetState(null)}
             />
-          )}
+          )} */}
 
           {headerSelected && <TabViewList_2 detail={detail} />}
           {headerSelected && (
@@ -469,16 +570,14 @@ const UnloadFromTruck = ({navigation}) => {
               orderStatus={headerSelected?.status}
             />
           )}
-          {headerSelected && toggleState === ToggleState.INFO && (
-            <ModalHeaderInfo
-              data={headerSelected}
-              visible={toggleState === ToggleState.INFO}
-              setVisible={() => toggleSetState(null)}
-            />
-          )}
 
           <View>
-            {headerSelected && (
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              // pagingEnabled
+            >
+              {/* {headerSelected && (
               <TouchableOpacity
                 style={[styles.signatureBox]}
                 onPress={() => toggleSetState(ToggleState.CAMERA)}
@@ -518,7 +617,149 @@ const UnloadFromTruck = ({navigation}) => {
                   />
                 )}
               </TouchableOpacity>
-            )}
+            )} */}
+              {/* image 1 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg1(!openImg1)}
+                disabled={headerSelected?.status === 'ARRIVED'}>
+                {img1 !== null || headerSelected?.img_item_arrive ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img1 ||
+                          `${path.IMG}/${headerSelected?.img_item_arrive}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 1`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* image 2 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg2(!openImg2)}
+                disabled={headerSelected?.status === 'ARRIVED'}>
+                {img2 !== null || headerSelected?.img_item_arrive_2 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img2 ||
+                          `${path.IMG}/${headerSelected?.img_item_arrive_2}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 2`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* image 3 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg3(!openImg3)}
+                disabled={headerSelected?.status === 'ARRIVED'}>
+                {img3 !== null || headerSelected?.img_item_arrive_3 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img3 ||
+                          `${path.IMG}/${headerSelected?.img_item_arrive_3}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 3`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* image 4 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg4(!openImg4)}
+                disabled={headerSelected?.status === 'ARRIVED'}>
+                {img4 !== null || headerSelected?.img_item_arrive_4 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img4 ||
+                          `${path.IMG}/${headerSelected?.img_item_arrive_4}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 4`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* image 5 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg5(!openImg5)}
+                disabled={headerSelected?.status === 'ARRIVED'}>
+                {img5 !== null || headerSelected?.img_item_arrive_5 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img5 ||
+                          `${path.IMG}/${headerSelected?.img_item_arrive_5}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 5`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* ===================================================================== */}
 
             {headerSelected && (
               <TouchableOpacity
@@ -530,7 +771,8 @@ const UnloadFromTruck = ({navigation}) => {
                     borderColor: '#7A7A7A'
                   }
                 ]}
-                onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+                // onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+                onPress={() => setOpenSignature(!openSignature)}
                 disabled={headerSelected?.status === 'ARRIVED'}>
                 {currentSign !== null || headerSelected?.signature_arrive ? (
                   <View style={styles.preview}>
@@ -553,17 +795,8 @@ const UnloadFromTruck = ({navigation}) => {
                 ) : (
                   <View style={styles.imageUpload}>
                     <Ionicons name="pencil" size={40} color="#4d4d4d" />
-                    <Text style={{color: '#000', fontSize: 20}}>{`${t(
-                      'signature'
-                    )}`}</Text>
+                    <CustomText size="md" text={t('signature')} />
                   </View>
-                )}
-                {toggleState === ToggleState.SIGNATURE && (
-                  <ModalSignature
-                    set={setCurrentSign}
-                    visible={true}
-                    setVisible={() => toggleSetState(null)}
-                  />
                 )}
               </TouchableOpacity>
             )}
@@ -716,6 +949,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2
   },
+
+  imageBox: {
+    marginTop: 15,
+    height: 200,
+    width: 250,
+    // marginHorizontal: 5,
+    marginRight: 10,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc'
+  },
+
   signatureBox: {
     marginTop: 15,
     height: 200,

@@ -10,8 +10,11 @@ import {
   Alert,
   Keyboard,
   ActivityIndicator,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Dimensions
 } from 'react-native'
+
+const {height} = Dimensions.get('window')
 import debounce from 'lodash.debounce'
 import moment from 'moment'
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -30,6 +33,8 @@ import {setfetchfocus} from '../../store/slices/focusSlice'
 import {
   fetchDetail,
   fetchHeaderSelect,
+  hh_confirm_all,
+  hh_confirm_partial,
   // hh_check_ro_qty_box, deprecated!
   hh_sel_box_by_receipt,
   sendConfirm,
@@ -45,18 +50,11 @@ import ModalHeaderInfo from '../../components/ModalHeaderInfo'
 import NetInfoCheck from '../../components/NetInfoCheck'
 import CustomText from '../../components/CustomText'
 import ModalBoxConfirmAll from '../../components/ModalBoxConfirmAll'
-import ImageCarousel from './ImageCarousel'
+import ModalContainer from '../../components/ModalContainer'
 
-// import PagerView from 'react-native-pager-view'
-
-const ToggleState = {
-  HEADER: 'HEADER',
-  INFO: 'INFO',
-  DETAIL: 'DETAIL',
-  SCAN: 'SCAN',
-  SIGNATURE: 'SIGNATURE',
-  CAMERA: 'CAMERA'
-}
+import ModalImagePicker from '../../components/ModalImagePicker'
+import ModalSignaturePad from '../../components/ModalSignaturePad'
+import ModalPartialContainer from '../../components/ModalPartialContainer'
 
 const LoadToTruck = ({navigation}) => {
   const [loading, setLoading] = useState(false)
@@ -65,8 +63,14 @@ const LoadToTruck = ({navigation}) => {
   const [headerSelected, setHeaderSelected] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailSelected, setDetailSelected] = useState(null)
+
   const [currentSign, setCurrentSign] = useState(null)
-  const [currentImage, setCurrentImage] = useState(null)
+  const [img1, setImg1] = useState(null)
+  const [img2, setImg2] = useState(null)
+  const [img3, setImg3] = useState(null)
+  const [img4, setImg4] = useState(null)
+  const [img5, setImg5] = useState(null)
+
   const [shipment, setShipment] = useState(null)
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
@@ -74,18 +78,31 @@ const LoadToTruck = ({navigation}) => {
   const [containerOk, setContainerOk] = useState(null)
   const [input, setInput] = useState('')
 
-  const [isConfirmAll, setIsConfirmAll] = useState(false)
+  const [partialContainer, setPartialContainer] = useState(null)
 
   const [openHeaderList, setOpenHeaderList] = useState(false)
   const [openHeaderInfo, setOpenHeaderInfo] = useState(false)
-
   const [openBoxConfirmAll, setOpenBoxConfirmAll] = useState(false)
+  const [openContainer, setOpenContainer] = useState(false)
+  const [openPartialContainer, setOpenPartialContainer] = useState(false)
+  const [isPartialConfirm, setIsPartialConfirm] = useState(false)
+
+  const [openSignature, setOpenSignature] = useState(false)
+
+  const [openImg1, setOpenImg1] = useState(false)
+  const [openImg2, setOpenImg2] = useState(false)
+  const [openImg3, setOpenImg3] = useState(false)
+  const [openImg4, setOpenImg4] = useState(false)
+  const [openImg5, setOpenImg5] = useState(false)
 
   const [redata, setredata] = useState(false)
 
   const toast = useToast()
   const {t} = useTranslation()
   const {userName, refresh} = useAuthToken()
+
+  console.log(refresh)
+  // console.log(headerSelected)
 
   const inputRef = useRef(null)
   const ref = createRef(null)
@@ -130,16 +147,16 @@ const LoadToTruck = ({navigation}) => {
     return debouncedSearch.cancel
   }, [input, debouncedSearch])
 
+  useEffect(() => {
+    if (partialContainer && isPartialConfirm) {
+      partialSave()
+    }
+  }, [partialContainer, isPartialConfirm])
+
   // ----------------------------------------------------------
   // == HANDLE
   // ----------------------------------------------------------
-  const toggleSetState = (newToggleState) => {
-    if (toggleState === newToggleState) {
-      setToggleState(null) // Toggle off if pressed again
-    } else {
-      setToggleState(newToggleState)
-    }
-  }
+
   const search = () => {
     input?.length !== 0 && fetchHeaderSelect_API(input)
   }
@@ -152,7 +169,11 @@ const LoadToTruck = ({navigation}) => {
     setToggleButton(target.status === 'PICKED' ? true : false)
     setToggleState(null)
     setCurrentSign(null)
-    setCurrentImage(null)
+    setImg1(null)
+    setImg2(null)
+    setImg3(null)
+    setImg4(null)
+    setImg5(null)
     setInput('')
     setShipment(null)
     setContainerOk(null)
@@ -162,12 +183,60 @@ const LoadToTruck = ({navigation}) => {
     setHeaderSelected(null)
     setDetail(null)
     setDetailSelected(null)
-    setCurrentImage(null)
     setCurrentSign(null)
+    setImg1(null)
+    setImg2(null)
+    setImg3(null)
+    setImg4(null)
+    setImg5(null)
     setInput('')
     setShipment(null)
     setContainerOk(null)
     inputRef.current?.focus()
+  }
+
+  const handleConfirmAll = async (partial) => {
+    if (partial === 'all') {
+      try {
+        const res = await hh_confirm_all(
+          {receipt_no: headerSelected?.receipt_no, maker: userName},
+          refresh
+        )
+        await onSave()
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    if (partial === 'partial') {
+      if (partialContainer == null) {
+        setOpenPartialContainer(!openPartialContainer)
+      }
+    }
+
+    setredata((el) => !el)
+    setOpenBoxConfirmAll(!openBoxConfirmAll)
+  }
+
+  const partialSave = async () => {
+    try {
+      const res = await hh_confirm_partial(
+        {
+          receipt_no: headerSelected?.receipt_no,
+          maker: userName,
+          new_container: partialContainer
+        },
+        refresh
+      )
+
+      console.log(res)
+      await onSave()
+    } catch (error) {
+      console.log(error)
+    }
+
+    setIsPartialConfirm(false)
+    setPartialContainer(null)
   }
 
   const onPressConfirm = async () => {
@@ -186,7 +255,20 @@ const LoadToTruck = ({navigation}) => {
         },
         {
           text: t('confirm'),
-          onPress: () => setOpenBoxConfirmAll(!openBoxConfirmAll)
+          onPress: () => {
+            if (shipment === null) {
+              alertReUse('load_shipment', 'load_shipment_detail')
+              return
+            }
+
+            if (containerOk === null) {
+              // setAlert(!alert)
+              setOpenContainer(!openContainer)
+              return
+            }
+
+            setOpenBoxConfirmAll(!openBoxConfirmAll)
+          }
         }
       ])
     } else {
@@ -197,115 +279,252 @@ const LoadToTruck = ({navigation}) => {
   const onSave = async () => {
     setLoading(true)
 
-    const imgName = currentImage?.split('/').pop()
-    const imgType = imgName?.split('.').pop()
+    const imgName1 = img1?.split('/').pop()
+    const imgType1 = imgName1?.split('.').pop()
+
+    const imgName2 = img2?.split('/').pop()
+    const imgType2 = imgName2?.split('.').pop()
+
+    const imgName3 = img3?.split('/').pop()
+    const imgType3 = imgName3?.split('.').pop()
+
+    const imgName4 = img4?.split('/').pop()
+    const imgType4 = imgName4?.split('.').pop()
+
+    const imgName5 = img5?.split('/').pop()
+    const imgType5 = imgName5?.split('.').pop()
+
     const signName = currentSign?.split('/').pop()
     const signType = signName?.split('.').pop()
 
     if (shipment === null) {
       alertReUse('load_shipment', 'load_shipment_detail')
-    } else {
-      // CHECK Signature required !
-      // if (currentSign === null) {
-      //   alertReUse('signature_required', 'signature_required_detail')
-      // } else {
-      if (containerOk !== null) {
-        // SENT ITEM PICKED --> ONSHIP
-        // ==============================
-        const obj = new FormData()
+      return
+    }
 
-        obj.append('files', {
+    if (containerOk === null) {
+      setOpenContainer(!openContainer)
+      return
+    }
+
+    // SENT ITEM PICKED --> ONSHIP
+    // ==============================
+    const obj = new FormData()
+
+    // obj.append('files', {
+    //   uri: currentSign,
+    //   name: `SIGNATURE-1.${signType}`,
+    //   type: `image/${signType}`
+    // })
+
+    currentSign !== null
+      ? obj.append('files', {
           uri: currentSign,
           name: `SIGNATURE-1.${signType}`,
           type: `image/${signType}`
         })
+      : obj.append('files', null)
 
-        currentImage !== null
-          ? obj.append('files', {
-              uri: currentImage,
-              name: `ITEM-02.${imgType}`,
-              type: `image/${imgType}`
-            })
-          : obj.append('files', null)
-
-        obj.append('receipt_no', headerSelected?.receipt_no)
-        obj.append('status', 'ONSHIP')
-
-        await sendSignature(obj, refresh).catch((err) => {
-          // console.log(err.message)
+    img1 !== null
+      ? obj.append('files', {
+          uri: img1,
+          name: `ITEM-01.${imgType1}`,
+          type: `image/${imgType1}`
         })
-        await sendShipmentConfirm(
-          {
-            receipt_no: headerSelected?.receipt_no,
-            shipment_confirm:
-              headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
-                ? null
-                : 1
-          },
-          refresh
-        ).catch((err) => {
-          console.log(err.message)
+      : obj.append('files', null)
+
+    img2 !== null
+      ? obj.append('files', {
+          uri: img2,
+          name: `ITEM-02.${imgType2}`,
+          type: `image/${imgType2}`
         })
+      : obj.append('files', null)
 
-        await sendConfirm(
-          {
-            receipt_no: headerSelected?.receipt_no,
-            statusHeader: 'ONSHIP',
-            statusDetail: 'LOADED',
-            date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
-            maker: userName,
-            container_no: containerOk
-          },
-          refresh
-        )
-          .then(() => {
-            toast.show(t('confirmed'), {
-              type: 'success',
-              placement: 'bottom',
-              duration: 4000,
-              offset: 30
-              // animationType: 'slide-in'
-            })
+    img3 !== null
+      ? obj.append('files', {
+          uri: img3,
+          name: `ITEM-03.${imgType3}`,
+          type: `image/${imgType3}`
+        })
+      : obj.append('files', null)
+
+    img4 !== null
+      ? obj.append('files', {
+          uri: img4,
+          name: `ITEM-04.${imgType4}`,
+          type: `image/${imgType4}`
+        })
+      : obj.append('files', null)
+
+    img5 !== null
+      ? obj.append('files', {
+          uri: img5,
+          name: `ITEM-05.${imgType5}`,
+          type: `image/${imgType5}`
+        })
+      : obj.append('files', null)
+
+    obj.append('receipt_no', headerSelected?.receipt_no)
+    obj.append('status', 'ONSHIP')
+
+    await sendSignature(obj, refresh).catch((err) => {
+      // console.log(err.message)
+    })
+    await sendShipmentConfirm(
+      {
+        receipt_no: headerSelected?.receipt_no,
+        shipment_confirm:
+          headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
+            ? null
+            : 1
+      },
+      refresh
+    ).catch((err) => {
+      console.log(err.message)
+    })
+
+    await sendConfirm(
+      {
+        receipt_no: headerSelected?.receipt_no,
+        statusHeader: 'ONSHIP',
+        statusDetail: 'LOADED',
+        date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+        maker: userName,
+        container_no: containerOk
+      },
+      refresh
+    )
+      .then(() => {
+        toast.show(t('confirmed'), {
+          type: 'success',
+          placement: 'bottom',
+          duration: 4000,
+          offset: 30
+          // animationType: 'slide-in'
+        })
+      })
+      .catch((err) => {
+        console.log(err.message)
+
+        if (err.message == 401) {
+          dispatch(resetToken())
+          navigation.reset({
+            index: 0,
+            routes: [{name: screenMap.Login}]
           })
-          .catch((err) => {
-            console.log(err.message)
+          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+        }
+        alertReUse('auth_access_denied', 'auth_access_denied_detail')
+      })
 
-            if (err.message == 401) {
-              dispatch(resetToken())
-              navigation.reset({
-                index: 0,
-                routes: [{name: screenMap.Login}]
-              })
-              alertReUse('auth_access_denied', 'auth_access_denied_detail')
-            }
-            alertReUse('auth_access_denied', 'auth_access_denied_detail')
-          })
+    headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
+      alertReUse('load_alert', 'load_alert_detail')
 
-        headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
-          alertReUse('load_alert', 'load_alert_detail')
+    setredata((el) => !el)
 
-        setredata((el) => !el)
+    setCurrentSign(null)
+    setImg1(null)
+    setImg2(null)
+    setImg3(null)
+    setImg4(null)
+    setImg5(null)
 
-        setCurrentImage(null)
-        setCurrentSign(null)
-        setContainerOk(null)
-        setToggleButton(false)
-        setLoading(false)
-      } else {
-        setAlert(!alert)
-      }
-      // }
-    }
+    setContainerOk(null)
+    setToggleButton(false)
+    setLoading(false)
+
+    // if (containerOk === null) {
+    //   // SENT ITEM PICKED --> ONSHIP
+    //   // ==============================
+    //   const obj = new FormData()
+
+    //   obj.append('files', {
+    //     uri: currentSign,
+    //     name: `SIGNATURE-1.${signType}`,
+    //     type: `image/${signType}`
+    //   })
+
+    //   img1 !== null
+    //     ? obj.append('files', {
+    //         uri: img1,
+    //         name: `ITEM-02.${imgType}`,
+    //         type: `image/${imgType}`
+    //       })
+    //     : obj.append('files', null)
+
+    //   obj.append('receipt_no', headerSelected?.receipt_no)
+    //   obj.append('status', 'ONSHIP')
+
+    //   await sendSignature(obj, refresh).catch((err) => {
+    //     // console.log(err.message)
+    //   })
+    //   await sendShipmentConfirm(
+    //     {
+    //       receipt_no: headerSelected?.receipt_no,
+    //       shipment_confirm:
+    //         headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
+    //           ? null
+    //           : 1
+    //     },
+    //     refresh
+    //   ).catch((err) => {
+    //     console.log(err.message)
+    //   })
+
+    //   await sendConfirm(
+    //     {
+    //       receipt_no: headerSelected?.receipt_no,
+    //       statusHeader: 'ONSHIP',
+    //       statusDetail: 'LOADED',
+    //       date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+    //       maker: userName,
+    //       container_no: containerOk
+    //     },
+    //     refresh
+    //   )
+    //     .then(() => {
+    //       toast.show(t('confirmed'), {
+    //         type: 'success',
+    //         placement: 'bottom',
+    //         duration: 4000,
+    //         offset: 30
+    //         // animationType: 'slide-in'
+    //       })
+    //     })
+    //     .catch((err) => {
+    //       console.log(err.message)
+
+    //       if (err.message == 401) {
+    //         dispatch(resetToken())
+    //         navigation.reset({
+    //           index: 0,
+    //           routes: [{name: screenMap.Login}]
+    //         })
+    //         alertReUse('auth_access_denied', 'auth_access_denied_detail')
+    //       }
+    //       alertReUse('auth_access_denied', 'auth_access_denied_detail')
+    //     })
+
+    //   headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
+    //     alertReUse('load_alert', 'load_alert_detail')
+
+    //   setredata((el) => !el)
+
+    //   setImg1(null)
+    //   setCurrentSign(null)
+    //   setContainerOk(null)
+    //   setToggleButton(false)
+    //   setLoading(false)
+    // } else {
+    //   setAlert(!alert)
+    // }
 
     setLoading(false)
   }
 
   const alertReUse = (msg, detail) => {
     Alert.alert(t(msg), t(detail), [{onPress: () => setLoading(false)}])
-  }
-  const handleContainerClose = () => {
-    setAlert(!alert)
-    setLoading(false)
   }
 
   // ----------------------------------------------------------
@@ -326,9 +545,58 @@ const LoadToTruck = ({navigation}) => {
         handleOpen={setOpenHeaderInfo}
       />
       <ModalBoxConfirmAll
-        data={headerSelected}
+        handleConfirmAll={handleConfirmAll}
         open={openBoxConfirmAll}
         handleOpen={setOpenBoxConfirmAll}
+      />
+      <ModalContainer
+        open={openContainer}
+        handleOpen={setOpenContainer}
+        container_no={headerSelected?.container_no}
+        setContainerOk={setContainerOk}
+        containerOk={containerOk}
+      />
+      <ModalPartialContainer
+        setValue={setPartialContainer}
+        value={partialContainer}
+        open={openPartialContainer}
+        handleOpen={setOpenPartialContainer}
+        isConfirm={setIsPartialConfirm}
+
+        // container_no={headerSelected?.container_no}
+        // setContainerOk={setContainerOk}
+        // containerOk={containerOk}
+      />
+
+      <ModalSignaturePad
+        set={setCurrentSign}
+        open={openSignature}
+        handleOpen={setOpenSignature}
+      />
+      <ModalImagePicker
+        set={setImg1}
+        open={openImg1}
+        handleOpen={setOpenImg1}
+      />
+      <ModalImagePicker
+        set={setImg2}
+        open={openImg2}
+        handleOpen={setOpenImg2}
+      />
+      <ModalImagePicker
+        set={setImg3}
+        open={openImg3}
+        handleOpen={setOpenImg3}
+      />
+      <ModalImagePicker
+        set={setImg4}
+        open={openImg4}
+        handleOpen={setOpenImg4}
+      />
+      <ModalImagePicker
+        set={setImg5}
+        open={openImg5}
+        handleOpen={setOpenImg5}
       />
 
       <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
@@ -378,9 +646,7 @@ const LoadToTruck = ({navigation}) => {
             {/* RECEIPT */}
             <View style={{display: 'flex', flexDirection: 'column', gap: 0}}>
               <View>
-                <Text style={{color: '#000', fontSize: 20}}>
-                  {t('receipt_no')}
-                </Text>
+                <CustomText size="md" text={t('receipt_no')} />
               </View>
               <View style={styles.groupForm}>
                 <View
@@ -435,10 +701,7 @@ const LoadToTruck = ({navigation}) => {
                   style={[
                     styles.clearButton,
                     styles.shadow,
-                    {
-                      backgroundColor: '#2a52be',
-                      flex: 0.3
-                    }
+                    {backgroundColor: '#2a52be', flex: 0.3}
                   ]}
                   onPress={() => setOpenHeaderList(!openHeaderList)}>
                   <View
@@ -480,7 +743,8 @@ const LoadToTruck = ({navigation}) => {
                 <TouchableOpacity
                   disabled={!headerSelected && true}
                   onPress={() =>
-                    headerSelected?.status === 'PICKED' && setAlert(!alert)
+                    headerSelected?.status === 'PICKED' &&
+                    setOpenContainer(!openContainer)
                   }>
                   <TextInput
                     style={[
@@ -571,6 +835,7 @@ const LoadToTruck = ({navigation}) => {
           {headerSelected && <TabViewList_2 ref={ref} detail={detail} />}
           {headerSelected && (
             <Scan
+              redataHead={redata}
               ref={ref}
               detail={detail}
               data={headerSelected?.receipt_no}
@@ -578,62 +843,175 @@ const LoadToTruck = ({navigation}) => {
             />
           )}
 
-          {headerSelected?.container_no && (
-            <ContainerAlert
-              visible={alert}
-              onClose={handleContainerClose}
-              // forceConfirm={forceConfirm}
-              container_no={headerSelected?.container_no}
-              setContainerOk={setContainerOk}
-              containerOk={containerOk}
-            />
-          )}
-
-          {/* <ImageCarousel /> */}
-
           <View>
-            {headerSelected && (
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              // pagingEnabled
+            >
+              {/* image 1 */}
               <TouchableOpacity
-                style={[styles.signatureBox]}
-                onPress={() => toggleSetState(ToggleState.CAMERA)}
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg1(!openImg1)}
                 disabled={headerSelected?.status === 'ONSHIP'}>
-                {currentImage !== null || headerSelected?.img_item_onship ? (
+                {img1 !== null || headerSelected?.img_item_onship ? (
                   <View style={styles.preview}>
-                    {currentImage ? (
-                      <Image
-                        resizeMode={'contain'}
-                        style={{width: '100%', height: 180}}
-                        source={{uri: currentImage}}
-                      />
-                    ) : (
-                      <Image
-                        resizeMode={'contain'}
-                        style={{width: '100%', height: 180}}
-                        source={{
-                          uri: `${path.IMG}/${headerSelected?.img_item_onship}`
-                        }}
-                      />
-                    )}
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img1 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship}`
+                      }}
+                    />
                   </View>
                 ) : (
                   <View style={styles.imageUpload}>
                     <Ionicons name="image-outline" size={45} color="#4d4d4d" />
-
-                    <CustomText
-                      size="md"
-                      text={`${t('photo')} / ${t('camera')}`}
-                    />
+                    <CustomText size="md" text={`${t('photo')} 1`} />
                   </View>
                 )}
-                {toggleState === ToggleState.CAMERA && (
-                  <ModalCamera
-                    set={setCurrentImage}
-                    visible={true}
-                    setVisible={() => toggleSetState(null)}
-                  />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg2(!openImg2)}
+                disabled={headerSelected?.status === 'ONSHIP'}>
+                {img2 !== null || headerSelected?.img_item_onship_2 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img2 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship_2}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 2`} />
+                  </View>
                 )}
               </TouchableOpacity>
-            )}
+
+              {/* image 2 */}
+              {/* <TouchableOpacity
+                style={[styles.imageBox]}
+                onPress={() => setOpenImg2(!openImg2)}
+                disabled={headerSelected?.status === 'ONSHIP'}>
+                {img2 !== null || headerSelected?.img_item_onship_2 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img2 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship_2}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 2`} />
+                  </View>
+                )}
+              </TouchableOpacity> */}
+              {/* image 3 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg3(!openImg3)}
+                disabled={headerSelected?.status === 'ONSHIP'}>
+                {img3 !== null || headerSelected?.img_item_onship_3 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img3 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship_3}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 3`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+              {/* image 4 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg4(!openImg4)}
+                disabled={headerSelected?.status === 'ONSHIP'}>
+                {img4 !== null || headerSelected?.img_item_onship_4 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img4 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship_4}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 4`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+              {/* image 5 */}
+              <TouchableOpacity
+                style={[
+                  {display: headerSelected ? 'flex' : 'none'},
+                  styles.imageBox
+                ]}
+                onPress={() => setOpenImg5(!openImg5)}
+                disabled={headerSelected?.status === 'ONSHIP'}>
+                {img5 !== null || headerSelected?.img_item_onship_5 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img5 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship_5}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 5`} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* ================================================================ */}
 
             {headerSelected && (
               <TouchableOpacity
@@ -645,7 +1023,8 @@ const LoadToTruck = ({navigation}) => {
                     borderColor: '#7A7A7A'
                   }
                 ]}
-                onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+                // onPress={() => toggleSetState(ToggleState.SIGNATURE)}
+                onPress={() => setOpenSignature(!openSignature)}
                 disabled={headerSelected?.status === 'ONSHIP'}>
                 {currentSign !== null || headerSelected?.signature_onship ? (
                   <View style={styles.preview}>
@@ -668,16 +1047,8 @@ const LoadToTruck = ({navigation}) => {
                 ) : (
                   <View style={[styles.imageUpload]}>
                     <Ionicons name="pencil" size={40} color="#4d4d4d" />
-
                     <CustomText size="md" text={t('signature')} />
                   </View>
-                )}
-                {toggleState === ToggleState.SIGNATURE && (
-                  <ModalSignature
-                    set={setCurrentSign}
-                    visible={true}
-                    setVisible={() => toggleSetState(null)}
-                  />
                 )}
               </TouchableOpacity>
             )}
@@ -758,6 +1129,18 @@ const ButtonConfirmComponent = ({text, color, backgroundColor, onPress}) => {
   )
 }
 
+const ImageConponent = ({state, getImage}) => {
+  return (
+    <Image
+      resizeMode={'contain'}
+      style={{width: '100%', height: 180}}
+      source={{
+        uri: `${path.IMG}/${headerSelected?.signature_onship}`
+      }}
+    />
+  )
+}
+
 // ----------------------------------------------------------
 // == STYLE
 // ----------------------------------------------------------
@@ -822,6 +1205,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2
   },
+
+  imageBox: {
+    marginTop: 15,
+    height: 200,
+    width: 250,
+    // marginHorizontal: 5,
+    marginRight: 10,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc'
+  },
+
   signatureBox: {
     marginTop: 15,
     height: 200,

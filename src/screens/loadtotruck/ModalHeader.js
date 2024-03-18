@@ -66,7 +66,6 @@ const ModalHeader = ({onPress, open, handleOpen, headerSelected}) => {
           <Text style={styles.textNav}>{t('load_to_truck')}</Text>
           <TouchableOpacity
             style={styles.closeButton}
-            // onPress={() => handleOpen(false)}
             onPress={() => handleOpen(!open)}>
             <Ionicons name="close" size={25} color="#fff" />
           </TouchableOpacity>

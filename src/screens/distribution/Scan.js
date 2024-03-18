@@ -17,6 +17,7 @@ import {useDispatch} from 'react-redux'
 
 import {Empty} from '../../components/SpinnerEmpty'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
+import CustomText from '../../components/CustomText'
 
 const Scan = forwardRef(
   ({detail, distribute_id, orderStatus, navigation}, ref) => {
@@ -151,7 +152,7 @@ const Scan = forwardRef(
               onPress={() => setAlertBarcode(!alertBarcode)}>
               <Ionicons
                 style={styles.rightIcon}
-                name={'hammer-outline'}
+                name="hammer-outline"
                 size={30}
                 color="#eee"
               />
@@ -168,12 +169,7 @@ const Scan = forwardRef(
                   nestedScrollEnabled={true}
                   style={styles.modalContainer}>
                   {box?.map((item, idx) => (
-                    <ScanItem
-                      idx={idx}
-                      key={idx}
-                      item={item}
-                      box_id={item.box_id?.split('/')[1]}
-                    />
+                    <ScanItem idx={idx + 1} key={idx} item={item} />
                   ))}
                 </ScrollView>
               </TouchableWithoutFeedback>
@@ -189,7 +185,7 @@ const Scan = forwardRef(
           <Ionicons
             name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
             size={25}
-            color={'#777'}
+            color="#777"
           />
         </TouchableOpacity>
 
@@ -209,7 +205,7 @@ const Scan = forwardRef(
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, box_id, idx}) => {
+const ScanItem = React.memo(({item, idx}) => {
   return (
     <View
       style={[
@@ -218,53 +214,36 @@ const ScanItem = React.memo(({item, box_id, idx}) => {
           justifyContent: 'space-around',
           backgroundColor:
             item?.is_scan_d === 'SCANED'
-              ? '#ABFC7430'
+              ? '#F3FFEC'
               : item?.is_scan !== 'IDLE'
-              ? '#ddd'
+              ? '#eaeaea'
               : null,
-          borderTopWidth: 1,
+          borderTopWidth: 0.9,
           borderColor: '#ccc',
           borderStyle: 'dashed'
         }
       ]}>
       <View style={{alignItems: 'center', width: '20%'}}>
-        <Text style={{color: '#999', fontSize: 20, fontStyle: 'italic'}}>
-          {/* {item.num_box} */}
-          {idx}
-        </Text>
+        <CustomText size="lg" color="#999" text={idx} />
       </View>
-      <View style={{width: '50%', alignItems: 'center'}}>
-        {/* <Text style={{fontSize: 14, color: '#000'}}>{item.box_id}</Text> */}
-        <Text style={{fontSize: 14, color: '#000'}}>
-          {`${item?.item_serial}-${item.num_box}` || ''}
-        </Text>
+      <View style={{width: '40%', alignItems: 'center'}}>
+        <CustomText
+          size="md"
+          // text={`${item?.item_serial} ${item.num_box}/${allBox}` || ''}
+          text={`${item?.item_serial} ${item?.num_box_label}` || ''}
+        />
       </View>
 
-      <View style={{width: '10%', alignItems: 'center'}}>
-        <Text style={{fontSize: 14, color: '#000'}}>{box_id}</Text>
+      <View style={{width: '20%', alignItems: 'center'}}>
+        <CustomText size="xs" color="#999" text={item?.maker || '-'} />
       </View>
       <View style={{width: '20%', alignItems: 'center'}}>
         {item?.is_scan_d === 'SCANED' ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'checkmark-circle-outline'}
-            size={25}
-            color={'green'}
-          />
+          <Ionicons name="checkmark-circle-outline" size={25} color="#32A300" />
         ) : item?.is_scan !== 'IDLE' ? (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'close-circle-outline'}
-            size={20}
-            color={'red'}
-          />
+          <Ionicons name="close-circle-outline" size={25} color="#FF4646" />
         ) : (
-          <Ionicons
-            style={{alignSelf: 'center'}}
-            name={'ellipsis-horizontal-outline'}
-            size={20}
-            color={'#000'}
-          />
+          <Ionicons name="ellipsis-horizontal-outline" size={25} color="#000" />
         )}
       </View>
     </View>
