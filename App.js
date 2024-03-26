@@ -9,6 +9,9 @@ import {store, persistor} from './src/store/store.js'
 import {ThemeProvider} from '@rneui/themed'
 import {ToastProvider} from 'react-native-toast-notifications'
 
+import * as eva from '@eva-design/eva'
+import {ApplicationProvider, Layout, Text} from '@ui-kitten/components'
+
 import {I18nextProvider} from 'react-i18next'
 
 import i18n from './src/constants/i18n.js'
@@ -29,29 +32,31 @@ export default () => {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <I18nextProvider i18n={i18n}>
-          <ThemeProvider>
-            <ToastProvider
-              renderType={{
-                custom_type: (toast) => (
-                  <View
-                    style={{
-                      padding: 15,
-                      backgroundColor: 'grey',
-                      zIndex: 999
-                    }}>
-                    <Text>{toast.message}</Text>
-                  </View>
-                )
-              }}>
-              <RefreshContextProvider>
-                <ModalScanContextProvider>
-                  <NavigationContainer>
-                    <AppScreen />
-                  </NavigationContainer>
-                </ModalScanContextProvider>
-              </RefreshContextProvider>
-            </ToastProvider>
-          </ThemeProvider>
+          <ApplicationProvider {...eva} theme={eva.light}>
+            <ThemeProvider>
+              <ToastProvider
+                renderType={{
+                  custom_type: (toast) => (
+                    <View
+                      style={{
+                        padding: 15,
+                        backgroundColor: 'grey',
+                        zIndex: 999
+                      }}>
+                      <Text>{toast.message}</Text>
+                    </View>
+                  )
+                }}>
+                <RefreshContextProvider>
+                  <ModalScanContextProvider>
+                    <NavigationContainer>
+                      <AppScreen />
+                    </NavigationContainer>
+                  </ModalScanContextProvider>
+                </RefreshContextProvider>
+              </ToastProvider>
+            </ThemeProvider>
+          </ApplicationProvider>
         </I18nextProvider>
       </PersistGate>
     </Provider>

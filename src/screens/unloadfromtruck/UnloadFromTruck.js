@@ -272,7 +272,7 @@ const UnloadFromTruck = ({navigation}) => {
         receipt_no: headerSelected?.receipt_no,
         statusHeader: 'ARRIVED',
         statusDetail: 'UNLOADED',
-        date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+        date: `${moment().utc(true).format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
         maker: userName
       },
       refresh

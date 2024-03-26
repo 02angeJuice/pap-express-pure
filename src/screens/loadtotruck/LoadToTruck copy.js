@@ -101,7 +101,7 @@ const LoadToTruck = ({navigation}) => {
   const {t} = useTranslation()
   const {userName, refresh} = useAuthToken()
 
-  // console.log(refresh)
+  console.log(refresh)
   // console.log(headerSelected)
 
   const inputRef = useRef(null)
@@ -258,13 +258,12 @@ const LoadToTruck = ({navigation}) => {
           onPress: () => {
             if (shipment === null) {
               alertReUse('load_shipment', 'load_shipment_detail')
-              setLoading(false)
               return
             }
 
             if (containerOk === null) {
+              // setAlert(!alert)
               setOpenContainer(!openContainer)
-              setLoading(false)
               return
             }
 
@@ -300,19 +299,23 @@ const LoadToTruck = ({navigation}) => {
 
     if (shipment === null) {
       alertReUse('load_shipment', 'load_shipment_detail')
-      setLoading(false)
       return
     }
 
     if (containerOk === null) {
       setOpenContainer(!openContainer)
-      setLoading(false)
       return
     }
 
     // SENT ITEM PICKED --> ONSHIP
     // ==============================
     const obj = new FormData()
+
+    // obj.append('files', {
+    //   uri: currentSign,
+    //   name: `SIGNATURE-1.${signType}`,
+    //   type: `image/${signType}`
+    // })
 
     currentSign !== null
       ? obj.append('files', {
@@ -365,7 +368,9 @@ const LoadToTruck = ({navigation}) => {
     obj.append('receipt_no', headerSelected?.receipt_no)
     obj.append('status', 'ONSHIP')
 
-    await sendSignature(obj, refresh)
+    await sendSignature(obj, refresh).catch((err) => {
+      // console.log(err.message)
+    })
     await sendShipmentConfirm(
       {
         receipt_no: headerSelected?.receipt_no,
@@ -375,59 +380,43 @@ const LoadToTruck = ({navigation}) => {
             : 1
       },
       refresh
-    )
+    ).catch((err) => {
+      console.log(err.message)
+    })
 
-    const resConfirm = await sendConfirm(
+    await sendConfirm(
       {
         receipt_no: headerSelected?.receipt_no,
         statusHeader: 'ONSHIP',
         statusDetail: 'LOADED',
-        date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+        date: `${moment().utc(true).format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
         maker: userName,
         container_no: containerOk
       },
       refresh
     )
+      .then(() => {
+        toast.show(t('confirmed'), {
+          type: 'success',
+          placement: 'bottom',
+          duration: 4000,
+          offset: 30
+          // animationType: 'slide-in'
+        })
+      })
+      .catch((err) => {
+        console.log(err.message)
 
-    console.log(resConfirm)
-
-    // if (resConfirm?.status) {
-    //   toast.show(t('confirmed'), {
-    //     type: 'success',
-    //     placement: 'bottom',
-    //     duration: 4000,
-    //     offset: 30
-    //   })
-    // } else {
-    //   dispatch(resetToken())
-    //   navigation.reset({
-    //     index: 0,
-    //     routes: [{name: screenMap.Login}]
-    //   })
-    //   alertReUse('auth_access_denied', 'auth_access_denied_detail')
-    // }
-
-    // .then(() => {
-    //   toast.show(t('confirmed'), {
-    //     type: 'success',
-    //     placement: 'bottom',
-    //     duration: 4000,
-    //     offset: 30
-    //   })
-    // })
-    // .catch((err) => {
-    //   console.log(err.message)
-
-    //   if (err.message == 401) {
-    //     dispatch(resetToken())
-    //     navigation.reset({
-    //       index: 0,
-    //       routes: [{name: screenMap.Login}]
-    //     })
-    //     alertReUse('auth_access_denied', 'auth_access_denied_detail')
-    //   }
-    //   alertReUse('auth_access_denied', 'auth_access_denied_detail')
-    // })
+        if (err.message == 401) {
+          dispatch(resetToken())
+          navigation.reset({
+            index: 0,
+            routes: [{name: screenMap.Login}]
+          })
+          alertReUse('auth_access_denied', 'auth_access_denied_detail')
+        }
+        alertReUse('auth_access_denied', 'auth_access_denied_detail')
+      })
 
     headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
       alertReUse('load_alert', 'load_alert_detail')
@@ -443,6 +432,94 @@ const LoadToTruck = ({navigation}) => {
 
     setContainerOk(null)
     setToggleButton(false)
+    setLoading(false)
+
+    // if (containerOk === null) {
+    //   // SENT ITEM PICKED --> ONSHIP
+    //   // ==============================
+    //   const obj = new FormData()
+
+    //   obj.append('files', {
+    //     uri: currentSign,
+    //     name: `SIGNATURE-1.${signType}`,
+    //     type: `image/${signType}`
+    //   })
+
+    //   img1 !== null
+    //     ? obj.append('files', {
+    //         uri: img1,
+    //         name: `ITEM-02.${imgType}`,
+    //         type: `image/${imgType}`
+    //       })
+    //     : obj.append('files', null)
+
+    //   obj.append('receipt_no', headerSelected?.receipt_no)
+    //   obj.append('status', 'ONSHIP')
+
+    //   await sendSignature(obj, refresh).catch((err) => {
+    //     // console.log(err.message)
+    //   })
+    //   await sendShipmentConfirm(
+    //     {
+    //       receipt_no: headerSelected?.receipt_no,
+    //       shipment_confirm:
+    //         headerSelected?.shipment === (shipment === 0 ? 'car' : 'ship')
+    //           ? null
+    //           : 1
+    //     },
+    //     refresh
+    //   ).catch((err) => {
+    //     console.log(err.message)
+    //   })
+
+    //   await sendConfirm(
+    //     {
+    //       receipt_no: headerSelected?.receipt_no,
+    //       statusHeader: 'ONSHIP',
+    //       statusDetail: 'LOADED',
+    //       date: `${moment().format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`,
+    //       maker: userName,
+    //       container_no: containerOk
+    //     },
+    //     refresh
+    //   )
+    //     .then(() => {
+    //       toast.show(t('confirmed'), {
+    //         type: 'success',
+    //         placement: 'bottom',
+    //         duration: 4000,
+    //         offset: 30
+    //         // animationType: 'slide-in'
+    //       })
+    //     })
+    //     .catch((err) => {
+    //       console.log(err.message)
+
+    //       if (err.message == 401) {
+    //         dispatch(resetToken())
+    //         navigation.reset({
+    //           index: 0,
+    //           routes: [{name: screenMap.Login}]
+    //         })
+    //         alertReUse('auth_access_denied', 'auth_access_denied_detail')
+    //       }
+    //       alertReUse('auth_access_denied', 'auth_access_denied_detail')
+    //     })
+
+    //   headerSelected?.shipment !== (shipment === 0 ? 'car' : 'ship') &&
+    //     alertReUse('load_alert', 'load_alert_detail')
+
+    //   setredata((el) => !el)
+
+    //   setImg1(null)
+    //   setCurrentSign(null)
+    //   setContainerOk(null)
+    //   setToggleButton(false)
+    //   setLoading(false)
+    // } else {
+    //   setAlert(!alert)
+    // }
+
     setLoading(false)
   }
 
@@ -485,6 +562,10 @@ const LoadToTruck = ({navigation}) => {
         open={openPartialContainer}
         handleOpen={setOpenPartialContainer}
         isConfirm={setIsPartialConfirm}
+
+        // container_no={headerSelected?.container_no}
+        // setContainerOk={setContainerOk}
+        // containerOk={containerOk}
       />
 
       <ModalSignaturePad
@@ -522,6 +603,7 @@ const LoadToTruck = ({navigation}) => {
         <ScrollView
           style={styles.container}
           scrollEnabled={true}
+          // keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled">
           <View style={styles.form}>
             <View
@@ -550,6 +632,7 @@ const LoadToTruck = ({navigation}) => {
                   defaultButtonText={t('transport_select')}
                   dropdownStyle={{borderRadius: 5, marginTop: 0}}
                   onSelect={(selectedItem, index) => {
+                    // console.log(selectedItem, index)
                     setShipment(index)
                   }}
                   buttonTextAfterSelection={(selectedItem, index) =>
@@ -625,6 +708,7 @@ const LoadToTruck = ({navigation}) => {
                     style={[styles.row, {justifyContent: 'center', gap: 1}]}>
                     <Ionicons
                       style={{alignSelf: 'center'}}
+                      // name={'document-text-outline'}
                       name={'document-text-outline'}
                       size={20}
                       color="#fff"
@@ -729,6 +813,7 @@ const LoadToTruck = ({navigation}) => {
                     style={[styles.row, {justifyContent: 'center', gap: 1}]}>
                     <Ionicons
                       style={{alignSelf: 'center'}}
+                      // name={'document-text-outline'}
                       name={'trash-bin-outline'}
                       size={20}
                       color="#fff"
@@ -819,6 +904,31 @@ const LoadToTruck = ({navigation}) => {
                 )}
               </TouchableOpacity>
 
+              {/* image 2 */}
+              {/* <TouchableOpacity
+                style={[styles.imageBox]}
+                onPress={() => setOpenImg2(!openImg2)}
+                disabled={headerSelected?.status === 'ONSHIP'}>
+                {img2 !== null || headerSelected?.img_item_onship_2 ? (
+                  <View style={styles.preview}>
+                    <Image
+                      resizeMode={'contain'}
+                      style={{width: '100%', height: 180}}
+                      source={{
+                        uri:
+                          img2 ||
+                          `${path.IMG}/${headerSelected?.img_item_onship_2}`
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.imageUpload}>
+                    <Ionicons name="image-outline" size={45} color="#4d4d4d" />
+                    <CustomText size="md" text={`${t('photo')} 2`} />
+                  </View>
+                )}
+              </TouchableOpacity> */}
+              {/* image 3 */}
               <TouchableOpacity
                 style={[
                   {display: headerSelected ? 'flex' : 'none'},

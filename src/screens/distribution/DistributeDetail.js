@@ -9,7 +9,8 @@ import {
   Alert,
   ActivityIndicator,
   Linking,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Switch
 } from 'react-native'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -17,6 +18,8 @@ import FastImage from 'react-native-fast-image'
 // Global Modal
 // import ModalCamera from '../../components/ModalCamera'
 import ModalSignature from '../../components/ModalSignature'
+
+// import SelectDropdown from 'react-native-select-dropdown'
 
 import {useToast} from 'react-native-toast-notifications'
 import {useTranslation} from 'react-i18next'
@@ -30,6 +33,7 @@ import {
   fetchOrderDetail,
   hh_sel_box_by_od,
   hh_sel_distributes_by_id,
+  selTruckList,
   sendOrderConfirm
 } from '../../apis'
 import {screenMap} from '../../constants/screenMap'
@@ -38,6 +42,7 @@ import TabViewList_2 from './TabViewList_2'
 import Scan from './Scan'
 import {Empty} from '../../components/SpinnerEmpty'
 import {path} from '../../constants/url'
+import Information from './Information'
 
 const ToggleState = {
   SCAN: 'SCAN',
@@ -57,6 +62,9 @@ const DistributeDetail = ({navigation, route}) => {
   const [currentImage, setCurrentImage] = useState(null)
   const [force, setForce] = useState(null)
   const [remark, setRemark] = useState(null)
+
+  const [truckList, setTruckList] = useState([])
+  const [selectTruck, setSelectTruck] = useState(null)
 
   const toast = useToast()
   const {t} = useTranslation()
@@ -90,6 +98,27 @@ const DistributeDetail = ({navigation, route}) => {
   useEffect(() => {
     orderSelected && fetchOrderDetail_API(orderSelected?.distribution_id)
   }, [orderSelected])
+
+  useEffect(() => {
+    const fetchTruckList = async () => {
+      let result = await selTruckList({
+        page: 1,
+        perPage: 100
+      })
+
+      if (result.status) {
+        const formattedTruckList = result?.data?.dataList.map((truck) => ({
+          label: truck.truck_no,
+          value: truck.truck_no
+        }))
+
+        console.log(formattedTruckList)
+
+        setTruckList(formattedTruckList)
+      }
+    }
+    fetchTruckList()
+  }, [])
 
   // ----------------------------------------------------------
   // == HANDLE
@@ -151,18 +180,8 @@ const DistributeDetail = ({navigation, route}) => {
           })
         : obj.append('files', null)
 
-      // currentImage !== null
-      //   ? obj.append('files', {
-      //       uri: currentImage,
-      //       name: `ITEM-OD.${imgType}`,
-      //       type: `image/${imgType}`
-      //     })
-      //   : obj.append('files', null)
-
       obj.append('files', null)
-
       obj.append('id', orderSelected?.distribution_id)
-      // obj.append('status', 'CLOSED')
       obj.append(
         'status',
         orderSelected?.distributeType === 'PDT001' ? 'CLOSED' : 'ONSHIP'
@@ -194,10 +213,6 @@ const DistributeDetail = ({navigation, route}) => {
 
       setredata((el) => !el)
 
-      // orderSelected?.distributeType === 'PDT001'
-      //   ? dispatch(setFilterDi('CLOSED'))
-      //   : dispatch(setFilterDi('ONSHIP'))
-
       setLoading(false)
     }
     setLoading(false)
@@ -227,235 +242,13 @@ const DistributeDetail = ({navigation, route}) => {
           style={styles.container}
           keyboardShouldPersistTaps="handled">
           {orderSelected ? (
-            <View
-              style={[
-                styles.column,
-                {
-                  marginTop: 10,
-                  backgroundColor: '#FFF',
-                  borderRadius: 10,
-                  gap: 3
-                },
-                styles.itemContent,
-                orderSelected?.status === 'DATA ENTRY' && {
-                  borderLeftColor: '#FF003C',
-                  borderLeftWidth: 10,
-                  backgroundColor: '#FFEBF1'
-                },
-                orderSelected?.status === 'ONSHIP' && {
-                  borderLeftColor: '#539ffc',
-                  borderLeftWidth: 10,
-                  backgroundColor: '#EBF4FF'
-                },
-                orderSelected?.status === 'CLOSED' && {
-                  borderLeftColor: '#95ed66',
-                  borderLeftWidth: 10,
-                  backgroundColor: '#E3FFD4'
-                }
-              ]}>
-              <View style={[styles.row, {justifyContent: 'space-end'}]}>
-                <View style={[styles.row, {gap: 3}]}>
-                  <Text style={{color: '#000', fontSize: 18}}>
-                    {t('receipt_no')}:
-                  </Text>
-                  <Text
-                    style={{color: '#000', fontSize: 18, fontWeight: '700'}}>
-                    {orderSelected?.distribution_id}
-                  </Text>
-                </View>
-              </View>
-
-              {orderSelected?.distributeType !== 'PDT001' && (
-                <Text style={{color: '#000', fontSize: 18}}>
-                  {t('driver')}: {orderSelected?.driver}
-                </Text>
-              )}
-
-              <View style={[styles.row, {justifyContent: 'space-between'}]}>
-                <View style={[styles.row, {gap: 3}]}>
-                  <Text style={{color: '#000', fontSize: 18}}>
-                    {t('recipient')}:
-                  </Text>
-                  <Text
-                    style={{color: '#000', fontSize: 18, fontWeight: 'bold'}}>
-                    {orderSelected?.customer_id}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    color: '#000',
-                    fontSize: 20,
-                    fontStyle: 'italic',
-                    fontWeight: 700
-                  }}>
-                  {`${
-                    orderSelected?.first_name === '-'
-                      ? ''
-                      : orderSelected?.first_name || ''
-                  }`}
-                  {`${
-                    orderSelected?.last_name === '-'
-                      ? ''
-                      : ' ' + orderSelected?.last_name || ''
-                  }`}
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  styles.column,
-                  {justifyContent: 'flex-start', marginTop: 10}
-                ]}>
-                <View style={[styles.row, {gap: 3}]}>
-                  <Text style={{color: '#000', fontSize: 18}}>
-                    {t('phone')}:
-                  </Text>
-
-                  <TouchableOpacity
-                    disabled={!orderSelected?.phone}
-                    onPress={() => handleCallPress(orderSelected?.phone)}>
-                    <Text
-                      style={{
-                        color: orderSelected?.phone ? '#007ECC' : '#000',
-                        fontSize: 18,
-                        fontWeight: 'bold'
-                      }}>
-                      {orderSelected?.phone || '--'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {orderSelected?.phone && (
-                    <Ionicons name={'call'} size={20} color="#007ECC" />
-                  )}
-                </View>
-
-                <View style={[styles.row, {gap: 3}]}>
-                  <Text style={{color: '#000', fontSize: 18}}>
-                    {t('phone2')}:
-                  </Text>
-
-                  <TouchableOpacity
-                    disabled={!orderSelected?.phonespare}
-                    onPress={() => handleCallPress(orderSelected?.phonespare)}>
-                    <Text
-                      style={{
-                        color: orderSelected?.phonespare ? '#007ECC' : '#000',
-                        fontSize: 18,
-                        fontWeight: 'bold'
-                      }}>
-                      {orderSelected?.phonespare || '--'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {orderSelected?.phonespare && (
-                    <Ionicons name={'call'} size={20} color="#007ECC" />
-                  )}
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.row,
-                  {
-                    justifyContent: 'center',
-                    gap: 3,
-                    backgroundColor: '#fff',
-                    borderRadius: 5,
-                    borderColor: '#eee',
-                    borderWidth: 1,
-                    padding: 3,
-                    marginVertical: 4
-                  }
-                ]}>
-                <Ionicons color="#FF0000" name="location-outline" size={20} />
-                <Text
-                  style={{
-                    flex: 1,
-                    flexWrap: 'wrap',
-                    color: '#000',
-                    fontSize: 18
-                  }}>
-                  {orderSelected?.address?.replace('-', '')}{' '}
-                  {orderSelected?.subdistrict} {orderSelected?.district}{' '}
-                  {orderSelected?.province} {orderSelected?.zip_code}
-                </Text>
-              </View>
-
-              <View
-                style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
-                <Text style={{color: '#000', fontSize: 18}}>
-                  {t('transport_type')}:{' '}
-                </Text>
-                <View
-                  style={[
-                    styles.status,
-                    styles.row,
-                    orderSelected?.distributeType === 'PDT001'
-                      ? styles.PICKED
-                      : orderSelected?.distributeType === 'PDT002'
-                      ? styles.ONSHIP
-                      : orderSelected?.distributeType === 'PDT003'
-                      ? styles.ARRIVED
-                      : styles.OFFICE,
-                    {
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      gap: 5,
-                      borderColor: '#000',
-                      borderWidth: 0.5
-                    }
-                  ]}>
-                  <Ionicons
-                    color={'#000'}
-                    name={
-                      orderSelected?.distributeType === 'PDT001'
-                        ? 'home'
-                        : orderSelected?.distributeType === 'PDT002'
-                        ? 'bag-handle'
-                        : orderSelected?.distributeType === 'PDT003'
-                        ? 'cube'
-                        : 'business'
-                    }
-                    size={15}
-                  />
-                  <Text style={{padding: 2, color: '#000', fontSize: 18}}>
-                    {orderSelected?.distributeType === 'PDT001'
-                      ? `${t('od_type_warehouse')}`
-                      : orderSelected?.distributeType === 'PDT002'
-                      ? `${t('od_type_express')}`
-                      : orderSelected?.distributeType === 'PDT003'
-                      ? `${t('od_type_self')}`
-                      : `${t('od_type_office')}`}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[styles.row, {gap: 2, justifyContent: 'flex-start'}]}>
-                <Text style={{color: '#000', fontSize: 18}}>
-                  {t('status')}:
-                </Text>
-                <View
-                  style={[
-                    styles.status,
-
-                    orderSelected?.status === 'CLOSED'
-                      ? {backgroundColor: '#2FC58B'}
-                      : orderSelected?.status === 'ONSHIP'
-                      ? {backgroundColor: '#009DFF'}
-                      : {backgroundColor: '#FF2F61'}
-                  ]}>
-                  <Text style={{padding: 2, color: '#FFF', fontSize: 18}}>
-                    {orderSelected?.status}
-                  </Text>
-                </View>
-              </View>
-            </View>
+            <Information orderSelected={orderSelected} />
           ) : (
             <Empty text={orderSelected && t('empty')} />
           )}
 
           {order_id && <TabViewList_2 detail={detail} />}
+
           {order_id && (
             <Scan
               ref={ref}
@@ -464,21 +257,6 @@ const DistributeDetail = ({navigation, route}) => {
               orderStatus={orderSelected?.status}
             />
           )}
-
-          {/* <PagerView
-        style={{width: '100%', height: 375}}
-        initialPage={1}
-        pageMargin={10}>
-        {order_id && <TabViewList_2 key="2" detail={detail} />}
-        {order_id && (
-          <Scan
-            key="1"
-            detail={detail}
-            checkScan={checkScan}
-            distribute_id={order_id}
-          />
-        )}
-      </PagerView> */}
 
           {order_id && (
             <TouchableOpacity
@@ -634,22 +412,7 @@ const styles = StyleSheet.create({
 
     fontWeight: 'bold'
   },
-  PICKED: {
-    backgroundColor: '#CFFFAE',
-    color: '#183B00'
-  },
-  ONSHIP: {
-    backgroundColor: '#B5E3FF',
-    color: '#003F67'
-  },
-  ARRIVED: {
-    backgroundColor: '#FFC4D2',
-    color: '#4A0011'
-  },
-  OFFICE: {
-    backgroundColor: '#E0C9FF',
-    color: '#5719AA'
-  },
+
   buttonGroup: {
     display: 'flex',
     flexDirection: 'row',
@@ -691,6 +454,52 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
+  },
+
+  dropdownButtonStyle: {
+    width: 200,
+    height: 50,
+    backgroundColor: '#E9ECEF',
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12
+  },
+  dropdownButtonTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#151E26'
+  },
+  dropdownButtonArrowStyle: {
+    fontSize: 28
+  },
+  dropdownButtonIconStyle: {
+    fontSize: 28,
+    marginRight: 8
+  },
+  dropdownMenuStyle: {
+    backgroundColor: '#E9ECEF',
+    borderRadius: 8
+  },
+  dropdownItemStyle: {
+    width: '100%',
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8
+  },
+  dropdownItemTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#151E26'
+  },
+  dropdownItemIconStyle: {
+    fontSize: 28,
+    marginRight: 8
   }
 })
 

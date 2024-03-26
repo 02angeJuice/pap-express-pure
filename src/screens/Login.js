@@ -61,8 +61,12 @@ const Login = ({navigation}) => {
         })
       }
     } catch (err) {
-      const {error, message, statusCode} = err?.response?.data
-      console.log('sendCheckLoginHH_API', err.response?.data)
+      const {error, message, statusCode} = err
+
+      // return
+
+      // const {error, message, statusCode} = err?.response?.data
+      // console.log('sendCheckLoginHH_API', err.response?.data)
 
       if (message === 'alertOnline') {
         console.log('มีคน Login อยู่')

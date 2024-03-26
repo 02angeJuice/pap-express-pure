@@ -1,6 +1,22 @@
 import axios from 'axios'
 import {path} from '../constants/url'
 
+axios.defaults.timeout = 5000
+
+// const url = import.meta.env.REACT_APP_APIURL;
+const instance = axios.create({
+  baseURL: path.URL //ลิ้ง api
+  // baseURL: 'http://localhost:3002',
+  // timeout: 5000 //
+})
+
+const authHeaders = (token) => {
+  return {Authorization: `Bearer ${token}`}
+}
+
+const contentJSON = {'Content-Type': 'application/json'}
+const contentFormData = {'Content-Type': 'multipart/form-data'}
+
 export const checkVersion = async () => await axios.post(`${path.APK_VERSION}`)
 
 // ----------------------------------------------------------
@@ -180,17 +196,53 @@ export const sendDetailConfirm = async (obj, token) =>
       throw new Error(err.response?.data.statusCode)
     })
 
-export const sendShipmentConfirm = async (obj, token) =>
-  await axios
-    .patch(`${path.URL}/api/hh/receipt/shipment`, obj, {
-      headers: {Authorization: `Bearer ${token}`}
+// export const sendConfirm = async (obj, token) =>
+//   await axios
+//     .patch(`${path.JAM}/admin/UpdateRODetailForHH`, obj, {
+//       headers: {Authorization: `Bearer ${token}`}
+//     })
+//     .then((res) => {
+//       console.log('sendConfirm SUCCESS, STATUS:', res.status)
+//       return res.status
+//     })
+//     .catch((err) => {
+//       throw new Error(err.response?.data.statusCode)
+//     })
+
+// loadtotruck
+// ----------------------------------------------------------
+export const sendShipmentConfirm = async (obj, token) => {
+  try {
+    const res = await instance.patch('/api/hh/receipt/shipment', obj, {
+      headers: authHeaders(token)
     })
-    .then((res) =>
-      console.log('sendShipmentConfirm SUCCESS, STATUS:', res.status)
-    )
-    .catch((err) => {
-      throw new Error(err.response?.data.statusCode)
+    return {status: true, data: res?.data}
+  } catch (err) {
+    return {status: false, data: err?.response?.data}
+  }
+}
+
+export const sendSignature = async (obj, token) => {
+  try {
+    const res = await instance.patch(`/admin/SaveSignature`, obj, {
+      headers: {...contentFormData, ...authHeaders(token)}
     })
+    return {status: true, data: res?.data}
+  } catch (err) {
+    return {status: false, data: err?.response?.data}
+  }
+}
+
+// export const sendConfirm = async (obj, token) => {
+//   try {
+//     const result = await instance.patch(`/admin/UpdateRODetailForHH`, obj, {
+//       headers: authHeaders(token)
+//     })
+//     return {status: true, data: res?.data}
+//   } catch (err) {
+//     return {status: false, data: err?.response?.data}
+//   }
+// }
 
 export const sendConfirm = async (obj, token) =>
   await axios
@@ -205,31 +257,7 @@ export const sendConfirm = async (obj, token) =>
       throw new Error(err.response?.data.statusCode)
     })
 
-export const sendSignature = async (obj, token) => {
-  // .then((res) => console.log('sendSignature SUCCESS, STATUS:', res.status))
-  //   .catch((err) => {
-  //     throw new Error(err.response?.data.statusCode)
-  //   })
-
-  console.log(obj)
-
-  try {
-    const result = await axios({
-      method: 'patch',
-      url: `${path.JAM}/admin/SaveSignature`,
-      data: obj,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
-      }
-    })
-
-    return result
-  } catch (err) {
-    throw new Error(err.response?.data.statusCode)
-  }
-}
-
+// ----------------------------------------------------------------
 export const sendItemConfirm = async (obj, token) =>
   await axios
     .patch(`${path.URL}/api/hh/distribute/item`, obj, {
@@ -257,3 +285,32 @@ export const sendOrderConfirm = async (obj, token) =>
     .catch((err) => {
       throw new Error(err.response?.data.statusCode)
     })
+
+// ----------------------------------------------------------------
+// truck master
+export const selTruckList = async (data) => {
+  try {
+    const res = await instance.post('/admin/selTruckList', data)
+    return {status: true, data: res?.data}
+  } catch (error) {
+    return {status: false, data: error?.response?.data}
+  }
+}
+
+export const insupdTruckItem = async (data) => {
+  try {
+    const res = await instance.post('/admin/insupdTruckItem', data)
+    return {status: true, data: res?.data}
+  } catch (error) {
+    return {status: false, data: error?.response?.data}
+  }
+}
+
+export const delTruckItem = async (data) => {
+  try {
+    const res = await instance.post('/admin/delTruckItem', data)
+    return {status: true, data: res?.data}
+  } catch (error) {
+    return {status: false, data: error?.response?.data}
+  }
+}

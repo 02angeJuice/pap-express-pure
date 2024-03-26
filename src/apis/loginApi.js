@@ -52,7 +52,7 @@ export const sendCheckLoginHH = async (obj) => {
     .post(`${path.JAM}/auth/local/checkLoginHH`, obj)
     .then((res) => res)
     .catch((error) => {
-      throw error
+      throw error?.response?.data
     })
 }
 
