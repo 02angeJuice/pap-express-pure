@@ -319,7 +319,16 @@ export const delTruckItem = async (data) => {
 // scan checked
 export const boxItemChecked = async (data) => {
   try {
-    const res = await instance.post('/admin/delTruckItem', data)
+    const res = await instance.post('/api/hh/receipt/box_checked', data)
+    return {status: true, data: res?.data}
+  } catch (error) {
+    return {status: false, data: error?.response?.data}
+  }
+}
+
+export const boxItemCheckedAll = async (data) => {
+  try {
+    const res = await instance.post('/api/hh/receipt/box_checked_all', data)
     return {status: true, data: res?.data}
   } catch (error) {
     return {status: false, data: error?.response?.data}

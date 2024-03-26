@@ -11,7 +11,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import {useTranslation} from 'react-i18next'
 import {useFocus, useScan} from '../../hooks'
-import {hh_sel_box_by_od} from '../../apis'
+import {boxItemChecked, boxItemCheckedAll, hh_sel_box_by_od} from '../../apis'
 import {setfetchfocus} from '../../store/slices/focusSlice'
 import {useDispatch} from 'react-redux'
 
@@ -35,6 +35,9 @@ const Scan = forwardRef(
     const dispatch = useDispatch()
     const {insertDetailsBox} = useScan()
     const {fetchfocus} = useFocus()
+
+    const [allChecked, setAllChecked] = useState(false)
+    const [indeterminate, setIndeterminate] = useState(false)
 
     // ----------------------------------------------------------
     // == EFFECT
@@ -102,11 +105,84 @@ const Scan = forwardRef(
       }
     }
 
-    const [selectedCheckboxes, setSelectedCheckboxes] = useState([])
+    const onGroupCheckedChange = (checked) => {
+      setBox(
+        box.map((item) => {
+          if (item.is_scan === 'IDLE') {
+            return {...item, checked: checked}
+          }
 
-    const handleCheckboxChange = (box_id) => {
-      console.log(box_id)
+          return item
+        })
+      )
+      setAllChecked(checked)
+      updateGroup(...box.map((item) => item.checked && item.is_scan === 'IDLE'))
     }
+
+    const onBoxCheckedChange = (checked, box_id) => {
+      // setBox([...box, {box_id: }])
+      console.log(checked)
+
+      setBox(
+        box.map((item) => {
+          if (item.box_id === box_id) {
+            return {...item, checked: checked}
+          }
+
+          return item
+        })
+      )
+
+      updateGroup(...box.map((item) => item.checked && item.is_scan === 'IDLE'))
+    }
+
+    const updateGroup = (...states) => {
+      // console.log(states)
+      const someChecked = states.some((item) => item === true)
+      const everyChecked = states.every((item) => item === true)
+
+      if (someChecked && !everyChecked) {
+        setAllChecked(true)
+        setIndeterminate(true)
+      } else if (!someChecked && !everyChecked) {
+        setAllChecked(false)
+        setIndeterminate(false)
+      } else if (everyChecked) {
+        setAllChecked(true)
+        setIndeterminate(false)
+      }
+    }
+
+    // const [selectedCheckboxes, setSelectedCheckboxes] = useState([])
+
+    // const handleCheckboxChange = async (box_id, checked) => {
+    //   await boxItemChecked({box_id: box_id, checked: !checked})
+    //   setredata((prev) => !prev)
+    // }
+
+    // const _groupChecked = box?.every((el) => el.checked)
+
+    // useEffect(() => {
+    //   const handleGropuCheckboxChange = async () => {
+    //     await boxItemCheckedAll({
+    //       item_no: box?.[0].item_no,
+    //       checked: groupChecked
+    //     })
+
+    //     setredata((prev) => !prev)
+    //   }
+
+    //   if (!box?.every((item) => item.checked && item.is_scan === 'IDLE')) {
+    //     handleGropuCheckboxChange()
+    //   }
+    // }, [groupChecked])
+
+    // useEffect(() => {
+    //   console.log(box?.every((item) => item.checked && item.is_scan === 'IDLE'))
+    //   if (!box?.every((item) => item.checked && item.is_scan === 'IDLE')) {
+    //     setGroupChecked(false)
+    //   }
+    // }, [box?.every((item) => item.checked && item.is_scan === 'IDLE')])
 
     // ----------------------------------------------------------
     // == MAIN
@@ -124,12 +200,18 @@ const Scan = forwardRef(
               }
             ]}>
             <View style={{flex: 1, alignItems: 'center'}}>
-              <CheckBox
+              {/* <CheckBox
               // style={styles.group}
               // checked={allChecked}
               // indeterminate={indeterminate}
               // onChange={onGroupCheckedChange}
-              ></CheckBox>
+              ></CheckBox> */}
+
+              <CheckBox
+                checked={allChecked}
+                indeterminate={indeterminate}
+                onChange={onGroupCheckedChange}
+              />
             </View>
             <View style={{flex: 1, alignItems: 'center'}}>
               <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
@@ -284,7 +366,9 @@ const Scan = forwardRef(
                     <View style={{flex: 1, alignItems: 'center'}}>
                       <CheckBox
                         checked={item.checked}
-                        onChange={() => handleCheckboxChange(item.box_id)}
+                        onChange={(checked) =>
+                          onBoxCheckedChange(checked, item.box_id)
+                        }
                       />
                     </View>
 
