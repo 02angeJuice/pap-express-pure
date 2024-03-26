@@ -43,6 +43,7 @@ import Scan from './Scan'
 import {Empty} from '../../components/SpinnerEmpty'
 import {path} from '../../constants/url'
 import Information from './Information'
+import {Dropdown} from './Dropdown'
 
 const ToggleState = {
   SCAN: 'SCAN',
@@ -107,10 +108,9 @@ const DistributeDetail = ({navigation, route}) => {
       })
 
       if (result.status) {
-        const formattedTruckList = result?.data?.dataList.map((truck) => ({
-          label: truck.truck_no,
-          value: truck.truck_no
-        }))
+        const formattedTruckList = result?.data?.dataList.map(
+          (truck) => truck.truck_no
+        )
 
         console.log(formattedTruckList)
 
@@ -248,6 +248,8 @@ const DistributeDetail = ({navigation, route}) => {
           )}
 
           {order_id && <TabViewList_2 detail={detail} />}
+
+          <Dropdown list={truckList || []} />
 
           {order_id && (
             <Scan

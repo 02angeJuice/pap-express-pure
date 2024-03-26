@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import {Platform, Alert, Linking} from 'react-native'
 import {NavigationContainer, useNavigation} from '@react-navigation/native'
 import {createStackNavigator} from '@react-navigation/stack'
@@ -84,8 +84,13 @@ const Screen = ({navigation}) => {
   // ----------------------------------------------------------
   // == EFFECT
   // ----------------------------------------------------------
+
+  useMemo(async () => {
+    await i18n.changeLanguage(language)
+  }, [language, i18n])
+
   useEffect(() => {
-    language && i18n.changeLanguage(language)
+    // language && i18n.changeLanguage(language)
     checkVersion_API()
   }, [])
 

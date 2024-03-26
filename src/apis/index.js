@@ -314,3 +314,14 @@ export const delTruckItem = async (data) => {
     return {status: false, data: error?.response?.data}
   }
 }
+
+// ----------------------------------------------------------------
+// scan checked
+export const boxItemChecked = async (data) => {
+  try {
+    const res = await instance.post('/admin/delTruckItem', data)
+    return {status: true, data: res?.data}
+  } catch (error) {
+    return {status: false, data: error?.response?.data}
+  }
+}

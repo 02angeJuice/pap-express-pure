@@ -1,5 +1,5 @@
 const SERVER = 'https://www.similantechnology.org:4433'
-const DEV = `https://262b-125-24-199-102.ngrok-free.app`
+const DEV = `https://6e63-125-24-199-88.ngrok-free.app`
 
 export const path = {
   APK_DOWNLOAD: `https://www.similantechnology.org:4433/pap_api/dist/hh-apk/`,

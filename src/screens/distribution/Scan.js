@@ -19,6 +19,8 @@ import {Empty} from '../../components/SpinnerEmpty'
 import BarcodeInputAlert from '../../components/BarcodeInputAlert'
 import CustomText from '../../components/CustomText'
 
+import {CheckBox} from '@ui-kitten/components'
+
 const Scan = forwardRef(
   ({detail, distribute_id, orderStatus, navigation}, ref) => {
     const [alertBarcode, setAlertBarcode] = useState(false)
@@ -100,6 +102,12 @@ const Scan = forwardRef(
       }
     }
 
+    const [selectedCheckboxes, setSelectedCheckboxes] = useState([])
+
+    const handleCheckboxChange = (box_id) => {
+      console.log(box_id)
+    }
+
     // ----------------------------------------------------------
     // == MAIN
     // ----------------------------------------------------------
@@ -115,10 +123,18 @@ const Scan = forwardRef(
                 borderStyle: 'dashed'
               }
             ]}>
-            <View style={{flex: 0.5, alignItems: 'center', width: '100%'}}>
+            <View style={{flex: 1, alignItems: 'center'}}>
+              <CheckBox
+              // style={styles.group}
+              // checked={allChecked}
+              // indeterminate={indeterminate}
+              // onChange={onGroupCheckedChange}
+              ></CheckBox>
+            </View>
+            <View style={{flex: 1, alignItems: 'center'}}>
               <Text style={{color: '#000', fontSize: 20}}>{'#'}</Text>
             </View>
-            <View style={{flex: 1, alignItems: 'center', width: '100%'}}>
+            <View style={{flex: 1, alignItems: 'center'}}>
               <Text
                 style={{
                   color: box
@@ -133,7 +149,7 @@ const Scan = forwardRef(
                 box?.filter((el) => el.is_scan === 'IDLE')?.length || 0
               })`}</Text>
             </View>
-            <View style={{flex: 2, alignItems: 'center'}}>
+            <View style={{flex: 4, alignItems: 'center'}}>
               <TextInput
                 editable={orderStatus === 'DATA ENTRY'}
                 ref={ref}
@@ -161,7 +177,7 @@ const Scan = forwardRef(
         </TouchableWithoutFeedback>
         {expanded && (
           <>
-            {box !== null ? (
+            {/* {box !== null ? (
               <TouchableWithoutFeedback
                 onPress={() => dispatch(setfetchfocus())}>
                 <ScrollView
@@ -169,13 +185,153 @@ const Scan = forwardRef(
                   nestedScrollEnabled={true}
                   style={styles.modalContainer}>
                   {box?.map((item, idx) => (
-                    <ScanItem idx={idx + 1} key={idx} item={item} />
+                    // <ScanItem idx={idx + 1} key={idx} item={item} />
+
+                    <View
+                      style={[
+                        styles.row,
+                        {
+                          justifyContent: 'space-around',
+                          backgroundColor:
+                            item?.is_scan_d === 'SCANED'
+                              ? '#F3FFEC'
+                              : item?.is_scan !== 'IDLE'
+                              ? '#eaeaea'
+                              : null,
+                          borderTopWidth: 0.9,
+                          borderColor: '#ccc',
+                          borderStyle: 'dashed'
+                        }
+                      ]}>
+                      <View style={{flex: 1, alignItems: 'center'}}>
+                        <CheckBox
+                          checked={item.checked}
+                          onChange={() => handleCheckboxChange(item.box_id)}
+                        />
+                      </View>
+
+                      <View style={{flex: 1, alignItems: 'center'}}>
+                        <CustomText size="lg" color="#999" text={idx} />
+                      </View>
+                      <View style={{flex: 3, alignItems: 'center'}}>
+                        <CustomText
+                          size="md"
+                          text={
+                            `${item?.item_serial} ${item?.num_box_label}` || ''
+                          }
+                        />
+                      </View>
+
+                      <View style={{flex: 1, alignItems: 'center'}}>
+                        <CustomText
+                          size="xs"
+                          color="#999"
+                          text={item?.maker || '-'}
+                        />
+                      </View>
+                      <View style={{flex: 1, alignItems: 'center'}}>
+                        {item?.is_scan_d === 'SCANED' ? (
+                          <Ionicons
+                            name="checkmark-circle-outline"
+                            size={25}
+                            color="#32A300"
+                          />
+                        ) : item?.is_scan !== 'IDLE' ? (
+                          <Ionicons
+                            name="close-circle-outline"
+                            size={25}
+                            color="#FF4646"
+                          />
+                        ) : (
+                          <Ionicons
+                            name="ellipsis-horizontal-outline"
+                            size={25}
+                            color="#000"
+                          />
+                        )}
+                      </View>
+                    </View>
                   ))}
                 </ScrollView>
               </TouchableWithoutFeedback>
             ) : (
               <Empty text={box && t('empty')} />
-            )}
+            )} */}
+            <TouchableWithoutFeedback onPress={() => dispatch(setfetchfocus())}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
+                style={styles.modalContainer}>
+                {box?.map((item, idx) => (
+                  // <ScanItem idx={idx + 1} key={idx} item={item} />
+
+                  <View
+                    style={[
+                      styles.row,
+                      {
+                        justifyContent: 'space-around',
+                        backgroundColor:
+                          item?.is_scan_d === 'SCANED'
+                            ? '#F3FFEC'
+                            : item?.is_scan !== 'IDLE'
+                            ? '#eaeaea'
+                            : null,
+                        borderTopWidth: 0.9,
+                        borderColor: '#ccc',
+                        borderStyle: 'dashed'
+                      }
+                    ]}>
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <CheckBox
+                        checked={item.checked}
+                        onChange={() => handleCheckboxChange(item.box_id)}
+                      />
+                    </View>
+
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <CustomText size="lg" color="#999" text={idx + 1} />
+                    </View>
+                    <View style={{flex: 3, alignItems: 'center'}}>
+                      <CustomText
+                        size="md"
+                        text={
+                          `${item?.item_serial} ${item?.num_box_label}` || ''
+                        }
+                      />
+                    </View>
+
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <CustomText
+                        size="xs"
+                        color="#999"
+                        text={item?.maker || '-'}
+                      />
+                    </View>
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      {item?.is_scan_d === 'SCANED' ? (
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={25}
+                          color="#32A300"
+                        />
+                      ) : item?.is_scan !== 'IDLE' ? (
+                        <Ionicons
+                          name="close-circle-outline"
+                          size={25}
+                          color="#FF4646"
+                        />
+                      ) : (
+                        <Ionicons
+                          name="ellipsis-horizontal-outline"
+                          size={25}
+                          color="#000"
+                        />
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </TouchableWithoutFeedback>
           </>
         )}
 
@@ -205,50 +361,64 @@ const Scan = forwardRef(
 // ----------------------------------------------------------
 // == COMPONENT
 // ----------------------------------------------------------
-const ScanItem = React.memo(({item, idx}) => {
-  return (
-    <View
-      style={[
-        styles.row,
-        {
-          justifyContent: 'space-around',
-          backgroundColor:
-            item?.is_scan_d === 'SCANED'
-              ? '#F3FFEC'
-              : item?.is_scan !== 'IDLE'
-              ? '#eaeaea'
-              : null,
-          borderTopWidth: 0.9,
-          borderColor: '#ccc',
-          borderStyle: 'dashed'
-        }
-      ]}>
-      <View style={{alignItems: 'center', width: '20%'}}>
-        <CustomText size="lg" color="#999" text={idx} />
-      </View>
-      <View style={{width: '40%', alignItems: 'center'}}>
-        <CustomText
-          size="md"
-          // text={`${item?.item_serial} ${item.num_box}/${allBox}` || ''}
-          text={`${item?.item_serial} ${item?.num_box_label}` || ''}
-        />
-      </View>
+// const ScanItem = React.memo(({item, idx}) => {
+//   return (
+//     <View
+//       style={[
+//         styles.row,
+//         {
+//           justifyContent: 'space-around',
+//           backgroundColor:
+//             item?.is_scan_d === 'SCANED'
+//               ? '#F3FFEC'
+//               : item?.is_scan !== 'IDLE'
+//               ? '#eaeaea'
+//               : null,
+//           borderTopWidth: 0.9,
+//           borderColor: '#ccc',
+//           borderStyle: 'dashed'
+//         }
+//       ]}>
+//       <View style={{flex: 1, alignItems: 'center'}}>
+//         {/* <CheckBox
+//         // style={styles.group}
+//         // checked={allChecked}
+//         // indeterminate={indeterminate}
+//         // onChange={onGroupCheckedChange}
+//         ></CheckBox> */}
 
-      <View style={{width: '20%', alignItems: 'center'}}>
-        <CustomText size="xs" color="#999" text={item?.maker || '-'} />
-      </View>
-      <View style={{width: '20%', alignItems: 'center'}}>
-        {item?.is_scan_d === 'SCANED' ? (
-          <Ionicons name="checkmark-circle-outline" size={25} color="#32A300" />
-        ) : item?.is_scan !== 'IDLE' ? (
-          <Ionicons name="close-circle-outline" size={25} color="#FF4646" />
-        ) : (
-          <Ionicons name="ellipsis-horizontal-outline" size={25} color="#000" />
-        )}
-      </View>
-    </View>
-  )
-})
+//         <CheckBox
+//           checked={selectedCheckboxes.includes(item.box_id)} // Check if the checkbox is selected
+//           onChange={() => handleCheckboxChange(item.box_id)} // Handle checkbox selection change
+//         />
+//       </View>
+
+//       <View style={{flex: 1, alignItems: 'center'}}>
+//         <CustomText size="lg" color="#999" text={idx} />
+//       </View>
+//       <View style={{flex: 3, alignItems: 'center'}}>
+//         <CustomText
+//           size="md"
+//           // text={`${item?.item_serial} ${item.num_box}/${allBox}` || ''}
+//           text={`${item?.item_serial} ${item?.num_box_label}` || ''}
+//         />
+//       </View>
+
+//       <View style={{flex: 1, alignItems: 'center'}}>
+//         <CustomText size="xs" color="#999" text={item?.maker || '-'} />
+//       </View>
+//       <View style={{flex: 1, alignItems: 'center'}}>
+//         {item?.is_scan_d === 'SCANED' ? (
+//           <Ionicons name="checkmark-circle-outline" size={25} color="#32A300" />
+//         ) : item?.is_scan !== 'IDLE' ? (
+//           <Ionicons name="close-circle-outline" size={25} color="#FF4646" />
+//         ) : (
+//           <Ionicons name="ellipsis-horizontal-outline" size={25} color="#000" />
+//         )}
+//       </View>
+//     </View>
+//   )
+// })
 
 // ----------------------------------------------------------
 // == STYLE

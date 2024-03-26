@@ -1,33 +1,37 @@
-// import React, { useState } from 'react';
-// import RNPickerSelect from 'react-native-picker-select';
-// import { View, Text } from 'react-native';
+import React from 'react'
+import {StyleSheet} from 'react-native'
+import {IndexPath, Layout, Select, SelectItem} from '@ui-kitten/components'
 
-// const Dropdown = ({list}) => {
-//   const [selectedValue, setSelectedValue] = useState(null);
+export const Dropdown = ({list}) => {
+  const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const displayValue = list?.[selectedIndex.row]
 
-//   const placeholder = {
-//     label: 'Select an option...',
-//     value: null,
-//   };
+  const renderOption = (title) => <SelectItem title={title} />
 
-//   const options = [
-//     { label: 'Option 1', value: 'option1' },
-//     { label: 'Option 2', value: 'option2' },
-//     { label: 'Option 3', value: 'option3' },
-//   ];
+  return (
+    <Layout style={styles.container} level="1">
+      <Select
+        style={styles.select}
+        placeholder="Default"
+        value={displayValue}
+        selectedIndex={selectedIndex}
+        onSelect={(index) => setSelectedIndex(index)}>
+        {list?.map(renderOption)}
+      </Select>
+    </Layout>
+  )
+}
 
-//   return (
-//     <View>
-//       <Text>Select an option:</Text>
-//       <RNPickerSelect
-//         placeholder={placeholder}
-//         items={options}
-//         onValueChange={(value) => setSelectedValue(value)}
-//         value={selectedValue}
-//       />
-//       {selectedValue && <Text>Selected: {selectedValue}</Text>}
-//     </View>
-//   );
-// };
-
-// export default Dropdown;
+const styles = StyleSheet.create({
+  container: {
+    marginVertical: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  select: {
+    flex: 1,
+    color: 'red',
+    // margin: 2,
+    borderRadius: 10
+  }
+})
